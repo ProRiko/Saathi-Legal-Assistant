@@ -327,10 +327,10 @@
     </div>
 
     <script>
-        // Configuration - Update this with your deployed backend URL
+        // Configuration - Railway deployment ready
         const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://127.0.0.1:5000' 
-            : window.location.origin;  // Use same domain for production
+            : window.location.origin;  // Production URL - Railway.app
 
         const chatMessages = document.getElementById('chatMessages');
         const messageInput = document.getElementById('messageInput');
