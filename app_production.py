@@ -204,6 +204,12 @@ def chat():
             "status": "error"
         }), 500
 
+# Alternative endpoint for compatibility
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    """Alternative chat endpoint for /api/chat calls"""
+    return chat()
+
 @app.route('/reset', methods=['POST'])
 def reset_conversation():
     """Reset conversation history"""
