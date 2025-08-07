@@ -327,10 +327,13 @@
     </div>
 
     <script>
-        // Configuration - Railway deployment ready
+        // Configuration - Railway deployment ready with cache-busting
+        const VERSION = '2.1.0'; // Increment to force cache refresh
         const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://127.0.0.1:5000' 
             : window.location.origin;  // Production URL - Railway.app
+
+        console.log('Saathi Legal Assistant v' + VERSION + ' - API Base URL:', API_BASE_URL);
 
         const chatMessages = document.getElementById('chatMessages');
         const messageInput = document.getElementById('messageInput');
@@ -352,17 +355,23 @@
         });
 
         async function checkServerStatus() {
+            console.log('Checking server status at:', API_BASE_URL);
             try {
-                const response = await fetch(`${API_BASE_URL}/`);
+                const response = await fetch(`${API_BASE_URL}/health?v=${VERSION}`);
+                console.log('Server response:', response.status, response.statusText);
+                
                 if (response.ok) {
                     const data = await response.json();
-                    status.textContent = `✅ Connected to ${data.app || 'Saathi Legal Assistant'}`;
+                    console.log('Server data:', data);
+                    status.textContent = `✅ Connected to ${data.app || 'Saathi Legal Assistant'} (${data.provider})`;
                     status.className = 'status connected';
+                    sendBtn.disabled = false;
                 } else {
-                    throw new Error('Server not responding');
+                    throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
-                status.textContent = '❌ Unable to connect to server. Please try again later.';
+                console.error('Connection error:', error);
+                status.textContent = `❌ Unable to connect to server: ${error.message}`;
                 status.className = 'status error';
                 sendBtn.disabled = true;
             }
@@ -381,7 +390,8 @@
             showTypingIndicator();
 
             try {
-                const response = await fetch(`${API_BASE_URL}/chat`, {
+                console.log('Sending message:', message);
+                const response = await fetch(`${API_BASE_URL}/chat?v=${VERSION}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -392,13 +402,15 @@
                     })
                 });
 
+                console.log('Chat response status:', response.status);
                 const data = await response.json();
+                console.log('Chat response data:', data);
 
                 if (response.ok && data.reply) {
                     // Add bot response
                     addMessage(data.reply, 'bot', data.intent);
                 } else {
-                    throw new Error(data.error || 'Failed to get response');
+                    throw new Error(data.error || `Server error: ${response.status} ${response.statusText}`);
                 }
             } catch (error) {
                 addMessage('❌ Sorry, I couldn\'t process your request right now. Please try again later.', 'bot');
