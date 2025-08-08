@@ -2,290 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="description" content="Saathi Legal Assistant Chat - Your personalized AI legal consultation">
+    <meta name="theme-color" content="#1a2332">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Saathi Legal">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="chat-styles.css">
     <title>Saathi Legal Assistant - Chat</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header */
-        .header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 15px 20px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .header h1 {
-            font-size: 1.5em;
-            font-weight: 300;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .back-btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        /* Chat Container */
-        .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 1000px;
-            margin: 20px auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        /* Messages Area */
-        .messages-area {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            max-height: 60vh;
-            min-height: 400px;
-        }
-
-        .message {
-            margin-bottom: 20px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .message.user {
-            text-align: right;
-        }
-
-        .message.assistant {
-            text-align: left;
-        }
-
-        .message-content {
-            display: inline-block;
-            max-width: 70%;
-            padding: 15px 20px;
-            border-radius: 20px;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-        }
-
-        .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-bottom-right-radius: 5px;
-        }
-
-        .message.assistant .message-content {
-            background: #f8f9fa;
-            color: #333;
-            border: 1px solid #dee2e6;
-            border-bottom-left-radius: 5px;
-        }
-
-        .message-sender {
-            font-size: 0.8em;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .message-time {
-            font-size: 0.7em;
-            color: #999;
-            margin-top: 5px;
-        }
-
-        /* Input Area */
-        .input-area {
-            padding: 20px;
-            background: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-        }
-
-        .input-container {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-
-        .message-input {
-            flex: 1;
-            border: 2px solid #dee2e6;
-            border-radius: 25px;
-            padding: 15px 20px;
-            font-size: 16px;
-            resize: none;
-            max-height: 120px;
-            min-height: 50px;
-        }
-
-        .message-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .send-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .send-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .send-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Typing indicator */
-        .typing-indicator {
-            display: none;
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        .typing-content {
-            display: inline-block;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 15px 20px;
-            border-radius: 20px;
-            border-bottom-left-radius: 5px;
-        }
-
-        .typing-dots {
-            display: inline-flex;
-            gap: 4px;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #667eea;
-            animation: typing 1.4s infinite ease-in-out;
-        }
-
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Rate limit warning */
-        .rate-limit-warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-        }
-
-        /* Error message */
-        .error-message {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-        }
-
-        /* Welcome message */
-        .welcome-message {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-        }
-
-        .welcome-message h2 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            .chat-container {
-                margin: 10px;
-                border-radius: 15px;
-            }
-
-            .header {
-                padding: 10px 15px;
-            }
-
-            .header h1 {
-                font-size: 1.2em;
-            }
-
-            .message-content {
-                max-width: 85%;
-            }
-
-            .input-area {
-                padding: 15px;
-            }
-
-            .message-input {
-                font-size: 16px; /* Prevent zoom on iOS */
-            }
-
-            .send-btn {
-                padding: 12px 20px;
-                font-size: 14px;
-            }
-        }
-    </style>
 </head>
-<body>
+body>
     <!-- Header -->
     <div class="header">
         <h1>🏛️ Saathi Legal Assistant</h1>
@@ -319,13 +47,13 @@
 
         <!-- Typing indicator -->
         <div class="typing-indicator" id="typingIndicator">
-            <div class="typing-content">
+            <div class="message-bubble">
                 <div class="typing-dots">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </div>
-                <span style="margin-left: 10px; color: #666;">Saathi is thinking...</span>
+                <span style="margin-left: 10px;">Saathi is thinking...</span>
             </div>
         </div>
 
@@ -389,8 +117,7 @@
             
             messageDiv.innerHTML = `
                 <div class="message-sender">${sender === 'user' ? userName : 'Saathi Legal Assistant'}</div>
-                <div class="message-content">${content}</div>
-                <div class="message-time">${time}</div>
+                <div class="message-bubble">${content}</div>
             `;
             
             messagesArea.appendChild(messageDiv);
