@@ -168,6 +168,33 @@ body {
     position: relative;
 }
 
+/* Enhanced text formatting in message bubbles */
+.message-bubble strong {
+    font-weight: bold;
+    color: #f4f1e8;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.message-bubble em {
+    font-style: italic;
+    color: #f4f1e8;
+}
+
+.message-bubble ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.message-bubble li {
+    margin: 4px 0;
+    list-style-type: disc;
+}
+
+.message-bubble br {
+    display: block;
+    margin: 4px 0;
+}
+
 .message.user .message-bubble {
     background: linear-gradient(135deg, #1a2332 0%, #2c2c2c 100%);
     color: #f4f1e8;

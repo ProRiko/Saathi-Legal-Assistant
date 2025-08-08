@@ -107,6 +107,21 @@ body>
             textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
         }
 
+        function formatMarkdown(text) {
+            // Convert Markdown formatting to HTML
+            return text
+                // Bold text: **text** → <strong>text</strong>
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                // Italic text: *text* → <em>text</em>
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                // Bullet points: * item → <li>item</li>
+                .replace(/^\* (.+)$/gm, '<li>$1</li>')
+                // Convert multiple <li> items to <ul> lists
+                .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+                // Line breaks
+                .replace(/\n/g, '<br>');
+        }
+
         function addMessage(content, sender) {
             const messagesArea = document.getElementById('messagesArea');
             const messageDiv = document.createElement('div');
@@ -115,9 +130,12 @@ body>
             const now = new Date();
             const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
+            // Format content if it's from assistant (to process Markdown)
+            const formattedContent = sender === 'assistant' ? formatMarkdown(content) : content;
+            
             messageDiv.innerHTML = `
                 <div class="message-sender">${sender === 'user' ? userName : 'Saathi Legal Assistant'}</div>
-                <div class="message-bubble">${content}</div>
+                <div class="message-bubble">${formattedContent}</div>
             `;
             
             messagesArea.appendChild(messageDiv);
