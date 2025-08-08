@@ -724,17 +724,21 @@ def get_user_conversations(user_name, limit=50):
 # Landing Page Route
 @app.route('/')
 def landing_page():
-    """Serve the landing page"""
+    """Serve the landing page with phone input and old money theme"""
     try:
         with open('landing.html', 'r', encoding='utf-8') as f:
-            return f.read()
+            content = f.read()
+            logger.info("✅ Successfully serving landing.html with new old money theme")
+            return content
     except FileNotFoundError:
+        logger.error("❌ landing.html file not found!")
         return """
         <html>
-        <body style="text-align: center; padding: 50px; font-family: Arial;">
+        <body style="text-align: center; padding: 50px; font-family: Arial; background: #1a2332; color: #f4f1e8;">
             <h1>🏛️ Saathi Legal Assistant</h1>
             <p>Landing page not found. Please ensure landing.html exists.</p>
             <a href="/chat.html">Go to Chat</a>
+            <p><small>App Version: NEW_THEME_DEPLOYED</small></p>
         </body>
         </html>
         """, 404
