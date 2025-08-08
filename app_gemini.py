@@ -4,7 +4,7 @@ Railway.app deployment ready with Google Gemini API
 Enhanced with Legal Document Generation
 """
 import os
-from flask import Flask, request, jsonify, send_file, make_response, render_template_string
+from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string
 from flask_cors import CORS
 import requests
 import logging
@@ -34,6 +34,31 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+
+# Static file serving routes
+@app.route('/styles.css')
+def serve_styles():
+    """Serve the main CSS file"""
+    try:
+        return send_file('styles.css', mimetype='text/css')
+    except FileNotFoundError:
+        return "CSS file not found", 404
+
+@app.route('/chat-styles.css')
+def serve_chat_styles():
+    """Serve the chat CSS file"""
+    try:
+        return send_file('chat-styles.css', mimetype='text/css')
+    except FileNotFoundError:
+        return "CSS file not found", 404
+
+@app.route('/manifest.json')
+def serve_manifest():
+    """Serve the PWA manifest file"""
+    try:
+        return send_file('manifest.json', mimetype='application/json')
+    except FileNotFoundError:
+        return "Manifest file not found", 404
 
 # MongoDB Configuration
 MONGO_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
