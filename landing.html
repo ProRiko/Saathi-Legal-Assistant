@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saathi Legal Assistant - Your AI Legal Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            padding: 40px 0;
+        }
+
+        .logo {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        /* User Name Section */
+        .name-section {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        .name-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .name-input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .name-input {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            width: 250px;
+            text-align: center;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .save-name-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        .save-name-btn:hover {
+            background: #2ecc71;
+        }
+
+        .welcome-message {
+            color: #27ae60;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        /* Legal Disclaimer */
+        .disclaimer {
+            background: #fff3cd;
+            border: 3px solid #ffeaa7;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .disclaimer-icon {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .disclaimer h3 {
+            color: #856404;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .disclaimer p {
+            color: #856404;
+            font-size: 1em;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .disclaimer strong {
+            font-weight: bold;
+            color: #dc3545;
+        }
+
+        /* Features Section */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #dee2e6;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .feature-card p {
+            color: #6c757d;
+            font-size: 0.95em;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .start-consulting-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.3em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .start-consulting-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-consulting-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px 0;
+            opacity: 0.8;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .main-content {
+                padding: 20px;
+                margin: 20px 0;
+            }
+
+            .name-input-group {
+                flex-direction: column;
+            }
+
+            .name-input {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .disclaimer {
+                padding: 20px;
+            }
+
+            .disclaimer h3 {
+                font-size: 1.1em;
+            }
+
+            .disclaimer p {
+                font-size: 0.9em;
+            }
+
+            .start-consulting-btn {
+                padding: 15px 40px;
+                font-size: 1.1em;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">🏛️</div>
+            <h1>Saathi Legal Assistant</h1>
+            <p>Your AI-powered legal companion for consultation, document generation, and legal guidance</p>
+        </div>
+
+        <div class="main-content">
+            <!-- User Name Section -->
+            <div class="name-section">
+                <h2>Welcome! Let's get started</h2>
+                <p>Please enter your name for a personalized consultation experience:</p>
+                <div class="name-input-group">
+                    <input type="text" id="userName" class="name-input" placeholder="Enter your full name" maxlength="50">
+                    <button onclick="saveName()" class="save-name-btn">Save Name</button>
+                </div>
+                <div id="welcomeMessage" class="welcome-message" style="display: none;"></div>
+            </div>
+
+            <!-- Legal Disclaimer -->
+            <div class="disclaimer">
+                <div class="disclaimer-icon">⚖️</div>
+                <h3>IMPORTANT LEGAL DISCLAIMER</h3>
+                <p><strong>Please read carefully before proceeding:</strong></p>
+                <p>• This AI assistant provides <strong>general legal information only</strong> and does not constitute legal advice</p>
+                <p>• <strong>Always consult a qualified attorney</strong> for specific legal matters and before making legal decisions</p>
+                <p>• Generated documents are <strong>templates for reference only</strong> and may require customization</p>
+                <p>• We are <strong>not responsible</strong> for the accuracy, completeness, or legal validity of AI-generated content</p>
+                <p>• <strong>Your conversations may be logged</strong> to improve our services</p>
+                <p><strong>By proceeding, you acknowledge and accept these terms.</strong></p>
+            </div>
+
+            <!-- Features Section -->
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>AI Legal Consultation</h3>
+                    <p>Get instant answers to your legal questions with our advanced AI assistant trained on Indian law</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Document Generation</h3>
+                    <p>Generate professional legal documents including demand notices, rent agreements, and complaints</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Legal Forms</h3>
+                    <p>Access and customize legal forms for rental agreements, employment contracts, and more</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure & Private</h3>
+                    <p>Your consultations are secure with rate limiting and privacy protection measures</p>
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="cta-section">
+                <button id="startBtn" class="start-consulting-btn" onclick="startConsultation()" disabled>
+                    🚀 Start Consultation
+                </button>
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Preparing your consultation session...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; 2025 Saathi Legal Assistant. Built with ❤️ for the legal community.</p>
+            <p>Made in India 🇮🇳 | Powered by AI</p>
+        </div>
+    </div>
+
+    <script>
+        let userName = '';
+        
+        // Enable start button only after name is saved
+        function saveName() {
+            const nameInput = document.getElementById('userName');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('Please enter your name to continue');
+                return;
+            }
+            
+            if (name.length < 2) {
+                alert('Please enter a valid name (at least 2 characters)');
+                return;
+            }
+            
+            userName = name;
+            
+            // Save to localStorage for persistence
+            localStorage.setItem('saathi_user_name', userName);
+            
+            // Show welcome message
+            const welcomeMsg = document.getElementById('welcomeMessage');
+            welcomeMsg.innerHTML = `✅ Welcome, ${userName}! You can now start your consultation.`;
+            welcomeMsg.style.display = 'block';
+            
+            // Enable start button
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = false;
+            startBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            
+            // Disable name input
+            nameInput.disabled = true;
+            document.querySelector('.save-name-btn').disabled = true;
+            document.querySelector('.save-name-btn').style.background = '#95a5a6';
+            document.querySelector('.save-name-btn').innerHTML = '✓ Saved';
+        }
+        
+        // Check if name already saved
+        function checkSavedName() {
+            const savedName = localStorage.getItem('saathi_user_name');
+            if (savedName) {
+                document.getElementById('userName').value = savedName;
+                saveName();
+            }
+        }
+        
+        // Start consultation
+        function startConsultation() {
+            if (!userName) {
+                alert('Please save your name first');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('startBtn').style.display = 'none';
+            
+            // Send user name to server for session tracking
+            fetch('/api/start-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_name: userName,
+                    timestamp: new Date().toISOString(),
+                    session_id: generateSessionId()
+                })
+            }).then(response => {
+                // Redirect to chat regardless of server response
+                setTimeout(() => {
+                    window.location.href = 'chat.html';
+                }, 2000);
+            }).catch(error => {
+                // Still redirect even if session logging fails
+                console.log('Session logging failed, but continuing...');
+                setTimeout(() => {
+                    window.location.href = 'chat.html';
+                }, 2000);
+            });
+        }
+        
+        // Generate unique session ID
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // Allow Enter key to save name
+        document.getElementById('userName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveName();
+            }
+        });
+        
+        // Initialize
+        checkSavedName();
+        
+        // Auto-focus on name input
+        document.getElementById('userName').focus();
+    </script>
+</body>
+</html>
