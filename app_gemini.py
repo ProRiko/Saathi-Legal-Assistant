@@ -7,8 +7,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
+from collections import defaultdict, deque
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,13 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'your-gemini-api-key-here')
 GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-flash')
 MAX_TOKENS = int(os.environ.get('MAX_TOKENS', '500'))
 TEMPERATURE = float(os.environ.get('TEMPERATURE', '0.7'))
+
+# Rate limiting configuration
+RATE_LIMIT_REQUESTS = 3  # Maximum requests per minute
+RATE_LIMIT_WINDOW = 60   # Time window in seconds (1 minute)
+
+# In-memory rate limiting store (for production, consider using Redis)
+rate_limit_store = defaultdict(deque)
 
 # System prompt for legal assistant
 SYSTEM_PROMPT = """You are Saathi, a helpful legal assistant that provides general legal information for Indian law and common legal situations. 
@@ -68,6 +76,51 @@ def detect_intent(user_input):
             return intent
     
     return "general_legal"
+
+def get_client_identifier(request):
+    """Get a unique identifier for the client (IP address)"""
+    # Try to get the real IP address from various headers (for proxies/load balancers)
+    forwarded_for = request.headers.get('X-Forwarded-For')
+    if forwarded_for:
+        return forwarded_for.split(',')[0].strip()
+    
+    real_ip = request.headers.get('X-Real-IP')
+    if real_ip:
+        return real_ip
+    
+    return request.remote_addr or 'unknown'
+
+def is_rate_limited(client_id):
+    """Check if client has exceeded rate limit"""
+    now = datetime.now()
+    client_requests = rate_limit_store[client_id]
+    
+    # Remove old requests outside the time window
+    cutoff_time = now - timedelta(seconds=RATE_LIMIT_WINDOW)
+    while client_requests and client_requests[0] < cutoff_time:
+        client_requests.popleft()
+    
+    # Check if client has exceeded the limit
+    if len(client_requests) >= RATE_LIMIT_REQUESTS:
+        return True, len(client_requests)
+    
+    # Add current request timestamp
+    client_requests.append(now)
+    return False, len(client_requests)
+
+def get_rate_limit_reset_time(client_id):
+    """Get the time when the rate limit will reset for the client"""
+    client_requests = rate_limit_store[client_id]
+    if not client_requests:
+        return 0
+    
+    oldest_request = client_requests[0]
+    reset_time = oldest_request + timedelta(seconds=RATE_LIMIT_WINDOW)
+    now = datetime.now()
+    
+    if reset_time > now:
+        return int((reset_time - now).total_seconds())
+    return 0
 
 def call_gemini_api(messages):
     """Call Google Gemini API"""
@@ -159,7 +212,7 @@ def health_check():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    """Main chat endpoint using Gemini API"""
+    """Main chat endpoint using Gemini API with rate limiting"""
     global conversation_history
     
     if not is_api_configured():
@@ -170,11 +223,31 @@ def chat():
             "status": "error"
         }), 500
     
+    # Rate limiting check
+    client_id = get_client_identifier(request)
+    is_limited, request_count = is_rate_limited(client_id)
+    
+    if is_limited:
+        reset_time = get_rate_limit_reset_time(client_id)
+        logger.warning(f"Rate limit exceeded for client {client_id}")
+        return jsonify({
+            "reply": f"🚫 Rate limit exceeded. You can make {RATE_LIMIT_REQUESTS} requests per minute. Please wait {reset_time} seconds before trying again.",
+            "intent": "rate_limit",
+            "error": "RATE_LIMIT_EXCEEDED",
+            "status": "error",
+            "rate_limit": {
+                "limit": RATE_LIMIT_REQUESTS,
+                "remaining": 0,
+                "reset_in": reset_time,
+                "current_requests": request_count
+            }
+        }), 429
+
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "No JSON data provided", "status": "error"}), 400
-        
+            
         user_input = data.get('query', '').strip()
         if not user_input:
             return jsonify({"error": "No query provided", "status": "error"}), 400
@@ -204,13 +277,21 @@ def chat():
             # Detect intent
             intent = detect_intent(user_input)
             
+            # Calculate remaining requests for this client
+            remaining_requests = max(0, RATE_LIMIT_REQUESTS - request_count)
+            
             return jsonify({
                 "reply": reply,
                 "intent": intent,
                 "status": "success",
                 "provider": "Google Gemini",
                 "model": GEMINI_MODEL,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
+                "rate_limit": {
+                    "limit": RATE_LIMIT_REQUESTS,
+                    "remaining": remaining_requests,
+                    "reset_in": RATE_LIMIT_WINDOW
+                }
             })
         else:
             return jsonify({

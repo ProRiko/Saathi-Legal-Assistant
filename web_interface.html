@@ -203,6 +203,29 @@
             color: #721c24;
         }
 
+        .rate-limit-display {
+            text-align: center;
+            padding: 5px 10px;
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: #1976d2;
+        }
+
+        .rate-limit-display.warning {
+            background: #fff3e0;
+            border-color: #ffcc02;
+            color: #f57c00;
+        }
+
+        .rate-limit-display.danger {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #d32f2f;
+        }
+
         .typing-indicator {
             display: none;
             background: #e9ecef;
@@ -262,6 +285,9 @@
 
         <div class="chat-container">
             <div id="status" class="status">Connecting to server...</div>
+            <div id="rateLimitDisplay" class="rate-limit-display" style="display: none;">
+                <small>Requests remaining: <span id="rateLimitCount">0</span>/3 per minute</small>
+            </div>
             
             <div class="chat-messages" id="chatMessages">
                 <div class="message bot-message">
@@ -328,7 +354,7 @@
 
     <script>
         // Configuration - Railway deployment ready with cache-busting
-        const VERSION = '2.1.0'; // Increment to force cache refresh
+        const VERSION = '2.2.0'; // Added rate limiting - increment to force cache refresh
         const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://127.0.0.1:5000' 
             : window.location.origin;  // Production URL - Railway.app
@@ -409,6 +435,17 @@
                 if (response.ok && data.reply) {
                     // Add bot response
                     addMessage(data.reply, 'bot', data.intent);
+                    
+                    // Update rate limit display if available
+                    if (data.rate_limit) {
+                        updateRateLimitDisplay(data.rate_limit);
+                    }
+                } else if (response.status === 429) {
+                    // Rate limit exceeded
+                    addMessage(data.reply, 'bot', 'rate_limit');
+                    if (data.rate_limit) {
+                        updateRateLimitDisplay(data.rate_limit);
+                    }
                 } else {
                     throw new Error(data.error || `Server error: ${response.status} ${response.statusText}`);
                 }
@@ -465,6 +502,29 @@
 
         function hideTypingIndicator() {
             typingIndicator.style.display = 'none';
+        }
+
+        function updateRateLimitDisplay(rateLimitInfo) {
+            const display = document.getElementById('rateLimitDisplay');
+            const countElement = document.getElementById('rateLimitCount');
+            
+            if (rateLimitInfo && rateLimitInfo.limit) {
+                countElement.textContent = rateLimitInfo.remaining;
+                display.style.display = 'block';
+                
+                // Update styling based on remaining requests
+                display.className = 'rate-limit-display';
+                if (rateLimitInfo.remaining <= 1) {
+                    display.className += ' danger';
+                } else if (rateLimitInfo.remaining <= 2) {
+                    display.className += ' warning';
+                }
+                
+                // If rate limited, show reset time
+                if (rateLimitInfo.remaining === 0 && rateLimitInfo.reset_in > 0) {
+                    display.innerHTML = `<small>⏳ Rate limit exceeded. Try again in ${rateLimitInfo.reset_in} seconds.</small>`;
+                }
+            }
         }
 
         function askExample(question) {
