@@ -743,6 +743,90 @@ def landing_page():
         </html>
         """, 404
 
+@app.route('/templates.html')
+def templates_page():
+    """Serve the document templates page"""
+    try:
+        with open('templates.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return """
+        <html>
+        <body style="text-align: center; padding: 50px; font-family: Arial; background: #1a2332; color: #f4f1e8;">
+            <h1>📄 Templates Not Available</h1>
+            <p>Document templates page not found.</p>
+            <a href="/" style="color: #8b4513;">Back to Home</a>
+        </body>
+        </html>
+        """, 404
+
+@app.route('/api/templates', methods=['GET'])
+def get_templates():
+    """Get available document templates"""
+    try:
+        from document_generator import DocumentGenerator
+        generator = DocumentGenerator()
+        templates = generator.get_available_templates()
+        return jsonify(templates)
+    except Exception as e:
+        logger.error(f"Error getting templates: {str(e)}")
+        return jsonify({"error": "Failed to load templates"}), 500
+
+@app.route('/api/template-questions/<template_id>', methods=['GET'])
+def get_template_questions(template_id):
+    """Get questions for a specific template"""
+    try:
+        from document_generator import DocumentGenerator
+        generator = DocumentGenerator()
+        questions = generator.get_template_questions(template_id)
+        if questions:
+            return jsonify(questions)
+        else:
+            return jsonify({"error": "Template not found"}), 404
+    except Exception as e:
+        logger.error(f"Error getting template questions: {str(e)}")
+        return jsonify({"error": "Failed to load template questions"}), 500
+
+@app.route('/api/generate-document', methods=['POST'])
+def generate_document_api():
+    """Generate document from template and user data"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        template_id = data.get('template_id')
+        user_data = data.get('data', {})
+        
+        if not template_id:
+            return jsonify({"error": "Template ID required"}), 400
+        
+        from document_generator import DocumentGenerator
+        generator = DocumentGenerator()
+        document = generator.generate_document(template_id, user_data)
+        
+        if document:
+            # Log document generation
+            log_data = {
+                'template_id': template_id,
+                'user_data': user_data,
+                'timestamp': datetime.now().isoformat(),
+                'ip_address': get_client_identifier(request)
+            }
+            log_to_mongodb('document_generations', log_data)
+            
+            return jsonify({
+                "success": True,
+                "document": document,
+                "template_id": template_id
+            })
+        else:
+            return jsonify({"error": "Failed to generate document"}), 500
+            
+    except Exception as e:
+        logger.error(f"Error generating document: {str(e)}")
+        return jsonify({"error": "Failed to generate document"}), 500
+
 @app.route('/chat.html')
 def chat_page():
     """Serve the chat page"""

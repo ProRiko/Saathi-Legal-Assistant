@@ -267,6 +267,29 @@ body {
     line-height: 1.5;
 }
 
+/* Quick Action Buttons */
+.quick-action-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+    color: #f4f1e8;
+    text-decoration: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.5);
+    color: #f4f1e8;
+    text-decoration: none;
+}
+
 /* CTA Section */
 .cta-section {
     text-align: center;
