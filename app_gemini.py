@@ -46,6 +46,15 @@ app = Flask(__name__)
 CORS(app)
 
 # Static file serving routes
+@app.route('/calculator.html')
+def serve_calculator():
+    """Serve the simple calculator page"""
+    try:
+        with open('simple_calculator.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Calculator page not found", 404
+
 @app.route('/styles.css')
 def serve_styles():
     """Serve the main CSS file"""

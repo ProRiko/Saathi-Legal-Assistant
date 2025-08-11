@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rights Calculator - Saathi Legal</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .calc-container { max-width: 800px; margin: 40px auto; padding: 20px; }
+        .calc-card { background: rgba(244, 241, 232, 0.1); border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 15px; padding: 25px; margin: 20px 0; }
+        .calc-form { display: grid; gap: 15px; }
+        .calc-input { width: 100%; padding: 12px; border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 8px; background: rgba(244, 241, 232, 0.15); color: #f4f1e8; }
+        .calc-btn { background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%); color: #f4f1e8; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1em; cursor: pointer; }
+        .result { background: rgba(244, 241, 232, 0.1); border-radius: 10px; padding: 20px; margin: 20px 0; display: none; }
+        .result-amount { font-size: 2em; color: #8b4513; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="calc-container">
+        <div class="page-header" style="text-align: center; margin-bottom: 40px;">
+            <h1 style="color: #f4f1e8;">🧮 Legal Rights Calculator</h1>
+            <p style="color: #d4c4a8;">Calculate your legal entitlements instantly</p>
+        </div>
+
+        <!-- Gratuity Calculator -->
+        <div class="calc-card">
+            <h3 style="color: #f4f1e8; margin-bottom: 20px;">💰 Gratuity Calculator</h3>
+            <div class="calc-form">
+                <input type="number" id="salary" class="calc-input" placeholder="Monthly Salary (₹)" min="0">
+                <input type="number" id="years" class="calc-input" placeholder="Years of Service" min="0">
+                <input type="number" id="months" class="calc-input" placeholder="Extra Months (0-11)" min="0" max="11" value="0">
+                <button class="calc-btn" onclick="calculateGratuity()">Calculate Gratuity</button>
+            </div>
+            <div id="gratuityResult" class="result"></div>
+        </div>
+
+        <!-- PF Calculator -->
+        <div class="calc-card">
+            <h3 style="color: #f4f1e8; margin-bottom: 20px;">🏦 Provident Fund Calculator</h3>
+            <div class="calc-form">
+                <input type="number" id="basicSalary" class="calc-input" placeholder="Basic Salary (₹)" min="0">
+                <input type="number" id="pfYears" class="calc-input" placeholder="Years of Service" min="0">
+                <input type="number" id="interest" class="calc-input" placeholder="Interest Rate %" value="8.5" min="0">
+                <button class="calc-btn" onclick="calculatePF()">Calculate PF Balance</button>
+            </div>
+            <div id="pfResult" class="result"></div>
+        </div>
+
+        <!-- Stamp Duty Calculator -->
+        <div class="calc-card">
+            <h3 style="color: #f4f1e8; margin-bottom: 20px;">🏠 Stamp Duty Calculator</h3>
+            <div class="calc-form">
+                <input type="number" id="propertyValue" class="calc-input" placeholder="Property Value (₹)" min="0">
+                <select id="state" class="calc-input">
+                    <option value="0.05">Maharashtra (5%)</option>
+                    <option value="0.06">Delhi (6%)</option>
+                    <option value="0.05">Karnataka (5%)</option>
+                    <option value="0.04">Gujarat (4%)</option>
+                    <option value="0.05">Other States (5%)</option>
+                </select>
+                <button class="calc-btn" onclick="calculateStampDuty()">Calculate Stamp Duty</button>
+            </div>
+            <div id="stampResult" class="result"></div>
+        </div>
+
+        <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; color: #f4f1e8; text-align: center;">
+            <strong>⚠️ Disclaimer:</strong> These are estimates based on general legal provisions. Consult a legal expert for accurate advice.
+        </div>
+    </div>
+
+    <script>
+        function calculateGratuity() {
+            const salary = parseFloat(document.getElementById('salary').value);
+            const years = parseInt(document.getElementById('years').value);
+            const months = parseInt(document.getElementById('months').value) || 0;
+            
+            if (!salary || !years) {
+                alert('Please enter salary and years of service');
+                return;
+            }
+            
+            if (years < 5) {
+                showResult('gratuityResult', 'Not Eligible', 'Gratuity requires minimum 5 years of continuous service');
+                return;
+            }
+            
+            const totalYears = years + (months >= 6 ? 1 : 0);
+            const gratuity = Math.min((salary * 15 * totalYears) / 26, 2000000);
+            const formula = `(₹${salary.toLocaleString()} × 15 × ${totalYears}) ÷ 26`;
+            
+            showResult('gratuityResult', `₹${gratuity.toLocaleString('en-IN')}`, 
+                `Formula: ${formula}<br>Years considered: ${totalYears}<br>Maximum limit: ₹20,00,000`);
+        }
+        
+        function calculatePF() {
+            const basic = parseFloat(document.getElementById('basicSalary').value);
+            const years = parseFloat(document.getElementById('pfYears').value);
+            const rate = parseFloat(document.getElementById('interest').value) / 100;
+            
+            if (!basic || !years) {
+                alert('Please enter basic salary and years of service');
+                return;
+            }
+            
+            const monthlyContribution = basic * 0.24; // 12% employee + 12% employer
+            const annualContribution = monthlyContribution * 12;
+            const balance = years > 0 ? annualContribution * (Math.pow(1 + rate, years) - 1) / rate : 0;
+            
+            showResult('pfResult', `₹${balance.toLocaleString('en-IN')}`, 
+                `Monthly contribution: ₹${monthlyContribution.toLocaleString('en-IN')}<br>Annual contribution: ₹${annualContribution.toLocaleString('en-IN')}<br>Interest rate: ${(rate*100).toFixed(1)}%`);
+        }
+        
+        function calculateStampDuty() {
+            const value = parseFloat(document.getElementById('propertyValue').value);
+            const rate = parseFloat(document.getElementById('state').value);
+            
+            if (!value) {
+                alert('Please enter property value');
+                return;
+            }
+            
+            const stampDuty = value * rate;
+            
+            showResult('stampResult', `₹${stampDuty.toLocaleString('en-IN')}`, 
+                `Property value: ₹${value.toLocaleString('en-IN')}<br>Stamp duty rate: ${(rate*100)}%<br>Calculation: ₹${value.toLocaleString('en-IN')} × ${(rate*100)}%`);
+        }
+        
+        function showResult(elementId, amount, details) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="result-amount">${amount}</div>
+                <div style="color: #f4f1e8; line-height: 1.6; margin-top: 10px;">${details}</div>
+            `;
+            element.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
