@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Legal Help - Saathi Legal Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .directory-container { max-width: 1200px; margin: 40px auto; padding: 20px; }
+        .search-section { background: rgba(244, 241, 232, 0.1); border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 15px; padding: 25px; margin-bottom: 30px; }
+        .search-filters { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .filter-input, .filter-select { width: 100%; padding: 12px; border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 8px; background: rgba(244, 241, 232, 0.15); color: #f4f1e8; }
+        .search-btn { background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%); color: #f4f1e8; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1em; cursor: pointer; width: 100%; }
+        .help-category { margin-bottom: 30px; }
+        .help-card { background: rgba(244, 241, 232, 0.1); border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 15px; padding: 20px; margin: 15px 0; }
+        .help-header { display: flex; justify-content: between; align-items: center; margin-bottom: 15px; }
+        .help-title { color: #f4f1e8; font-size: 1.3em; font-weight: bold; }
+        .help-badge { background: #8b4513; color: #f4f1e8; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; }
+        .help-details { color: #d4c4a8; line-height: 1.6; }
+        .contact-info { background: rgba(139, 69, 19, 0.1); border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .location-tag { background: rgba(255, 193, 7, 0.2); color: #ffc107; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; margin-right: 10px; }
+        .rating-stars { color: #ffc107; font-size: 1.1em; }
+        @media (max-width: 768px) {
+            .search-filters { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="directory-container">
+        <div class="page-header" style="text-align: center; margin-bottom: 40px;">
+            <h1 style="color: #f4f1e8;">🏛️ Find Legal Help Directory</h1>
+            <p style="color: #d4c4a8;">Connect with qualified lawyers, legal aid centers, and courts near you</p>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <h3 style="color: #f4f1e8; margin-bottom: 20px;">🔍 Search Legal Help</h3>
+            <div class="search-filters">
+                <input type="text" id="locationSearch" class="filter-input" placeholder="Enter your city or state">
+                <select id="helpType" class="filter-select">
+                    <option value="all">All Types</option>
+                    <option value="lawyer">Lawyers</option>
+                    <option value="legal-aid">Legal Aid Centers</option>
+                    <option value="court">Courts</option>
+                    <option value="ngo">Legal NGOs</option>
+                </select>
+                <select id="specialization" class="filter-select">
+                    <option value="all">All Specializations</option>
+                    <option value="civil">Civil Law</option>
+                    <option value="criminal">Criminal Law</option>
+                    <option value="family">Family Law</option>
+                    <option value="corporate">Corporate Law</option>
+                    <option value="labor">Labor Law</option>
+                    <option value="consumer">Consumer Law</option>
+                    <option value="property">Property Law</option>
+                </select>
+            </div>
+            <button class="search-btn" onclick="searchLegalHelp()">🔍 Search Legal Help</button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="helpResults">
+            <!-- Lawyers Section -->
+            <div class="help-category">
+                <h2 style="color: #f4f1e8; margin-bottom: 20px;">👨‍💼 Qualified Lawyers</h2>
+                
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Adv. Rajesh Kumar</div>
+                        <div class="help-badge">Civil & Property Law</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Mumbai, Maharashtra</div>
+                        <div class="rating-stars">⭐⭐⭐⭐⭐ (4.8/5)</div>
+                        <p>15+ years experience in civil litigation, property disputes, and contract law</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> +91 98765 43210<br>
+                            <strong>📧 Email:</strong> rajesh.adv@gmail.com<br>
+                            <strong>📍 Address:</strong> 101 High Court Building, Fort, Mumbai - 400001<br>
+                            <strong>💰 Consultation:</strong> ₹1,500 - ₹3,000
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Adv. Priya Sharma</div>
+                        <div class="help-badge">Family & Criminal Law</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Delhi, NCR</div>
+                        <div class="rating-stars">⭐⭐⭐⭐⭐ (4.9/5)</div>
+                        <p>12+ years experience in family disputes, divorce, domestic violence cases</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> +91 98765 54321<br>
+                            <strong>📧 Email:</strong> priya.law@outlook.com<br>
+                            <strong>📍 Address:</strong> 205 Lawyers Chamber, Tis Hazari Court, Delhi - 110054<br>
+                            <strong>💰 Consultation:</strong> ₹2,000 - ₹4,000
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Adv. Suresh Patel</div>
+                        <div class="help-badge">Labor & Consumer Law</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Bangalore, Karnataka</div>
+                        <div class="rating-stars">⭐⭐⭐⭐☆ (4.6/5)</div>
+                        <p>10+ years experience in labor disputes, consumer complaints, employment law</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> +91 98765 67890<br>
+                            <strong>📧 Email:</strong> suresh.legal@gmail.com<br>
+                            <strong>📍 Address:</strong> 301 City Civil Court Complex, Bangalore - 560001<br>
+                            <strong>💰 Consultation:</strong> ₹1,200 - ₹2,500
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legal Aid Centers -->
+            <div class="help-category">
+                <h2 style="color: #f4f1e8; margin-bottom: 20px;">🏢 Legal Aid Centers</h2>
+                
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Maharashtra State Legal Services Authority</div>
+                        <div class="help-badge">Free Legal Aid</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Mumbai, Maharashtra</div>
+                        <p>Free legal services for economically weaker sections, women, children, SC/ST, disabled persons</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> 022-2261-9200<br>
+                            <strong>📧 Email:</strong> mslsa@maharashtra.gov.in<br>
+                            <strong>📍 Address:</strong> High Court Building, Mumbai - 400032<br>
+                            <strong>💰 Fee:</strong> Completely Free<br>
+                            <strong>🕒 Hours:</strong> Mon-Fri 10:00 AM - 5:00 PM
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Delhi State Legal Services Authority</div>
+                        <div class="help-badge">Free Legal Aid</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Delhi, NCR</div>
+                        <p>Free legal assistance, mediation services, legal literacy programs</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> 011-2389-2761<br>
+                            <strong>📧 Email:</strong> dslsa@delhicourts.nic.in<br>
+                            <strong>📍 Address:</strong> Legal Aid Office, Tis Hazari Court, Delhi - 110054<br>
+                            <strong>💰 Fee:</strong> Completely Free<br>
+                            <strong>🕒 Hours:</strong> Mon-Sat 9:00 AM - 5:00 PM
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courts -->
+            <div class="help-category">
+                <h2 style="color: #f4f1e8; margin-bottom: 20px;">🏛️ Courts & Tribunals</h2>
+                
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Bombay High Court</div>
+                        <div class="help-badge">High Court</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Mumbai, Maharashtra</div>
+                        <p>Principal civil court with original and appellate jurisdiction</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> 022-2261-5121<br>
+                            <strong>📧 Email:</strong> hc.mumbai@bombayhighcourt.nic.in<br>
+                            <strong>📍 Address:</strong> Fort, Mumbai - 400001<br>
+                            <strong>🕒 Court Hours:</strong> Mon-Fri 10:30 AM - 4:30 PM
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Delhi District Courts</div>
+                        <div class="help-badge">District Court</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Delhi, NCR</div>
+                        <p>Civil and criminal jurisdiction for Delhi district</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> 011-2386-4455<br>
+                            <strong>📧 Email:</strong> registrar@delhicourts.nic.in<br>
+                            <strong>📍 Address:</strong> Tis Hazari Court Complex, Delhi - 110054<br>
+                            <strong>🕒 Court Hours:</strong> Mon-Sat 10:00 AM - 4:00 PM
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legal NGOs -->
+            <div class="help-category">
+                <h2 style="color: #f4f1e8; margin-bottom: 20px;">🤝 Legal NGOs & Support</h2>
+                
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Lawyers Collective</div>
+                        <div class="help-badge">Human Rights NGO</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Mumbai, Delhi, Bangalore</div>
+                        <p>Public interest litigation, human rights advocacy, legal research</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> 022-2284-5085<br>
+                            <strong>📧 Email:</strong> info@lawyerscollective.org<br>
+                            <strong>📍 Address:</strong> Multiple locations across India<br>
+                            <strong>💰 Fee:</strong> Pro Bono / Minimal Fee
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">JAGORI (Women's Rights)</div>
+                        <div class="help-badge">Women's Rights</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Delhi, NCR</div>
+                        <p>Legal support for women, domestic violence cases, workplace harassment</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> 011-2685-1745<br>
+                            <strong>📧 Email:</strong> jagori@jagori.org<br>
+                            <strong>📍 Address:</strong> B-114, Shivalik, Malviya Nagar, Delhi - 110017<br>
+                            <strong>💰 Fee:</strong> Free for eligible cases
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Legal Helplines -->
+        <div style="background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 15px; padding: 25px; margin: 30px 0;">
+            <h3 style="color: #f4f1e8; margin-bottom: 20px;">🚨 Emergency Legal Helplines</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div>
+                    <strong style="color: #dc3545;">National Legal Services Authority</strong><br>
+                    📞 <a href="tel:15100" style="color: #ffc107;">15100</a> (Toll-Free)
+                </div>
+                <div>
+                    <strong style="color: #dc3545;">Women Helpline</strong><br>
+                    📞 <a href="tel:181" style="color: #ffc107;">181</a> (24x7)
+                </div>
+                <div>
+                    <strong style="color: #dc3545;">Child Helpline</strong><br>
+                    📞 <a href="tel:1098" style="color: #ffc107;">1098</a> (24x7)
+                </div>
+                <div>
+                    <strong style="color: #dc3545;">Senior Citizen Helpline</strong><br>
+                    📞 <a href="tel:14567" style="color: #ffc107;">14567</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/" style="background: rgba(139, 69, 19, 0.2); color: #8b4513; padding: 12px 25px; border-radius: 8px; text-decoration: none; border: 1px solid rgba(139, 69, 19, 0.3);">🏠 Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        function searchLegalHelp() {
+            const location = document.getElementById('locationSearch').value.toLowerCase();
+            const helpType = document.getElementById('helpType').value;
+            const specialization = document.getElementById('specialization').value;
+            
+            const allCards = document.querySelectorAll('.help-card');
+            let visibleCount = 0;
+            
+            allCards.forEach(card => {
+                const cardText = card.textContent.toLowerCase();
+                const locationMatch = !location || cardText.includes(location);
+                const typeMatch = helpType === 'all' || cardText.includes(helpType.replace('-', ' '));
+                const specMatch = specialization === 'all' || cardText.includes(specialization);
+                
+                if (locationMatch && typeMatch && specMatch) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Show/hide category headers
+            const categories = document.querySelectorAll('.help-category');
+            categories.forEach(category => {
+                const visibleCards = category.querySelectorAll('.help-card:not([style*="display: none"])');
+                if (visibleCards.length === 0) {
+                    category.style.display = 'none';
+                } else {
+                    category.style.display = 'block';
+                }
+            });
+            
+            if (visibleCount === 0) {
+                alert('No results found. Try adjusting your search criteria.');
+            }
+        }
+        
+        // Clear search filters
+        function clearFilters() {
+            document.getElementById('locationSearch').value = '';
+            document.getElementById('helpType').value = 'all';
+            document.getElementById('specialization').value = 'all';
+            searchLegalHelp();
+        }
+    </script>
+</body>
+</html>
