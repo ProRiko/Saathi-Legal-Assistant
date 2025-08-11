@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="description" content="Saathi Legal Assistant Device Compatibility Test">
+    <meta name="theme-color" content="#1a2332">
+    <title>Saathi Legal Assistant - Device Compatibility Test</title>
+    <link rel="stylesheet" href="device-compatibility.css">
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #1a2332 0%, #2c2c2c 50%, #8b4513 100%);
+            color: #f4f1e8;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(244, 241, 232, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(139, 69, 19, 0.3);
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(26, 35, 50, 0.3);
+            border-radius: 10px;
+            border-left: 4px solid #8b4513;
+        }
+        
+        .test-item {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(139, 69, 19, 0.2);
+        }
+        
+        .status-pass {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .status-fail {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .status-warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border-color: #ffc107;
+        }
+        
+        .status-loading {
+            background: rgba(0, 123, 255, 0.2);
+            color: #007bff;
+            border-color: #007bff;
+            animation: pulse 2s infinite;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+            color: #f4f1e8;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.4);
+        }
+        
+        .device-info {
+            background: rgba(44, 44, 44, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .recommendations {
+            background: rgba(139, 69, 19, 0.2);
+            border: 1px solid rgba(139, 69, 19, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .recommendation-item {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .recommendation-item:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🔧 Device Compatibility Test</h1>
+            <p>This tool helps diagnose why some devices can't access Saathi Legal Assistant</p>
+            <button class="test-button" onclick="runAllTests()">🚀 Run All Tests</button>
+            <button class="test-button" onclick="shareResults()">📤 Share Results</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📱 Device Information</h2>
+            <div id="deviceInfo" class="device-info">
+                <div>Loading device information...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🌐 Network Tests</h2>
+            <div id="networkTests">
+                <div id="connectionTest" class="test-item status-loading">
+                    🔄 Testing internet connection...
+                </div>
+                <div id="corsTest" class="test-item status-loading">
+                    🔄 Testing CORS compatibility...
+                </div>
+                <div id="healthTest" class="test-item status-loading">
+                    🔄 Testing server health...
+                </div>
+                <div id="apiTest" class="test-item status-loading">
+                    🔄 Testing API endpoints...
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>💻 Browser Compatibility</h2>
+            <div id="browserTests">
+                <div id="jsTest" class="test-item status-loading">
+                    🔄 Testing JavaScript support...
+                </div>
+                <div id="cssTest" class="test-item status-loading">
+                    🔄 Testing CSS features...
+                </div>
+                <div id="localStorageTest" class="test-item status-loading">
+                    🔄 Testing local storage...
+                </div>
+                <div id="fetchTest" class="test-item status-loading">
+                    🔄 Testing fetch API...
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Performance Tests</h2>
+            <div id="performanceTests">
+                <div id="loadTimeTest" class="test-item status-loading">
+                    🔄 Testing page load time...
+                </div>
+                <div id="memoryTest" class="test-item status-loading">
+                    🔄 Testing memory usage...
+                </div>
+                <div id="renderTest" class="test-item status-loading">
+                    🔄 Testing rendering performance...
+                </div>
+            </div>
+        </div>
+
+        <div id="recommendations" class="recommendations" style="display: none;">
+            <h3>💡 Recommendations</h3>
+            <div id="recommendationsList"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔗 Quick Access Links</h2>
+            <button class="test-button" onclick="testDirectAccess()">🏠 Test Landing Page</button>
+            <button class="test-button" onclick="testChatAccess()">💬 Test Chat Page</button>
+            <button class="test-button" onclick="clearCacheAndRetry()">🧹 Clear Cache & Retry</button>
+        </div>
+    </div>
+
+    <script>
+        const testResults = {
+            device: {},
+            network: {},
+            browser: {},
+            performance: {},
+            recommendations: []
+        };
+
+        // Detect device information
+        function detectDevice() {
+            const userAgent = navigator.userAgent;
+            const device = {
+                userAgent: userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                devicePixelRatio: window.devicePixelRatio,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                
+                // Device type detection
+                isMobile: /Mobile|Android|iPhone|iPad/.test(userAgent),
+                isAndroid: /Android/.test(userAgent),
+                isIOS: /iPhone|iPad|iPod/.test(userAgent),
+                isChrome: /Chrome/.test(userAgent) && !/Edge/.test(userAgent),
+                isSafari: /Safari/.test(userAgent) && !/Chrome/.test(userAgent),
+                isFirefox: /Firefox/.test(userAgent),
+                isEdge: /Edge/.test(userAgent),
+                
+                // Feature detection
+                touchSupport: 'ontouchstart' in window,
+                webglSupport: !!document.createElement('canvas').getContext('webgl'),
+                localStorage: typeof Storage !== 'undefined',
+                fetch: typeof fetch !== 'undefined',
+                promises: typeof Promise !== 'undefined'
+            };
+            
+            testResults.device = device;
+            displayDeviceInfo(device);
+            return device;
+        }
+
+        function displayDeviceInfo(device) {
+            const deviceInfo = document.getElementById('deviceInfo');
+            deviceInfo.innerHTML = `
+                <div><strong>Device Type:</strong> ${device.isMobile ? 'Mobile' : 'Desktop'} ${device.isAndroid ? '(Android)' : device.isIOS ? '(iOS)' : ''}</div>
+                <div><strong>Browser:</strong> ${device.isChrome ? 'Chrome' : device.isSafari ? 'Safari' : device.isFirefox ? 'Firefox' : device.isEdge ? 'Edge' : 'Unknown'}</div>
+                <div><strong>Screen:</strong> ${device.screenWidth}x${device.screenHeight} (${device.devicePixelRatio}x DPI)</div>
+                <div><strong>Viewport:</strong> ${device.windowWidth}x${device.windowHeight}</div>
+                <div><strong>Language:</strong> ${device.language}</div>
+                <div><strong>Platform:</strong> ${device.platform}</div>
+                <div><strong>Online:</strong> ${device.onLine ? '✅' : '❌'}</div>
+                <div><strong>Touch Support:</strong> ${device.touchSupport ? '✅' : '❌'}</div>
+                <div><strong>LocalStorage:</strong> ${device.localStorage ? '✅' : '❌'}</div>
+                <div><strong>Fetch API:</strong> ${device.fetch ? '✅' : '❌'}</div>
+            `;
+        }
+
+        // Network tests
+        async function testNetwork() {
+            const API_BASE_URL = window.location.origin;
+            
+            // Connection test
+            try {
+                await fetch('/device-diagnostic', { method: 'GET' });
+                updateTestStatus('connectionTest', 'pass', '✅ Internet connection working');
+                testResults.network.connection = true;
+            } catch (error) {
+                updateTestStatus('connectionTest', 'fail', '❌ Internet connection failed: ' + error.message);
+                testResults.network.connection = false;
+            }
+
+            // CORS test
+            try {
+                const response = await fetch('/health');
+                if (response.ok) {
+                    updateTestStatus('corsTest', 'pass', '✅ CORS configuration working');
+                    testResults.network.cors = true;
+                } else {
+                    throw new Error('HTTP ' + response.status);
+                }
+            } catch (error) {
+                updateTestStatus('corsTest', 'fail', '❌ CORS issue: ' + error.message);
+                testResults.network.cors = false;
+            }
+
+            // Health test
+            try {
+                const response = await fetch('/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateTestStatus('healthTest', 'pass', `✅ Server healthy: ${data.app} (${data.provider})`);
+                    testResults.network.health = true;
+                } else {
+                    throw new Error('HTTP ' + response.status);
+                }
+            } catch (error) {
+                updateTestStatus('healthTest', 'fail', '❌ Server health check failed: ' + error.message);
+                testResults.network.health = false;
+            }
+
+            // API test
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: 'test', lang: 'en' })
+                });
+                
+                if (response.ok) {
+                    updateTestStatus('apiTest', 'pass', '✅ API endpoints accessible');
+                    testResults.network.api = true;
+                } else {
+                    updateTestStatus('apiTest', 'warning', `⚠️ API responded with status: ${response.status}`);
+                    testResults.network.api = 'partial';
+                }
+            } catch (error) {
+                updateTestStatus('apiTest', 'fail', '❌ API not accessible: ' + error.message);
+                testResults.network.api = false;
+            }
+        }
+
+        // Browser compatibility tests
+        async function testBrowser() {
+            // JavaScript test
+            try {
+                const jsFeatures = [
+                    () => typeof Promise !== 'undefined',
+                    () => typeof fetch !== 'undefined',
+                    () => typeof localStorage !== 'undefined',
+                    () => Array.prototype.includes,
+                    () => String.prototype.startsWith
+                ];
+                
+                const passed = jsFeatures.filter(test => test()).length;
+                if (passed === jsFeatures.length) {
+                    updateTestStatus('jsTest', 'pass', '✅ JavaScript features fully supported');
+                    testResults.browser.javascript = true;
+                } else {
+                    updateTestStatus('jsTest', 'warning', `⚠️ Some JavaScript features missing (${passed}/${jsFeatures.length})`);
+                    testResults.browser.javascript = 'partial';
+                }
+            } catch (error) {
+                updateTestStatus('jsTest', 'fail', '❌ JavaScript support issues');
+                testResults.browser.javascript = false;
+            }
+
+            // CSS test
+            try {
+                const cssFeatures = [
+                    () => CSS.supports('display', 'flex'),
+                    () => CSS.supports('display', 'grid'),
+                    () => CSS.supports('backdrop-filter', 'blur(10px)'),
+                    () => CSS.supports('transform', 'translateZ(0)')
+                ];
+                
+                const passed = cssFeatures.filter(test => {
+                    try { return test(); } catch { return false; }
+                }).length;
+                
+                if (passed >= 3) {
+                    updateTestStatus('cssTest', 'pass', '✅ Modern CSS features supported');
+                    testResults.browser.css = true;
+                } else {
+                    updateTestStatus('cssTest', 'warning', `⚠️ Limited CSS support (${passed}/4 features)`);
+                    testResults.browser.css = 'partial';
+                }
+            } catch (error) {
+                updateTestStatus('cssTest', 'fail', '❌ CSS feature detection failed');
+                testResults.browser.css = false;
+            }
+
+            // LocalStorage test
+            try {
+                localStorage.setItem('saathi_test', 'test');
+                localStorage.removeItem('saathi_test');
+                updateTestStatus('localStorageTest', 'pass', '✅ LocalStorage working');
+                testResults.browser.localStorage = true;
+            } catch (error) {
+                updateTestStatus('localStorageTest', 'fail', '❌ LocalStorage not available');
+                testResults.browser.localStorage = false;
+            }
+
+            // Fetch API test
+            if (typeof fetch !== 'undefined') {
+                updateTestStatus('fetchTest', 'pass', '✅ Fetch API supported');
+                testResults.browser.fetch = true;
+            } else {
+                updateTestStatus('fetchTest', 'fail', '❌ Fetch API not supported');
+                testResults.browser.fetch = false;
+            }
+        }
+
+        // Performance tests
+        async function testPerformance() {
+            // Load time test
+            const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+            if (loadTime > 0) {
+                if (loadTime < 3000) {
+                    updateTestStatus('loadTimeTest', 'pass', `✅ Good load time: ${loadTime}ms`);
+                } else if (loadTime < 10000) {
+                    updateTestStatus('loadTimeTest', 'warning', `⚠️ Slow load time: ${loadTime}ms`);
+                } else {
+                    updateTestStatus('loadTimeTest', 'fail', `❌ Very slow load time: ${loadTime}ms`);
+                }
+                testResults.performance.loadTime = loadTime;
+            }
+
+            // Memory test (if available)
+            if (performance.memory) {
+                const memoryMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+                if (memoryMB < 50) {
+                    updateTestStatus('memoryTest', 'pass', `✅ Good memory usage: ${memoryMB}MB`);
+                } else if (memoryMB < 100) {
+                    updateTestStatus('memoryTest', 'warning', `⚠️ High memory usage: ${memoryMB}MB`);
+                } else {
+                    updateTestStatus('memoryTest', 'fail', `❌ Very high memory usage: ${memoryMB}MB`);
+                }
+                testResults.performance.memory = memoryMB;
+            } else {
+                updateTestStatus('memoryTest', 'warning', '⚠️ Memory info not available');
+            }
+
+            // Rendering test
+            const renderStart = performance.now();
+            requestAnimationFrame(() => {
+                const renderTime = performance.now() - renderStart;
+                if (renderTime < 16) {
+                    updateTestStatus('renderTest', 'pass', `✅ Good rendering: ${renderTime.toFixed(1)}ms`);
+                } else {
+                    updateTestStatus('renderTest', 'warning', `⚠️ Slow rendering: ${renderTime.toFixed(1)}ms`);
+                }
+                testResults.performance.render = renderTime;
+            });
+        }
+
+        function updateTestStatus(elementId, status, message) {
+            const element = document.getElementById(elementId);
+            element.className = `test-item status-${status}`;
+            element.innerHTML = message;
+        }
+
+        function generateRecommendations() {
+            const recommendations = [];
+            
+            if (!testResults.network.connection) {
+                recommendations.push("Check your internet connection and try again");
+            }
+            
+            if (!testResults.network.cors) {
+                recommendations.push("CORS issues detected - try accessing from a different network or using a VPN");
+            }
+            
+            if (!testResults.browser.javascript) {
+                recommendations.push("Enable JavaScript in your browser settings");
+            }
+            
+            if (!testResults.browser.localStorage) {
+                recommendations.push("Enable local storage/cookies in your browser settings");
+            }
+            
+            if (testResults.device.isMobile && !testResults.device.touchSupport) {
+                recommendations.push("Touch events may not work properly on this device");
+            }
+            
+            if (testResults.performance.loadTime > 10000) {
+                recommendations.push("Consider using a faster internet connection");
+            }
+            
+            if (testResults.device.isIOS && testResults.device.isSafari) {
+                recommendations.push("For iOS Safari: ensure you're using the latest version");
+            }
+            
+            if (testResults.device.isAndroid) {
+                recommendations.push("For Android: try using Chrome browser for best compatibility");
+            }
+            
+            if (recommendations.length === 0) {
+                recommendations.push("All tests passed! Your device should work perfectly with Saathi Legal Assistant");
+            }
+            
+            testResults.recommendations = recommendations;
+            displayRecommendations(recommendations);
+        }
+
+        function displayRecommendations(recommendations) {
+            const container = document.getElementById('recommendations');
+            const list = document.getElementById('recommendationsList');
+            
+            list.innerHTML = recommendations.map(rec => 
+                `<div class="recommendation-item">${rec}</div>`
+            ).join('');
+            
+            container.style.display = 'block';
+        }
+
+        async function runAllTests() {
+            // Show loading states
+            document.querySelectorAll('.test-item').forEach(item => {
+                item.className = 'test-item status-loading';
+                item.innerHTML = '🔄 Testing...';
+            });
+            
+            detectDevice();
+            await testNetwork();
+            await testBrowser();
+            await testPerformance();
+            
+            generateRecommendations();
+        }
+
+        function shareResults() {
+            const resultsText = `Saathi Legal Assistant - Device Compatibility Test Results:
+
+Device: ${testResults.device.isMobile ? 'Mobile' : 'Desktop'} ${testResults.device.isAndroid ? '(Android)' : testResults.device.isIOS ? '(iOS)' : ''}
+Browser: ${testResults.device.isChrome ? 'Chrome' : testResults.device.isSafari ? 'Safari' : 'Other'}
+Screen: ${testResults.device.screenWidth}x${testResults.device.screenHeight}
+
+Network Tests:
+- Connection: ${testResults.network.connection ? 'PASS' : 'FAIL'}
+- CORS: ${testResults.network.cors ? 'PASS' : 'FAIL'}
+- Server Health: ${testResults.network.health ? 'PASS' : 'FAIL'}
+- API Access: ${testResults.network.api === true ? 'PASS' : testResults.network.api === 'partial' ? 'PARTIAL' : 'FAIL'}
+
+Browser Tests:
+- JavaScript: ${testResults.browser.javascript === true ? 'PASS' : testResults.browser.javascript === 'partial' ? 'PARTIAL' : 'FAIL'}
+- CSS: ${testResults.browser.css === true ? 'PASS' : testResults.browser.css === 'partial' ? 'PARTIAL' : 'FAIL'}
+- LocalStorage: ${testResults.browser.localStorage ? 'PASS' : 'FAIL'}
+- Fetch API: ${testResults.browser.fetch ? 'PASS' : 'FAIL'}
+
+Recommendations:
+${testResults.recommendations.map(rec => `- ${rec}`).join('\n')}
+
+Generated on: ${new Date().toISOString()}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Saathi Legal Assistant - Device Test Results',
+                    text: resultsText
+                });
+            } else {
+                navigator.clipboard.writeText(resultsText).then(() => {
+                    alert('Test results copied to clipboard!');
+                });
+            }
+        }
+
+        function testDirectAccess() {
+            window.open('/', '_blank');
+        }
+
+        function testChatAccess() {
+            window.open('/chat.html', '_blank');
+        }
+
+        function clearCacheAndRetry() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => registration.unregister());
+                });
+            }
+            
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            if (confirm('Cache cleared! Reload page to retry?')) {
+                location.reload();
+            }
+        }
+
+        // Run initial detection
+        detectDevice();
+    </script>
+</body>
+</html>

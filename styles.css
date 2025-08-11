@@ -378,6 +378,50 @@ body {
     margin: 20px auto;
 }
 
+/* Device Compatibility Notice */
+.device-notice {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.device-notice h3 {
+    color: #ffc107;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.device-notice a {
+    color: #ffc107;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.device-notice a:hover {
+    color: #ffdb4d;
+}
+
+.device-tips {
+    text-align: left;
+    margin-top: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.device-tips ul {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.device-tips li {
+    margin: 5px 0;
+    color: #f4f1e8;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

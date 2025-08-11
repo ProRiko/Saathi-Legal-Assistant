@@ -33,7 +33,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
+
+# Import device compatibility handler
+from device_compatibility import DeviceCompatibilityHandler, device_compatible_endpoint
+
+# Set up comprehensive device compatibility
+device_handler = DeviceCompatibilityHandler(app)
 
 # Static file serving routes
 @app.route('/styles.css')
@@ -63,6 +68,28 @@ def serve_enhanced_ux_styles():
 @app.route('/enhanced-ux.js')
 def serve_enhanced_ux_js():
     """Serve the enhanced UX JavaScript file"""
+    try:
+        return send_file('enhanced-ux.js', mimetype='application/javascript')
+    except FileNotFoundError:
+        return "Enhanced UX JS file not found", 404
+
+@app.route('/device-compatibility.css')
+@device_compatible_endpoint
+def serve_device_compatibility_css():
+    """Serve the device compatibility CSS file"""
+    try:
+        return send_file('device-compatibility.css', mimetype='text/css')
+    except FileNotFoundError:
+        return "Device compatibility CSS file not found", 404
+
+@app.route('/device-test.html')
+@device_compatible_endpoint
+def serve_device_test():
+    """Serve the device compatibility test page"""
+    try:
+        return send_file('device-test.html')
+    except FileNotFoundError:
+        return "Device test page not found", 404
     try:
         return send_file('enhanced-ux.js', mimetype='application/javascript')
     except FileNotFoundError:
@@ -538,17 +565,60 @@ def call_gemini_api(messages, user_language='english'):
         return None
 
 @app.route('/health')
+@device_compatible_endpoint
 def health_check():
-    """Health check endpoint"""
-    return jsonify({
+    """Health check endpoint - Device compatible"""
+    return device_handler.device_compatible_response({
         "status": "healthy",
         "app": "Saathi Legal Assistant - Gemini Powered",
         "version": "2.0.0",
         "api_configured": is_api_configured(),
         "model": GEMINI_MODEL,
         "provider": "Google Gemini",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
+        "device_info": {
+            "user_agent": request.headers.get('User-Agent', 'Unknown')[:100],
+            "origin": request.headers.get('Origin', 'Unknown'),
+            "host": request.headers.get('Host', 'Unknown')
+        }
     })
+
+@app.route('/device-diagnostic', methods=['GET', 'POST'])
+@device_compatible_endpoint
+def device_diagnostic():
+    """Diagnostic endpoint to help debug device access issues"""
+    from device_compatibility import get_device_info
+    
+    device_info = get_device_info()
+    
+    # Additional diagnostic information
+    diagnostic_info = {
+        "endpoint": "device-diagnostic",
+        "method": request.method,
+        "timestamp": datetime.utcnow().isoformat(),
+        "device_info": device_info,
+        "request_headers": dict(request.headers),
+        "api_configured": is_api_configured(),
+        "server_status": "running",
+        "cors_enabled": True,
+        "compatibility_layer": "active",
+        "recommendations": []
+    }
+    
+    # Add recommendations based on device type
+    if device_info['is_mobile']:
+        diagnostic_info["recommendations"].append("Mobile device detected - using mobile-optimized headers")
+    
+    if device_info['is_android']:
+        diagnostic_info["recommendations"].append("Android device - ensuring WebView compatibility")
+    
+    if device_info['is_ios']:
+        diagnostic_info["recommendations"].append("iOS device - optimizing for Safari constraints")
+    
+    if not device_info['origin']:
+        diagnostic_info["recommendations"].append("No Origin header - this may cause CORS issues")
+    
+    return device_handler.device_compatible_response(diagnostic_info)
 
 @app.route('/generate-letter', methods=['POST'])
 def generate_letter():
@@ -1027,6 +1097,7 @@ def get_user_history(user_name):
         }), 500
 
 @app.route('/chat', methods=['POST'])
+@device_compatible_endpoint
 def chat():
     """Main chat endpoint using Gemini API with rate limiting"""
     global conversation_history

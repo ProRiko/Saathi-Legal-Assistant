@@ -13,6 +13,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="enhanced-ux.css">
+    <link rel="stylesheet" href="device-compatibility.css">
     <title>Saathi Legal Assistant - Your AI Legal Companion</title>
 </head>
 <body>
@@ -27,7 +28,22 @@
             <p>Your AI-powered legal companion for consultation, document generation, and legal guidance</p>
         </div>
 
+                <!-- Main Content -->
         <div class="main-content">
+            <!-- Device Compatibility Notice -->
+            <div id="deviceNotice" class="device-notice" style="display: none;">
+                <h3>📱 Device Access Help</h3>
+                <p>Having trouble accessing Saathi? <a href="/device-test.html" target="_blank">Run our compatibility test</a> to diagnose the issue.</p>
+                <div class="device-tips">
+                    <strong>Quick fixes:</strong>
+                    <ul>
+                        <li>Try refreshing the page (Ctrl+F5)</li>
+                        <li>Clear browser cache and cookies</li>
+                        <li>Try a different browser (Chrome recommended)</li>
+                        <li>Check your internet connection</li>
+                    </ul>
+                </div>
+            </div>
             <!-- User Details Section -->
             <div class="name-section">
                 <h2>Welcome! Let's get started</h2>
@@ -358,9 +374,57 @@
         
         // Initialize
         checkSavedDetails();
+        checkDeviceCompatibility();
         
         // Auto-focus on name input
         document.getElementById('userName').focus();
+        
+        function checkDeviceCompatibility() {
+            const issues = [];
+            const notice = document.getElementById('deviceNotice');
+            
+            // Check for common issues
+            if (!navigator.onLine) {
+                issues.push('No internet connection detected');
+            }
+            
+            if (typeof fetch === 'undefined') {
+                issues.push('Browser does not support fetch API');
+            }
+            
+            if (typeof localStorage === 'undefined') {
+                issues.push('Browser does not support local storage');
+            }
+            
+            // Check if we can reach the server
+            fetch('/health', { method: 'GET' })
+                .then(response => {
+                    if (!response.ok) {
+                        issues.push('Cannot connect to server');
+                        showDeviceNotice();
+                    }
+                })
+                .catch(error => {
+                    console.log('Server connectivity issue:', error);
+                    showDeviceNotice();
+                });
+            
+            // Show notice if there are issues or on certain devices
+            const userAgent = navigator.userAgent.toLowerCase();
+            if (issues.length > 0 || 
+                userAgent.includes('samsung') || 
+                userAgent.includes('ucbrowser') ||
+                userAgent.includes('operamini')) {
+                showDeviceNotice();
+            }
+        }
+        
+        function showDeviceNotice() {
+            const notice = document.getElementById('deviceNotice');
+            if (notice) {
+                notice.style.display = 'block';
+            }
+        }
         
         // Calculator Modal Functions
         function openCalculatorModal() {
