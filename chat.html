@@ -19,6 +19,19 @@ body>
         <h1>🏛️ Saathi Legal Assistant</h1>
         <div class="user-info">
             <span id="userGreeting">Welcome!</span>
+            <div class="language-selector" style="margin: 0 10px;">
+                <select id="languageSelect" onchange="changeLanguage()" style="background: rgba(139, 69, 19, 0.2); border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 5px; color: #f4f1e8; padding: 5px; font-size: 0.9em;">
+                    <option value="english">🇬🇧 English</option>
+                    <option value="hindi">🇮🇳 हिंदी</option>
+                    <option value="marathi">🏛️ मराठी</option>
+                    <option value="tamil">🕉️ தமிழ்</option>
+                    <option value="telugu">🌸 తెలుగు</option>
+                    <option value="gujarati">🦚 ગુજરાતી</option>
+                    <option value="bengali">🐟 বাংলা</option>
+                    <option value="kannada">🌺 ಕನ್ನಡ</option>
+                    <option value="punjabi">🌾 ਪੰਜਾਬੀ</option>
+                </select>
+            </div>
             <button class="back-btn" onclick="goBack()">← Back</button>
         </div>
     </div>
@@ -78,11 +91,18 @@ body>
         let sessionId = generateSessionId();
         let messageCount = 0;
         let conversationHistory = [];
+        let currentLanguage = localStorage.getItem('preferredLanguage') || 'english';
 
         // Initialize
         function init() {
             document.getElementById('userGreeting').textContent = `Hello, ${userName}!`;
             document.getElementById('messageInput').focus();
+            
+            // Load saved language preference
+            if (currentLanguage) {
+                document.getElementById('languageSelect').value = currentLanguage;
+                updatePlaceholderText();
+            }
             
             // Auto-resize textarea
             const textarea = document.getElementById('messageInput');
@@ -105,6 +125,44 @@ body>
             const textarea = document.getElementById('messageInput');
             textarea.style.height = 'auto';
             textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        // Language support functions
+        function changeLanguage() {
+            currentLanguage = document.getElementById('languageSelect').value;
+            localStorage.setItem('preferredLanguage', currentLanguage);
+            updatePlaceholderText();
+            
+            // Add language change notification
+            const langNames = {
+                'english': 'English',
+                'hindi': 'हिंदी (Hindi)',
+                'marathi': 'मराठी (Marathi)',
+                'tamil': 'தமிழ் (Tamil)',
+                'telugu': 'తెలుగు (Telugu)',
+                'gujarati': 'ગુજરાતી (Gujarati)',
+                'bengali': 'বাংলা (Bengali)',
+                'kannada': 'ಕನ್ನಡ (Kannada)',
+                'punjabi': 'ਪੰਜਾਬੀ (Punjabi)'
+            };
+            
+            addMessage(`🌍 Language changed to ${langNames[currentLanguage]}. All responses will now be provided in both this language and English.`, 'assistant');
+        }
+
+        function updatePlaceholderText() {
+            const placeholders = {
+                'english': 'Type your legal question or request here...',
+                'hindi': 'यहाँ अपना कानूनी प्रश्न या अनुरोध लिखें...',
+                'marathi': 'येथे तुमचा कायदेशीर प्रश्न किंवा विनंती लिहा...',
+                'tamil': 'உங்கள் சட்ட கேள்வி அல்லது கோரிக்கையை இங்கே தட்டச்சு செய்யுங்கள்...',
+                'telugu': 'మీ న్యాయ ప్రశ్న లేదా అభ్యర్థనను ఇక్కడ టైప్ చేయండి...',
+                'gujarati': 'તમારા કાનૂની પ્રશ્ન અથવા વિનંતી અહીં ટાઇપ કરો...',
+                'bengali': 'আপনার আইনি প্রশ্ন বা অনুরোধ এখানে টাইপ করুন...',
+                'kannada': 'ನಿಮ್ಮ ಕಾನೂನು ಪ್ರಶ್ನೆ ಅಥವಾ ವಿನಂತಿಯನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ...',
+                'punjabi': 'ਇੱਥੇ ਆਪਣਾ ਕਾਨੂੰਨੀ ਸਵਾਲ ਜਾਂ ਬੇਨਤੀ ਟਾਈਪ ਕਰੋ...'
+            };
+            
+            document.getElementById('messageInput').placeholder = placeholders[currentLanguage];
         }
 
         function formatMarkdown(text) {
@@ -222,6 +280,7 @@ body>
                     body: JSON.stringify({
                         message: message,
                         user_name: userName,
+                        language: currentLanguage,
                         session_id: sessionId,
                         message_count: ++messageCount
                     })

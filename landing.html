@@ -19,6 +19,9 @@
         <!-- Header -->
         <div class="header">
             <div class="logo">🏛️</div>
+            <div id="languageIndicator" style="position: absolute; top: 20px; right: 20px; background: rgba(139, 69, 19, 0.2); border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 20px; padding: 8px 15px; color: #f4f1e8; font-size: 0.9em; cursor: pointer;" onclick="window.location.href='/language-selection.html'">
+                🌍 <span id="currentLanguage">English</span>
+            </div>
             <h1>Saathi Legal Assistant</h1>
             <p>Your AI-powered legal companion for consultation, document generation, and legal guidance</p>
         </div>
@@ -81,10 +84,10 @@
                     <p>Track your legal cases, court dates, deadlines, and case progress all in one place</p>
                 </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">📝</div>
-                    <h3>Document Generation</h3>
-                    <p>Generate professional legal documents including demand notices, rent agreements, and complaints</p>
+                <div class="feature-card" onclick="window.location.href='/language-selection.html'" style="cursor: pointer;">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Multi-Language Support</h3>
+                    <p>Get legal assistance in Hindi, Marathi, Tamil, Telugu, Gujarati, Bengali, Kannada, Punjabi, and English</p>
                 </div>
 
                 <div class="feature-card">
@@ -115,6 +118,9 @@
                     </a>
                     <a href="/case-tracker.html" class="quick-action-btn">
                         📋 Track Cases
+                    </a>
+                    <a href="/language-selection.html" class="quick-action-btn">
+                        🌍 Choose Language
                     </a>
                     <a href="#" onclick="startConsultation()" class="quick-action-btn" id="chatBtn">
                         💬 Ask Legal Questions
@@ -346,6 +352,30 @@
             `;
             element.style.display = 'block';
         }
+
+        // Language functionality
+        function loadLanguagePreference() {
+            const savedLanguage = localStorage.getItem('preferredLanguage');
+            const languageName = localStorage.getItem('languageName');
+            
+            if (savedLanguage && languageName) {
+                document.getElementById('currentLanguage').textContent = languageName;
+                
+                // Add a small notification that language is active
+                const indicator = document.getElementById('languageIndicator');
+                indicator.style.background = 'rgba(40, 167, 69, 0.2)';
+                indicator.style.borderColor = 'rgba(40, 167, 69, 0.3)';
+                indicator.title = `Current language: ${languageName}. Click to change.`;
+            } else {
+                // Suggest selecting a language
+                document.getElementById('languageIndicator').title = 'Click to select your preferred language';
+            }
+        }
+
+        // Load language preference when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLanguagePreference();
+        });
     </script>
 
     <!-- Rights Calculator Modal -->

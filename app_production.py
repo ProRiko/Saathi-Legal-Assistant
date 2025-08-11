@@ -79,6 +79,15 @@ def serve_legal_help():
     except FileNotFoundError:
         return "Legal help directory not found", 404
 
+@app.route('/language-selection.html')
+def serve_language_selection():
+    """Serve the language selection page"""
+    try:
+        with open('language_selection.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Language selection page not found", 404
+
 @app.route('/calculator.html') 
 def serve_calculator():
     """Serve the simple calculator page"""
@@ -92,7 +101,7 @@ def serve_calculator():
 def version_check():
     """Simple version check endpoint"""
     return jsonify({
-        "version": "4.0.0 - FEATURE #4 LEGAL CASE TRACKER",
+        "version": "5.0.0 - FEATURE #5 MULTI-LANGUAGE SUPPORT",
         "status": "working", 
         "timestamp": datetime.now().isoformat(),
         "features": ["Smart Templates", "Rights Calculator", "Legal Help Directory", "Legal Case Tracker"]
@@ -436,9 +445,25 @@ def create_pdf_document(title, content, filename):
         logger.error(f"Error creating PDF: {str(e)}")
         return None
 
-def call_gemini_api(messages):
-    """Call Google Gemini API"""
+def call_gemini_api(messages, user_language='english'):
+    """Call Google Gemini API with language support"""
     try:
+        # Language prompts for multilingual support
+        language_prompts = {
+            'english': 'Respond in English only.',
+            'hindi': 'Provide your response in both Hindi and English. Format: **Hindi:** [response in Hindi] **English:** [response in English]',
+            'marathi': 'Provide your response in both Marathi and English. Format: **मराठी:** [response in Marathi] **English:** [response in English]',
+            'tamil': 'Provide your response in both Tamil and English. Format: **தமிழ்:** [response in Tamil] **English:** [response in English]',
+            'telugu': 'Provide your response in both Telugu and English. Format: **తెలుగు:** [response in Telugu] **English:** [response in English]',
+            'gujarati': 'Provide your response in both Gujarati and English. Format: **ગુજરાતી:** [response in Gujarati] **English:** [response in English]',
+            'bengali': 'Provide your response in both Bengali and English. Format: **বাংলা:** [response in Bengali] **English:** [response in English]',
+            'kannada': 'Provide your response in both Kannada and English. Format: **ಕನ್ನಡ:** [response in Kannada] **English:** [response in English]',
+            'punjabi': 'Provide your response in both Punjabi and English. Format: **ਪੰਜਾਬੀ:** [response in Punjabi] **English:** [response in English]'
+        }
+        
+        # Get language instruction
+        language_instruction = language_prompts.get(user_language, language_prompts['english'])
+        
         # Prepare the request for Gemini API
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
         headers = {
@@ -448,9 +473,10 @@ def call_gemini_api(messages):
         # Convert messages to Gemini format
         prompt_parts = []
         
-        # Add system prompt first
+        # Add system prompt with language instruction
+        enhanced_system_prompt = f"{SYSTEM_PROMPT}\n\nIMPORTANT LANGUAGE INSTRUCTION: {language_instruction}\n\nConversation:\n"
         prompt_parts.append({
-            "text": SYSTEM_PROMPT + "\n\nConversation:\n"
+            "text": enhanced_system_prompt
         })
         
         # Add conversation history
@@ -1024,6 +1050,7 @@ def chat():
             
         user_input = data.get('message', '').strip()  # Changed from 'query' to 'message'
         user_name = data.get('user_name', 'User')
+        user_language = data.get('language', 'english')  # Get user's preferred language
         session_id = data.get('session_id', '')
         message_count = data.get('message_count', 0)
         
@@ -1043,10 +1070,10 @@ def chat():
         if len(conversation_history) > 20:
             conversation_history = conversation_history[-20:]
         
-        logger.info(f"Processing query: {user_input[:50]}...")
+        logger.info(f"Processing query: {user_input[:50]}... in {user_language}")
         
-        # Call Gemini API
-        reply = call_gemini_api(conversation_history)
+        # Call Gemini API with language support
+        reply = call_gemini_api(conversation_history, user_language)
         
         if reply:
             # Add assistant response to conversation
@@ -1074,6 +1101,7 @@ def chat():
             
             return jsonify({
                 "reply": reply,
+                "language": user_language,
                 "intent": intent,
                 "status": "success",
                 "user_name": user_name,
