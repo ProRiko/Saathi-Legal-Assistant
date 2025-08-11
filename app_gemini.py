@@ -19,6 +19,15 @@ from reportlab.lib import colors
 import io
 import tempfile
 
+# Rights Calculator
+try:
+    from backend.rights_calculator import LegalRightsCalculator
+    rights_calc = LegalRightsCalculator()
+    RIGHTS_CALC_AVAILABLE = True
+except ImportError:
+    RIGHTS_CALC_AVAILABLE = False
+    print("Rights Calculator not available.")
+
 # MongoDB imports (optional - will work without MongoDB)
 try:
     from pymongo import MongoClient
@@ -826,6 +835,73 @@ def generate_document_api():
     except Exception as e:
         logger.error(f"Error generating document: {str(e)}")
         return jsonify({"error": "Failed to generate document"}), 500
+
+@app.route('/api/rights-calculators', methods=['GET'])
+def get_rights_calculators():
+    """Get all available rights calculators"""
+    try:
+        if not RIGHTS_CALC_AVAILABLE:
+            return jsonify({"error": "Rights calculator not available"}), 503
+            
+        calculators = rights_calc.get_calculators()
+        return jsonify(calculators)
+    except Exception as e:
+        logger.error(f"Error getting calculators: {str(e)}")
+        return jsonify({
+            "error": "Failed to load calculators",
+            "status": "error"
+        }), 500
+
+@app.route('/api/calculate-rights', methods=['POST'])
+def calculate_rights():
+    """Calculate legal rights based on provided data"""
+    try:
+        if not RIGHTS_CALC_AVAILABLE:
+            return jsonify({"error": "Rights calculator not available"}), 503
+            
+        data = request.json
+        if not data:
+            return jsonify({
+                "error": "No JSON data provided",
+                "status": "error"
+            }), 400
+        
+        calculator = data.get('calculator')
+        category = data.get('category')
+        calc_data = data.get('data', {})
+        
+        if not calculator or not category:
+            return jsonify({
+                "error": "Calculator and category are required",
+                "status": "error"
+            }), 400
+        
+        logger.info(f"Calculating rights for {category}.{calculator}")
+        
+        # Convert string values to appropriate types
+        for key, value in calc_data.items():
+            if isinstance(value, str) and value.isdigit():
+                calc_data[key] = int(value)
+            elif isinstance(value, str):
+                try:
+                    calc_data[key] = float(value)
+                except ValueError:
+                    pass  # Keep as string if not a number
+        
+        # Perform calculation
+        result = rights_calc.calculate(category, calculator, calc_data)
+        
+        return jsonify({
+            "success": True,
+            "calculation": result
+        })
+        
+    except Exception as e:
+        logger.error(f"Error calculating rights: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 @app.route('/chat.html')
 def chat_page():
