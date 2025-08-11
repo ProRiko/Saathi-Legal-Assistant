@@ -60,6 +60,35 @@ def serve_manifest():
     except FileNotFoundError:
         return "Manifest file not found", 404
 
+# New Feature Routes
+@app.route('/legal-help.html')
+def serve_legal_help():
+    """Serve the legal help directory page"""
+    try:
+        with open('legal_help.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Legal help directory not found", 404
+
+@app.route('/calculator.html') 
+def serve_calculator():
+    """Serve the simple calculator page"""
+    try:
+        with open('simple_calculator.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Calculator page not found", 404
+
+@app.route('/version')
+def version_check():
+    """Simple version check endpoint"""
+    return jsonify({
+        "version": "3.0.0 - FEATURE #3 LEGAL HELP DIRECTORY",
+        "status": "working", 
+        "timestamp": datetime.now().isoformat(),
+        "features": ["Smart Templates", "Rights Calculator", "Legal Help Directory"]
+    })
+
 # MongoDB Configuration
 MONGO_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 DATABASE_NAME = os.getenv('DATABASE_NAME', 'saathi_legal_assistant')
