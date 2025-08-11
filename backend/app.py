@@ -32,8 +32,12 @@ def health_check():
 @app.route('/<path:filename>')
 def serve_static(filename):
     """Serve static files from parent directory"""
-    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return send_from_directory(parent_dir, filename)
+    try:
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return send_from_directory(parent_dir, filename)
+    except Exception as e:
+        logger.error(f"Error serving static file {filename}: {str(e)}")
+        return jsonify({"error": "File not found", "status": "error"}), 404
 
 @app.route('/chat', methods=['POST'])
 def chat():
