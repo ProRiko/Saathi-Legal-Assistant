@@ -179,9 +179,28 @@
             transition: border-color 0.3s;
         }
 
+        /* Fix dropdown option visibility */
+        .form-select option {
+            background: #1a2332;
+            color: #f4f1e8;
+            padding: 8px;
+        }
+
+        .form-select option:hover {
+            background: #8b4513;
+            color: #f4f1e8;
+        }
+
+        /* Alternative: Force better contrast */
+        .form-select {
+            background: rgba(244, 241, 232, 0.15);
+            color: #f4f1e8;
+        }
+
         .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: rgba(139, 69, 19, 0.8);
+            background: rgba(244, 241, 232, 0.2);
         }
 
         .form-textarea {
@@ -368,6 +387,9 @@
                     formFields.appendChild(fieldGroup);
                 });
 
+                // Enhance dropdown styling after creation
+                enhanceDropdowns();
+
                 document.getElementById('formModal').style.display = 'block';
                 document.getElementById('documentPreview').style.display = 'none';
                 document.getElementById('downloadButtons').style.display = 'none';
@@ -400,15 +422,17 @@
                     ${question.required ? 'required' : ''}
                 ></textarea>`;
             } else if (question.type === 'select') {
-                fieldHTML += `<select name="${question.id}" class="form-select" ${question.required ? 'required' : ''}>
-                    <option value="">Choose an option</option>`;
+                // Create select element with enhanced styling
+                fieldHTML += `<select name="${question.id}" class="form-select" ${question.required ? 'required' : ''} 
+                    style="background: rgba(244, 241, 232, 0.15) !important; color: #f4f1e8 !important;">
+                    <option value="" style="background: #1a2332; color: #f4f1e8;">Choose an option</option>`;
                 
                 // Debug: log the options being processed
                 console.log('Processing select options for:', question.id, question.options);
                 
                 if (question.options && Array.isArray(question.options)) {
                     question.options.forEach(option => {
-                        fieldHTML += `<option value="${option.value}">${option.text}</option>`;
+                        fieldHTML += `<option value="${option.value}" style="background: #1a2332; color: #f4f1e8; padding: 8px;">${option.text}</option>`;
                     });
                 } else {
                     console.error('Invalid options for question:', question.id, question.options);
@@ -419,6 +443,35 @@
 
             group.innerHTML = fieldHTML;
             return group;
+        }
+
+        function enhanceDropdowns() {
+            // Enhanced dropdown styling and behavior
+            const dropdowns = document.querySelectorAll('.form-select');
+            dropdowns.forEach(dropdown => {
+                // Apply enhanced styling
+                dropdown.style.background = 'rgba(244, 241, 232, 0.15)';
+                dropdown.style.color = '#f4f1e8';
+                dropdown.style.border = '1px solid rgba(139, 69, 19, 0.3)';
+                
+                // Add event listeners for better UX
+                dropdown.addEventListener('focus', function() {
+                    this.style.background = 'rgba(244, 241, 232, 0.25)';
+                    this.style.borderColor = 'rgba(139, 69, 19, 0.8)';
+                });
+                
+                dropdown.addEventListener('blur', function() {
+                    this.style.background = 'rgba(244, 241, 232, 0.15)';
+                    this.style.borderColor = 'rgba(139, 69, 19, 0.3)';
+                });
+                
+                dropdown.addEventListener('change', function() {
+                    if (this.value) {
+                        this.style.color = '#f4f1e8';
+                        console.log('Dropdown selection:', this.name, this.value);
+                    }
+                });
+            });
         }
 
         async function generateDocument(formData) {
