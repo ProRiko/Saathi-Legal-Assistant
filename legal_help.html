@@ -117,6 +117,60 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Adv. Amit Gupta</div>
+                        <div class="help-badge">Corporate & Tax Law</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Pune, Maharashtra</div>
+                        <div class="rating-stars">⭐⭐⭐⭐⭐ (4.7/5)</div>
+                        <p>8+ years experience in corporate law, taxation, business compliance</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> +91 98765 11223<br>
+                            <strong>📧 Email:</strong> amit.legal@corporatelaw.in<br>
+                            <strong>📍 Address:</strong> 502 Business Center, FC Road, Pune - 411005<br>
+                            <strong>💰 Consultation:</strong> ₹2,500 - ₹5,000
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Adv. Kavita Singh</div>
+                        <div class="help-badge">Criminal & Family Law</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Jaipur, Rajasthan</div>
+                        <div class="rating-stars">⭐⭐⭐⭐☆ (4.5/5)</div>
+                        <p>12+ years experience in criminal defense, family disputes, women's rights</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> +91 98765 44556<br>
+                            <strong>📧 Email:</strong> kavita.adv@rajlaw.com<br>
+                            <strong>📍 Address:</strong> 15 High Court Road, Jaipur - 302006<br>
+                            <strong>💰 Consultation:</strong> ₹1,800 - ₹3,500
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Adv. Ravi Agarwal</div>
+                        <div class="help-badge">Property & Civil Law</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Ahmedabad, Gujarat</div>
+                        <div class="rating-stars">⭐⭐⭐⭐⭐ (4.8/5)</div>
+                        <p>14+ years experience in property disputes, real estate, civil litigation</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> +91 98765 77889<br>
+                            <strong>📧 Email:</strong> ravi.property@gujaratlegal.com<br>
+                            <strong>📍 Address:</strong> 801 Law Garden Complex, Ahmedabad - 380006<br>
+                            <strong>💰 Consultation:</strong> ₹1,500 - ₹3,200
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Legal Aid Centers -->
@@ -155,6 +209,24 @@
                             <strong>📍 Address:</strong> Legal Aid Office, Tis Hazari Court, Delhi - 110054<br>
                             <strong>💰 Fee:</strong> Completely Free<br>
                             <strong>🕒 Hours:</strong> Mon-Sat 9:00 AM - 5:00 PM
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <div class="help-header">
+                        <div class="help-title">Karnataka State Legal Services Authority</div>
+                        <div class="help-badge">Free Legal Aid</div>
+                    </div>
+                    <div class="help-details">
+                        <div class="location-tag">Bangalore, Karnataka</div>
+                        <p>Free legal services, ADR services, legal awareness programs</p>
+                        <div class="contact-info">
+                            <strong>📞 Contact:</strong> 080-2221-4455<br>
+                            <strong>📧 Email:</strong> kslsa@karnataka.gov.in<br>
+                            <strong>📍 Address:</strong> High Court Building, Bangalore - 560001<br>
+                            <strong>💰 Fee:</strong> Completely Free<br>
+                            <strong>🕒 Hours:</strong> Mon-Fri 10:00 AM - 4:30 PM
                         </div>
                     </div>
                 </div>
@@ -270,18 +342,70 @@
 
     <script>
         function searchLegalHelp() {
-            const location = document.getElementById('locationSearch').value.toLowerCase();
+            const location = document.getElementById('locationSearch').value.toLowerCase().trim();
             const helpType = document.getElementById('helpType').value;
             const specialization = document.getElementById('specialization').value;
             
             const allCards = document.querySelectorAll('.help-card');
             let visibleCount = 0;
             
+            // Create location variations for better matching
+            const locationVariations = [];
+            if (location) {
+                locationVariations.push(location);
+                // Add common city variations
+                if (location.includes('mumbai')) locationVariations.push('bombay', 'maharashtra');
+                if (location.includes('bombay')) locationVariations.push('mumbai', 'maharashtra');
+                if (location.includes('delhi')) locationVariations.push('ncr', 'new delhi');
+                if (location.includes('bangalore')) locationVariations.push('bengaluru', 'karnataka');
+                if (location.includes('bengaluru')) locationVariations.push('bangalore', 'karnataka');
+                if (location.includes('kolkata')) locationVariations.push('calcutta', 'west bengal');
+                if (location.includes('chennai')) locationVariations.push('madras', 'tamil nadu');
+                if (location.includes('hyderabad')) locationVariations.push('telangana');
+                if (location.includes('pune')) locationVariations.push('maharashtra');
+                if (location.includes('ahmedabad')) locationVariations.push('gujarat');
+                if (location.includes('jaipur')) locationVariations.push('rajasthan');
+            }
+            
             allCards.forEach(card => {
                 const cardText = card.textContent.toLowerCase();
-                const locationMatch = !location || cardText.includes(location);
-                const typeMatch = helpType === 'all' || cardText.includes(helpType.replace('-', ' '));
-                const specMatch = specialization === 'all' || cardText.includes(specialization);
+                
+                // Improved location matching
+                let locationMatch = !location; // Show all if no location specified
+                if (location) {
+                    locationMatch = locationVariations.some(variant => cardText.includes(variant));
+                }
+                
+                // Improved type matching
+                let typeMatch = helpType === 'all';
+                if (helpType !== 'all') {
+                    const typeKeywords = {
+                        'lawyer': ['lawyer', 'advocate', 'attorney', 'adv.'],
+                        'legal-aid': ['legal aid', 'free legal', 'state legal services'],
+                        'court': ['court', 'tribunal', 'high court', 'district court'],
+                        'ngo': ['ngo', 'collective', 'organization', 'jagori']
+                    };
+                    if (typeKeywords[helpType]) {
+                        typeMatch = typeKeywords[helpType].some(keyword => cardText.includes(keyword));
+                    }
+                }
+                
+                // Improved specialization matching
+                let specMatch = specialization === 'all';
+                if (specialization !== 'all') {
+                    const specKeywords = {
+                        'civil': ['civil', 'property', 'contract'],
+                        'criminal': ['criminal'],
+                        'family': ['family', 'divorce', 'marriage', 'domestic'],
+                        'corporate': ['corporate', 'business'],
+                        'labor': ['labor', 'labour', 'employment'],
+                        'consumer': ['consumer'],
+                        'property': ['property', 'real estate', 'stamp duty']
+                    };
+                    if (specKeywords[specialization]) {
+                        specMatch = specKeywords[specialization].some(keyword => cardText.includes(keyword));
+                    }
+                }
                 
                 if (locationMatch && typeMatch && specMatch) {
                     card.style.display = 'block';
@@ -302,8 +426,28 @@
                 }
             });
             
+            // Show results count instead of alert
             if (visibleCount === 0) {
-                alert('No results found. Try adjusting your search criteria.');
+                // Create or update results message
+                let resultsMsg = document.getElementById('resultsMessage');
+                if (!resultsMsg) {
+                    resultsMsg = document.createElement('div');
+                    resultsMsg.id = 'resultsMessage';
+                    resultsMsg.style.cssText = 'background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; color: #f4f1e8; text-align: center;';
+                    document.getElementById('helpResults').insertBefore(resultsMsg, document.getElementById('helpResults').firstChild);
+                }
+                resultsMsg.innerHTML = `
+                    <strong>🔍 No results found for your search criteria.</strong><br>
+                    <small>Try searching for: "Mumbai", "Delhi", "Bangalore", or broader terms like "lawyer", "legal aid"</small><br>
+                    <button onclick="clearFilters()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-top: 10px; cursor: pointer;">Clear All Filters</button>
+                `;
+                resultsMsg.style.display = 'block';
+            } else {
+                // Hide results message if exists
+                const resultsMsg = document.getElementById('resultsMessage');
+                if (resultsMsg) {
+                    resultsMsg.style.display = 'none';
+                }
             }
         }
         
