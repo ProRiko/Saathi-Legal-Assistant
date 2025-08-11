@@ -11,6 +11,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="chat-styles.css">
+    <link rel="stylesheet" href="enhanced-ux.css">
     <title>Saathi Legal Assistant - Chat</title>
 </head>
 body>
@@ -259,14 +260,36 @@ body>
                 return;
             }
             
+            // Validate message length
+            if (message.length < 3) {
+                showError('Please enter a more detailed question (at least 3 characters)');
+                messageInput.focus();
+                return;
+            }
+            
+            if (message.length > 1000) {
+                showError('Message too long. Please keep it under 1000 characters.');
+                messageInput.focus();
+                return;
+            }
+            
             // Add user message
             addMessage(message, 'user');
             messageInput.value = '';
             messageInput.style.height = 'auto';
             
-            // Disable send button and show typing
+            // Disable send button and show typing with timeout protection
             sendBtn.disabled = true;
+            sendBtn.innerHTML = '⏳ Sending...';
             showTyping(true);
+            
+            // Set timeout for response (30 seconds)
+            const responseTimeout = setTimeout(() => {
+                showTyping(false);
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '📨 Send';
+                showError('Response timeout. Please try again with a shorter message.');
+            }, 30000);
             
             try {
                 // Log the conversation
@@ -286,31 +309,60 @@ body>
                     })
                 });
                 
+                clearTimeout(responseTimeout);
                 showTyping(false);
+                sendBtn.innerHTML = '📨 Send';
                 
                 if (response.status === 429) {
                     const data = await response.json();
-                    showRateLimit(data.reset_time);
+                    showRateLimit(data.rate_limit?.reset_in || 60);
                     return;
                 }
                 
                 if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
+                    throw new Error(`Server error: ${response.status} - ${response.statusText}`);
                 }
                 
                 const data = await response.json();
                 
-                if (data.status === 'success') {
+                if (data.status === 'success' && data.reply) {
                     addMessage(data.reply, 'assistant');
                     await logConversation(data.reply, 'assistant');
+                    
+                    // Show language confirmation if first message
+                    if (messageCount === 1 && currentLanguage !== 'english') {
+                        const langNames = {
+                            'hindi': 'हिंदी', 'marathi': 'मराठी', 'tamil': 'தமிழ்',
+                            'telugu': 'తెలుగు', 'gujarati': 'ગુજરાતી', 'bengali': 'বাংলা',
+                            'kannada': 'ಕನ್ನಡ', 'punjabi': 'ਪੰਜਾਬੀ'
+                        };
+                        setTimeout(() => {
+                            addMessage(`🌍 Responding in ${langNames[currentLanguage]} and English as requested.`, 'assistant');
+                        }, 1000);
+                    }
                 } else {
-                    throw new Error(data.error || 'Unknown error');
+                    throw new Error(data.error || 'Invalid response format');
                 }
                 
             } catch (error) {
                 console.error('Error:', error);
+                clearTimeout(responseTimeout);
                 showTyping(false);
-                showError('Failed to get response. Please try again.');
+                sendBtn.innerHTML = '📨 Send';
+                
+                // Provide user-friendly error messages
+                let errorMessage = 'Sorry, I encountered an issue. ';
+                if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                    errorMessage += 'Please check your internet connection and try again.';
+                } else if (error.message.includes('500')) {
+                    errorMessage += 'Server is temporarily unavailable. Please try again in a few moments.';
+                } else if (error.message.includes('timeout')) {
+                    errorMessage += 'The request took too long. Please try with a shorter message.';
+                } else {
+                    errorMessage += 'Please try again or rephrase your question.';
+                }
+                
+                addMessage(errorMessage, 'assistant');
             } finally {
                 sendBtn.disabled = false;
                 messageInput.focus();
@@ -346,5 +398,6 @@ body>
         // Initialize the chat
         init();
     </script>
+    <script src="enhanced-ux.js"></script>
 </body>
 </html>

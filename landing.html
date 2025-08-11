@@ -12,6 +12,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="enhanced-ux.css">
     <title>Saathi Legal Assistant - Your AI Legal Companion</title>
 </head>
 <body>
@@ -158,27 +159,31 @@
             const name = nameInput.value.trim();
             const phone = phoneInput.value.trim();
             
+            // Clear any existing error messages
+            clearErrorMessages();
+            
             if (!name) {
-                alert('Please enter your name to continue');
-                nameInput.focus();
+                showError('Please enter your name to continue', nameInput);
                 return;
             }
             
             if (name.length < 2) {
-                alert('Please enter a valid name (at least 2 characters)');
-                nameInput.focus();
+                showError('Please enter a valid name (at least 2 characters)', nameInput);
+                return;
+            }
+            
+            if (!/^[a-zA-Z\s\.]+$/.test(name)) {
+                showError('Name should contain only letters, spaces, and dots', nameInput);
                 return;
             }
             
             if (!phone) {
-                alert('Please enter your phone number to continue');
-                phoneInput.focus();
+                showError('Please enter your phone number to continue', phoneInput);
                 return;
             }
             
-            if (!/^[0-9]{10}$/.test(phone)) {
-                alert('Please enter a valid 10-digit phone number');
-                phoneInput.focus();
+            if (!/^[6-9][0-9]{9}$/.test(phone)) {
+                showError('Please enter a valid Indian mobile number (10 digits starting with 6-9)', phoneInput);
                 return;
             }
             
@@ -189,22 +194,100 @@
             localStorage.setItem('saathi_user_name', userName);
             localStorage.setItem('saathi_user_phone', userPhone);
             
-            // Show welcome message
-            const welcomeMsg = document.getElementById('welcomeMessage');
-            welcomeMsg.innerHTML = `✅ Welcome, ${userName}! Your details have been saved. You can now start your consultation.`;
-            welcomeMsg.style.display = 'block';
+            // Show success message
+            showSuccess(`✅ Welcome, ${userName}! Your details have been saved. You can now start your consultation.`);
             
-            // Enable start button
+            // Enable start button with smooth transition
             const startBtn = document.getElementById('startBtn');
             startBtn.disabled = false;
             startBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            startBtn.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                startBtn.style.transform = 'scale(1)';
+            }, 200);
             
-            // Disable inputs
+            // Disable inputs with visual feedback
             nameInput.disabled = true;
             phoneInput.disabled = true;
-            document.querySelector('.save-name-btn').disabled = true;
-            document.querySelector('.save-name-btn').style.background = '#95a5a6';
-            document.querySelector('.save-name-btn').innerHTML = '✓ Details Saved';
+            nameInput.style.background = 'rgba(139, 69, 19, 0.1)';
+            phoneInput.style.background = 'rgba(139, 69, 19, 0.1)';
+            
+            const saveBtn = document.querySelector('.save-name-btn');
+            saveBtn.disabled = true;
+            saveBtn.style.background = '#28a745';
+            saveBtn.innerHTML = '✓ Details Saved';
+        }
+
+        // Error handling functions
+        function showError(message, inputElement = null) {
+            const errorDiv = document.getElementById('errorMessage') || createErrorDiv();
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.className = 'error-message show';
+            
+            if (inputElement) {
+                inputElement.style.borderColor = '#dc3545';
+                inputElement.focus();
+                inputElement.addEventListener('input', clearFieldError, { once: true });
+            }
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                errorDiv.className = 'error-message';
+            }, 4000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage') || createSuccessDiv();
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            successDiv.className = 'success-message show';
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+                successDiv.className = 'success-message';
+            }, 3000);
+        }
+
+        function clearErrorMessages() {
+            const errorDiv = document.getElementById('errorMessage');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+            
+            // Reset input field styles
+            document.getElementById('userName').style.borderColor = '';
+            document.getElementById('userPhone').style.borderColor = '';
+        }
+
+        function clearFieldError(event) {
+            event.target.style.borderColor = '';
+        }
+
+        function createErrorDiv() {
+            const div = document.createElement('div');
+            div.id = 'errorMessage';
+            div.className = 'error-message';
+            div.style.cssText = `
+                background: #f8d7da; color: #721c24; border: 1px solid #f1aeb5;
+                padding: 12px 20px; border-radius: 8px; margin: 15px 0;
+                display: none; opacity: 0; transition: opacity 0.3s ease;
+            `;
+            document.querySelector('.name-section').appendChild(div);
+            return div;
+        }
+
+        function createSuccessDiv() {
+            const div = document.createElement('div');
+            div.id = 'successMessage';
+            div.className = 'success-message';
+            div.style.cssText = `
+                background: #d1e7dd; color: #0f5132; border: 1px solid #a3cfbb;
+                padding: 12px 20px; border-radius: 8px; margin: 15px 0;
+                display: none; opacity: 0; transition: opacity 0.3s ease;
+            `;
+            document.querySelector('.name-section').appendChild(div);
+            return div;
         }
         
         // Check if details already saved
@@ -433,5 +516,6 @@
         </div>
     </div>
     </script>
+    <script src="enhanced-ux.js"></script>
 </body>
 </html>

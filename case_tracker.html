@@ -206,7 +206,7 @@
             localStorage.setItem('legalCases', JSON.stringify(cases));
         }
 
-        // Add new case
+        // Add new case with comprehensive validation
         function addCase() {
             const title = document.getElementById('caseTitle').value.trim();
             const number = document.getElementById('caseNumber').value.trim();
@@ -218,22 +218,50 @@
             const priority = document.getElementById('priority').value;
             const description = document.getElementById('caseDescription').value.trim();
 
-            if (!title || !type || !status) {
-                alert('Please fill in required fields: Case Title, Case Type, and Status');
+            // Clear previous error highlighting
+            clearFormErrors();
+
+            // Validation with visual feedback
+            const errors = [];
+            
+            if (!title) {
+                errors.push({ field: 'caseTitle', message: 'Case title is required' });
+            } else if (title.length < 3) {
+                errors.push({ field: 'caseTitle', message: 'Case title must be at least 3 characters' });
+            }
+            
+            if (!type) {
+                errors.push({ field: 'caseType', message: 'Please select a case type' });
+            }
+            
+            if (!status) {
+                errors.push({ field: 'caseStatus', message: 'Please select a status' });
+            }
+            
+            if (nextHearing && !isValidDate(nextHearing)) {
+                errors.push({ field: 'nextHearing', message: 'Please enter a valid future date' });
+            }
+            
+            if (nextHearing && new Date(nextHearing) < new Date()) {
+                errors.push({ field: 'nextHearing', message: 'Next hearing date should be in the future' });
+            }
+
+            if (errors.length > 0) {
+                showFormErrors(errors);
                 return;
             }
 
             const newCase = {
                 id: Date.now(),
                 title,
-                number,
+                number: number || `CASE-${Date.now()}`,
                 type,
-                court,
-                lawyer,
-                nextHearing,
+                court: court || 'Not specified',
+                lawyer: lawyer || 'Not assigned',
+                nextHearing: nextHearing || '',
                 status,
                 priority,
-                description,
+                description: description || '',
                 createdDate: new Date().toISOString().split('T')[0],
                 timeline: [
                     { date: new Date().toISOString().split('T')[0], event: "Case added to tracker" }
@@ -246,7 +274,61 @@
             updateStats();
             clearForm();
 
-            alert('Case added successfully!');
+            showSuccessMessage('✅ Case added successfully!');
+        }
+
+        // Form validation helpers
+        function clearFormErrors() {
+            document.querySelectorAll('.form-error').forEach(el => el.remove());
+            document.querySelectorAll('.error-highlight').forEach(el => {
+                el.classList.remove('error-highlight');
+            });
+        }
+
+        function showFormErrors(errors) {
+            errors.forEach(error => {
+                const field = document.getElementById(error.field);
+                if (field) {
+                    field.classList.add('error-highlight');
+                    
+                    // Create error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'form-error';
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.cssText = 'color: #dc3545; font-size: 0.85em; margin-top: 5px;';
+                    
+                    field.parentNode.insertBefore(errorDiv, field.nextSibling);
+                }
+            });
+            
+            // Focus on first error field
+            const firstErrorField = document.querySelector('.error-highlight');
+            if (firstErrorField) {
+                firstErrorField.focus();
+            }
+        }
+
+        function isValidDate(dateString) {
+            const date = new Date(dateString);
+            return date instanceof Date && !isNaN(date.getTime());
+        }
+
+        function showSuccessMessage(message) {
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `
+                position: fixed; top: 20px; right: 20px; z-index: 1000;
+                background: #d1e7dd; color: #0f5132; border: 1px solid #a3cfbb;
+                padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                transform: translateX(100%); transition: transform 0.3s ease;
+            `;
+            successDiv.textContent = message;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => successDiv.style.transform = 'translateX(0)', 100);
+            setTimeout(() => {
+                successDiv.style.transform = 'translateX(100%)';
+                setTimeout(() => successDiv.remove(), 300);
+            }, 3000);
         }
 
         // Clear form

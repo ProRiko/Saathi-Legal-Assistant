@@ -52,6 +52,22 @@ def serve_chat_styles():
     except FileNotFoundError:
         return "CSS file not found", 404
 
+@app.route('/enhanced-ux.css')
+def serve_enhanced_ux_styles():
+    """Serve the enhanced UX CSS file"""
+    try:
+        return send_file('enhanced-ux.css', mimetype='text/css')
+    except FileNotFoundError:
+        return "Enhanced UX CSS file not found", 404
+
+@app.route('/enhanced-ux.js')
+def serve_enhanced_ux_js():
+    """Serve the enhanced UX JavaScript file"""
+    try:
+        return send_file('enhanced-ux.js', mimetype='application/javascript')
+    except FileNotFoundError:
+        return "Enhanced UX JS file not found", 404
+
 @app.route('/manifest.json')
 def serve_manifest():
     """Serve the PWA manifest file"""

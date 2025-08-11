@@ -187,7 +187,7 @@
 
         function continueWithLanguage() {
             if (!selectedLanguage) {
-                alert('Please select a language first');
+                showNotification('Please select a language first', 'error');
                 return;
             }
 
@@ -195,12 +195,63 @@
             localStorage.setItem('preferredLanguage', selectedLanguage);
             localStorage.setItem('languageName', languageTranslations[selectedLanguage].name);
 
-            // Show confirmation and redirect
+            // Show confirmation with loading
             const langName = languageTranslations[selectedLanguage].name;
-            alert(`Language set to ${langName}! All responses will be provided in both ${langName} and English.`);
+            showNotification(`✅ Language set to ${langName}! Redirecting...`, 'success');
+            
+            // Disable button to prevent double-click
+            document.getElementById('continueBtn').disabled = true;
+            document.getElementById('continueBtn').innerHTML = '⏳ Setting up...';
 
-            // Redirect back to home page
-            window.location.href = '/';
+            // Redirect after short delay for better UX
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+        }
+
+        function showNotification(message, type = 'info') {
+            // Remove existing notification
+            const existing = document.getElementById('notification');
+            if (existing) {
+                existing.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; z-index: 1000;
+                padding: 15px 20px; border-radius: 8px; font-weight: bold;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transform: translateX(100%); transition: transform 0.3s ease;
+            `;
+            
+            if (type === 'error') {
+                notification.style.background = '#f8d7da';
+                notification.style.color = '#721c24';
+                notification.style.border = '1px solid #f1aeb5';
+            } else if (type === 'success') {
+                notification.style.background = '#d1e7dd';
+                notification.style.color = '#0f5132';
+                notification.style.border = '1px solid #a3cfbb';
+            } else {
+                notification.style.background = '#cce7ff';
+                notification.style.color = '#004085';
+                notification.style.border = '1px solid #99d6ff';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto remove after delay
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, type === 'error' ? 4000 : 2000);
         }
 
         // Check if language is already selected
