@@ -2,7 +2,7 @@
 Saathi Legal Assistant - Gemini AI Powered
 Railway.app deployment ready with Google Gemini API
 Enhanced with Legal Document Generation and Rights Calculator
-VERSION: 2.0.1 - Rights Calculator Update
+VERSION: 2.1.0 - FORCED REDEPLOY - Simple Rights Calculator
 """
 import os
 from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string
