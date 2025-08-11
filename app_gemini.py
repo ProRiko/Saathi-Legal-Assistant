@@ -769,6 +769,17 @@ def templates_page():
         </html>
         """, 404
 
+@app.route('/debug/version')
+def debug_version():
+    """Debug endpoint to check deployment version"""
+    return jsonify({
+        "version": "rights_calculator_v2",
+        "timestamp": datetime.now().isoformat(),
+        "calculator_available": RIGHTS_CALC_AVAILABLE,
+        "routes": [str(rule) for rule in app.url_map.iter_rules()],
+        "message": "Rights Calculator deployment active"
+    })
+
 @app.route('/calculator.html')
 def calculator_page():
     """Serve the rights calculator page"""
