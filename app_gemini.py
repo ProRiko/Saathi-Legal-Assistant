@@ -769,6 +769,23 @@ def templates_page():
         </html>
         """, 404
 
+@app.route('/calculator.html')
+def calculator_page():
+    """Serve the rights calculator page"""
+    try:
+        with open('calculator.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return """
+        <html>
+        <body style="text-align: center; padding: 50px; font-family: Arial; background: #1a2332; color: #f4f1e8;">
+            <h1>🧮 Calculator Not Available</h1>
+            <p>Rights calculator page not found.</p>
+            <a href="/" style="color: #8b4513;">Back to Home</a>
+        </body>
+        </html>
+        """, 404
+
 @app.route('/api/templates', methods=['GET'])
 def get_templates():
     """Get available document templates"""
