@@ -1236,6 +1236,17 @@ def not_found(error):
 def internal_error(error):
     return jsonify({"error": "Internal server error", "status": "error"}), 500
 
+# Version endpoint for deployment verification
+@app.route('/version')
+def version_check():
+    """Simple version check endpoint"""
+    return jsonify({
+        "version": "3.0.0 - FEATURE #3 LEGAL HELP DIRECTORY",
+        "status": "working",
+        "timestamp": datetime.now().isoformat(),
+        "features": ["Smart Templates", "Rights Calculator", "Legal Help Directory"]
+    })
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     host = os.environ.get('HOST', '0.0.0.0')
