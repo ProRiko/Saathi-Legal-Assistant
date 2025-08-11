@@ -21,7 +21,7 @@ import tempfile
 
 # Rights Calculator
 try:
-    from backend.rights_calculator import LegalRightsCalculator
+    from rights_calculator import LegalRightsCalculator
     rights_calc = LegalRightsCalculator()
     RIGHTS_CALC_AVAILABLE = True
 except ImportError:
