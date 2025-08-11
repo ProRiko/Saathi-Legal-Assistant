@@ -61,6 +61,15 @@ def serve_manifest():
         return "Manifest file not found", 404
 
 # New Feature Routes
+@app.route('/case-tracker.html')
+def serve_case_tracker():
+    """Serve the legal case tracker page"""
+    try:
+        with open('case_tracker.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Case tracker not found", 404
+
 @app.route('/legal-help.html')
 def serve_legal_help():
     """Serve the legal help directory page"""
@@ -83,10 +92,10 @@ def serve_calculator():
 def version_check():
     """Simple version check endpoint"""
     return jsonify({
-        "version": "3.0.0 - FEATURE #3 LEGAL HELP DIRECTORY",
+        "version": "4.0.0 - FEATURE #4 LEGAL CASE TRACKER",
         "status": "working", 
         "timestamp": datetime.now().isoformat(),
-        "features": ["Smart Templates", "Rights Calculator", "Legal Help Directory"]
+        "features": ["Smart Templates", "Rights Calculator", "Legal Help Directory", "Legal Case Tracker"]
     })
 
 # MongoDB Configuration

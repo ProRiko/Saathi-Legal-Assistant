@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Case Tracker - Saathi Legal Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .tracker-container { max-width: 1200px; margin: 40px auto; padding: 20px; }
+        .tracker-section { background: rgba(244, 241, 232, 0.1); border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 15px; padding: 25px; margin-bottom: 30px; }
+        .case-form { display: grid; gap: 15px; margin-bottom: 30px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 12px; border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 8px; background: rgba(244, 241, 232, 0.15); color: #f4f1e8; font-family: inherit; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .form-btn { background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%); color: #f4f1e8; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1em; cursor: pointer; width: 100%; }
+        .case-card { background: rgba(244, 241, 232, 0.05); border: 1px solid rgba(139, 69, 19, 0.2); border-radius: 12px; padding: 20px; margin: 15px 0; position: relative; }
+        .case-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .case-title { color: #f4f1e8; font-size: 1.3em; font-weight: bold; }
+        .case-status { padding: 5px 12px; border-radius: 15px; font-size: 0.9em; font-weight: bold; }
+        .status-active { background: #28a745; color: white; }
+        .status-pending { background: #ffc107; color: #333; }
+        .status-closed { background: #6c757d; color: white; }
+        .case-details { color: #d4c4a8; line-height: 1.6; }
+        .case-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0; }
+        .meta-item { background: rgba(139, 69, 19, 0.1); border-radius: 8px; padding: 10px; }
+        .meta-label { font-size: 0.8em; color: #a0522d; font-weight: bold; text-transform: uppercase; }
+        .meta-value { color: #f4f1e8; font-size: 1.1em; margin-top: 5px; }
+        .case-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .action-btn { background: rgba(139, 69, 19, 0.2); color: #8b4513; border: 1px solid rgba(139, 69, 19, 0.3); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; }
+        .action-btn:hover { background: rgba(139, 69, 19, 0.3); }
+        .urgent { border-left: 4px solid #dc3545; }
+        .due-soon { border-left: 4px solid #ffc107; }
+        .filter-bar { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { background: rgba(139, 69, 19, 0.2); color: #f4f1e8; border: 1px solid rgba(139, 69, 19, 0.3); padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .filter-btn.active { background: #8b4513; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, rgba(139, 69, 19, 0.1) 0%, rgba(139, 69, 19, 0.05) 100%); border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-number { font-size: 2.5em; color: #8b4513; font-weight: bold; }
+        .stat-label { color: #d4c4a8; font-size: 0.9em; margin-top: 5px; }
+        .timeline { border-left: 2px solid #8b4513; margin-left: 20px; padding-left: 20px; }
+        .timeline-item { margin-bottom: 20px; position: relative; }
+        .timeline-item::before { content: ''; position: absolute; left: -27px; top: 5px; width: 12px; height: 12px; background: #8b4513; border-radius: 50%; }
+        .timeline-date { color: #8b4513; font-size: 0.9em; font-weight: bold; }
+        .timeline-event { color: #f4f1e8; margin-top: 5px; }
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .case-meta { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="tracker-container">
+        <div class="page-header" style="text-align: center; margin-bottom: 40px;">
+            <h1 style="color: #f4f1e8;">📋 Legal Case Tracker</h1>
+            <p style="color: #d4c4a8;">Track your legal cases, court dates, and important deadlines</p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCases">0</div>
+                <div class="stat-label">Total Cases</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeCases">0</div>
+                <div class="stat-label">Active Cases</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="upcomingHearings">0</div>
+                <div class="stat-label">Upcoming Hearings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingActions">0</div>
+                <div class="stat-label">Pending Actions</div>
+            </div>
+        </div>
+
+        <!-- Add New Case -->
+        <div class="tracker-section">
+            <h3 style="color: #f4f1e8; margin-bottom: 20px;">➕ Add New Case</h3>
+            <div class="case-form" id="caseForm">
+                <div class="form-row">
+                    <input type="text" id="caseTitle" class="form-input" placeholder="Case Title" required>
+                    <input type="text" id="caseNumber" class="form-input" placeholder="Case Number">
+                </div>
+                <div class="form-row">
+                    <select id="caseType" class="form-select" required>
+                        <option value="">Select Case Type</option>
+                        <option value="civil">Civil Case</option>
+                        <option value="criminal">Criminal Case</option>
+                        <option value="family">Family Law</option>
+                        <option value="corporate">Corporate Law</option>
+                        <option value="property">Property Dispute</option>
+                        <option value="labor">Labor Law</option>
+                        <option value="consumer">Consumer Complaint</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <input type="text" id="court" class="form-input" placeholder="Court Name">
+                </div>
+                <div class="form-row">
+                    <input type="text" id="lawyer" class="form-input" placeholder="Lawyer Name">
+                    <input type="date" id="nextHearing" class="form-input">
+                </div>
+                <div class="form-row">
+                    <select id="caseStatus" class="form-select" required>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                    <select id="priority" class="form-select">
+                        <option value="normal">Normal Priority</option>
+                        <option value="high">High Priority</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <textarea id="caseDescription" class="form-textarea" placeholder="Case Description & Notes"></textarea>
+                <button type="button" class="form-btn" onclick="addCase()">Add Case</button>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="filterCases('all')">All Cases</button>
+            <button class="filter-btn" onclick="filterCases('active')">Active</button>
+            <button class="filter-btn" onclick="filterCases('pending')">Pending</button>
+            <button class="filter-btn" onclick="filterCases('closed')">Closed</button>
+            <button class="filter-btn" onclick="filterCases('urgent')">Urgent</button>
+            <button class="filter-btn" onclick="filterCases('hearings')">Upcoming Hearings</button>
+        </div>
+
+        <!-- Cases List -->
+        <div id="casesList">
+            <!-- Sample case will be shown here -->
+        </div>
+
+        <!-- Back Button -->
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/" style="background: rgba(139, 69, 19, 0.2); color: #8b4513; padding: 12px 25px; border-radius: 8px; text-decoration: none; border: 1px solid rgba(139, 69, 19, 0.3);">🏠 Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        // Case storage
+        let cases = [];
+
+        // Initialize with sample data
+        function initializeSampleData() {
+            const sampleCases = [
+                {
+                    id: 1,
+                    title: "Property Dispute - 123 Main Street",
+                    number: "PROP/2024/001",
+                    type: "property",
+                    court: "District Court, Mumbai",
+                    lawyer: "Adv. Rajesh Kumar",
+                    nextHearing: "2025-08-20",
+                    status: "active",
+                    priority: "high",
+                    description: "Property ownership dispute regarding inherited property. Need to produce ownership documents.",
+                    createdDate: "2024-12-01",
+                    timeline: [
+                        { date: "2024-12-01", event: "Case filed" },
+                        { date: "2024-12-15", event: "First hearing scheduled" },
+                        { date: "2025-01-10", event: "Documents submitted" }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Consumer Complaint - Defective Product",
+                    number: "CC/2024/047",
+                    type: "consumer",
+                    court: "Consumer Court, Delhi",
+                    lawyer: "Adv. Priya Sharma",
+                    nextHearing: "2025-08-25",
+                    status: "active",
+                    priority: "normal",
+                    description: "Complaint against XYZ Electronics for defective smartphone. Seeking refund and compensation.",
+                    createdDate: "2024-11-20",
+                    timeline: [
+                        { date: "2024-11-20", event: "Complaint filed" },
+                        { date: "2024-12-05", event: "Notice to respondent" }
+                    ]
+                }
+            ];
+            
+            // Only add sample data if no cases exist
+            if (cases.length === 0) {
+                cases = sampleCases;
+                saveCases();
+                displayCases();
+                updateStats();
+            }
+        }
+
+        // Load cases from localStorage
+        function loadCases() {
+            const stored = localStorage.getItem('legalCases');
+            if (stored) {
+                cases = JSON.parse(stored);
+            }
+        }
+
+        // Save cases to localStorage
+        function saveCases() {
+            localStorage.setItem('legalCases', JSON.stringify(cases));
+        }
+
+        // Add new case
+        function addCase() {
+            const title = document.getElementById('caseTitle').value.trim();
+            const number = document.getElementById('caseNumber').value.trim();
+            const type = document.getElementById('caseType').value;
+            const court = document.getElementById('court').value.trim();
+            const lawyer = document.getElementById('lawyer').value.trim();
+            const nextHearing = document.getElementById('nextHearing').value;
+            const status = document.getElementById('caseStatus').value;
+            const priority = document.getElementById('priority').value;
+            const description = document.getElementById('caseDescription').value.trim();
+
+            if (!title || !type || !status) {
+                alert('Please fill in required fields: Case Title, Case Type, and Status');
+                return;
+            }
+
+            const newCase = {
+                id: Date.now(),
+                title,
+                number,
+                type,
+                court,
+                lawyer,
+                nextHearing,
+                status,
+                priority,
+                description,
+                createdDate: new Date().toISOString().split('T')[0],
+                timeline: [
+                    { date: new Date().toISOString().split('T')[0], event: "Case added to tracker" }
+                ]
+            };
+
+            cases.unshift(newCase);
+            saveCases();
+            displayCases();
+            updateStats();
+            clearForm();
+
+            alert('Case added successfully!');
+        }
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('caseForm').reset();
+        }
+
+        // Display cases
+        function displayCases(filteredCases = null) {
+            const casesToShow = filteredCases || cases;
+            const container = document.getElementById('casesList');
+            
+            if (casesToShow.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #d4c4a8;">
+                        <h3>No cases found</h3>
+                        <p>Add your first case above to start tracking</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = casesToShow.map(caseItem => {
+                const priorityClass = caseItem.priority === 'urgent' ? 'urgent' : 
+                                   caseItem.priority === 'high' ? 'due-soon' : '';
+                
+                const hearingDate = caseItem.nextHearing ? 
+                    new Date(caseItem.nextHearing).toLocaleDateString() : 'Not scheduled';
+                
+                const daysToHearing = caseItem.nextHearing ? 
+                    Math.ceil((new Date(caseItem.nextHearing) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                
+                let hearingStatus = '';
+                if (daysToHearing !== null) {
+                    if (daysToHearing < 0) hearingStatus = '(Overdue)';
+                    else if (daysToHearing === 0) hearingStatus = '(Today)';
+                    else if (daysToHearing <= 7) hearingStatus = `(in ${daysToHearing} days)`;
+                }
+
+                return `
+                    <div class="case-card ${priorityClass}">
+                        <div class="case-header">
+                            <div class="case-title">${caseItem.title}</div>
+                            <div class="case-status status-${caseItem.status}">${caseItem.status.toUpperCase()}</div>
+                        </div>
+                        
+                        <div class="case-details">
+                            <div class="case-meta">
+                                <div class="meta-item">
+                                    <div class="meta-label">Case Number</div>
+                                    <div class="meta-value">${caseItem.number || 'N/A'}</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Case Type</div>
+                                    <div class="meta-value">${caseItem.type.charAt(0).toUpperCase() + caseItem.type.slice(1)}</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Court</div>
+                                    <div class="meta-value">${caseItem.court || 'N/A'}</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Lawyer</div>
+                                    <div class="meta-value">${caseItem.lawyer || 'N/A'}</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Next Hearing</div>
+                                    <div class="meta-value">${hearingDate} ${hearingStatus}</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Priority</div>
+                                    <div class="meta-value">${caseItem.priority.charAt(0).toUpperCase() + caseItem.priority.slice(1)}</div>
+                                </div>
+                            </div>
+                            
+                            ${caseItem.description ? `<p style="margin: 15px 0; color: #d4c4a8;">${caseItem.description}</p>` : ''}
+                            
+                            <div class="timeline">
+                                ${caseItem.timeline.slice(0, 3).map(event => `
+                                    <div class="timeline-item">
+                                        <div class="timeline-date">${new Date(event.date).toLocaleDateString()}</div>
+                                        <div class="timeline-event">${event.event}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="case-actions">
+                            <button class="action-btn" onclick="editCase(${caseItem.id})">Edit</button>
+                            <button class="action-btn" onclick="addEvent(${caseItem.id})">Add Event</button>
+                            <button class="action-btn" onclick="deleteCase(${caseItem.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Filter cases
+        function filterCases(filter) {
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            let filteredCases;
+            const today = new Date();
+            
+            switch(filter) {
+                case 'all':
+                    filteredCases = cases;
+                    break;
+                case 'active':
+                    filteredCases = cases.filter(c => c.status === 'active');
+                    break;
+                case 'pending':
+                    filteredCases = cases.filter(c => c.status === 'pending');
+                    break;
+                case 'closed':
+                    filteredCases = cases.filter(c => c.status === 'closed');
+                    break;
+                case 'urgent':
+                    filteredCases = cases.filter(c => c.priority === 'urgent');
+                    break;
+                case 'hearings':
+                    filteredCases = cases.filter(c => c.nextHearing && new Date(c.nextHearing) >= today);
+                    break;
+                default:
+                    filteredCases = cases;
+            }
+            
+            displayCases(filteredCases);
+        }
+
+        // Update statistics
+        function updateStats() {
+            const total = cases.length;
+            const active = cases.filter(c => c.status === 'active').length;
+            const today = new Date();
+            const upcomingHearings = cases.filter(c => c.nextHearing && new Date(c.nextHearing) >= today).length;
+            const pendingActions = cases.filter(c => c.status === 'pending' || c.priority === 'urgent').length;
+
+            document.getElementById('totalCases').textContent = total;
+            document.getElementById('activeCases').textContent = active;
+            document.getElementById('upcomingHearings').textContent = upcomingHearings;
+            document.getElementById('pendingActions').textContent = pendingActions;
+        }
+
+        // Delete case
+        function deleteCase(id) {
+            if (confirm('Are you sure you want to delete this case?')) {
+                cases = cases.filter(c => c.id !== id);
+                saveCases();
+                displayCases();
+                updateStats();
+            }
+        }
+
+        // Add event to case
+        function addEvent(id) {
+            const event = prompt('Enter new event/update:');
+            if (event && event.trim()) {
+                const caseIndex = cases.findIndex(c => c.id === id);
+                if (caseIndex !== -1) {
+                    cases[caseIndex].timeline.unshift({
+                        date: new Date().toISOString().split('T')[0],
+                        event: event.trim()
+                    });
+                    saveCases();
+                    displayCases();
+                }
+            }
+        }
+
+        // Edit case (simplified)
+        function editCase(id) {
+            const caseItem = cases.find(c => c.id === id);
+            if (caseItem) {
+                const newHearing = prompt('Update next hearing date (YYYY-MM-DD):', caseItem.nextHearing);
+                if (newHearing) {
+                    caseItem.nextHearing = newHearing;
+                    saveCases();
+                    displayCases();
+                    updateStats();
+                }
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCases();
+            initializeSampleData();
+            displayCases();
+            updateStats();
+        });
+    </script>
+</body>
+</html>
