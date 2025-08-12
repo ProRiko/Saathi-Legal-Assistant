@@ -30,41 +30,6 @@
 
                 <!-- Main Content -->
         <div class="main-content">
-            <!-- Onboarding Wizard -->
-            <div id="onboardingWizard" class="onboarding-wizard">
-                <div class="wizard-overlay">
-                    <div class="wizard-content">
-                        <h2>🎯 Welcome to Saathi Legal Assistant!</h2>
-                        <p>Let us guide you through your legal journey in 3 simple steps:</p>
-                        
-                        <div class="wizard-steps">
-                            <div class="step-card active" data-step="1">
-                                <div class="step-number">1</div>
-                                <h3>📝 Tell us about yourself</h3>
-                                <p>Enter your name and contact details for personalized assistance</p>
-                            </div>
-                            
-                            <div class="step-card" data-step="2">
-                                <div class="step-number">2</div>
-                                <h3>🎯 Choose your need</h3>
-                                <p>Select whether you need legal advice, documents, or rights information</p>
-                            </div>
-                            
-                            <div class="step-card" data-step="3">
-                                <div class="step-number">3</div>
-                                <h3>🚀 Get instant help</h3>
-                                <p>Receive AI-powered legal guidance in your preferred language</p>
-                            </div>
-                        </div>
-                        
-                        <div class="wizard-actions">
-                            <button class="wizard-btn secondary" onclick="skipWizard()">Skip Tutorial</button>
-                            <button class="wizard-btn primary" onclick="startWizard()">Get Started</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Device Compatibility Notice -->
             <div id="deviceNotice" class="device-notice" style="display: none;">
                 <h3>📱 Device Access Help</h3>
@@ -272,59 +237,6 @@
             saveBtn.disabled = true;
             saveBtn.style.background = '#28a745';
             saveBtn.innerHTML = '✓ Details Saved';
-        }
-
-        // Wizard control functions
-        function startWizard() {
-            try {
-                if (typeof onboardingWizard !== 'undefined' && onboardingWizard) {
-                    // Hide the intro wizard
-                    const introWizard = document.querySelector('.intro-wizard');
-                    if (introWizard) {
-                        introWizard.style.display = 'none';
-                    }
-                    
-                    // Reset and show the onboarding wizard
-                    onboardingWizard.resetOnboarding();
-                    
-                    // Show success message
-                    showSuccess('Welcome! Let\'s start your legal journey! 🚀');
-                } else {
-                    // Fallback if onboarding wizard isn't loaded
-                    console.log('Onboarding wizard not loaded, redirecting to consultation');
-                    startConsultation();
-                }
-            } catch (error) {
-                console.error('Error starting wizard:', error);
-                showError('Unable to start wizard. Redirecting to consultation...');
-                setTimeout(startConsultation, 2000);
-            }
-        }
-
-        function skipWizard() {
-            try {
-                // Hide the intro wizard
-                const introWizard = document.querySelector('.intro-wizard');
-                if (introWizard) {
-                    introWizard.style.display = 'none';
-                }
-                
-                // Mark onboarding as completed
-                if (typeof onboardingWizard !== 'undefined' && onboardingWizard) {
-                    onboardingWizard.skipWizard();
-                } else {
-                    localStorage.setItem('saathi_onboarding_completed', 'true');
-                }
-                
-                showSuccess('Skipped tutorial. You can explore features directly! 👍');
-            } catch (error) {
-                console.error('Error skipping wizard:', error);
-                // Fallback - just hide intro wizard
-                const introWizard = document.querySelector('.intro-wizard');
-                if (introWizard) {
-                    introWizard.style.display = 'none';
-                }
-            }
         }
 
         // Error handling functions
@@ -839,6 +751,5 @@
     </div>
     </script>
     <script src="enhanced-ux.js"></script>
-    <script src="onboarding.js"></script>
 </body>
 </html>
