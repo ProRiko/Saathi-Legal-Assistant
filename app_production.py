@@ -1,7 +1,7 @@
 """
 Saathi Legal Assistant - Gemini AI Powered
 Railway.app deployment ready with Google Gemini API
-Enhanced with Legal Document Generation
+Enhanced with Legal Document Generation - Production Ready
 """
 import os
 from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string
@@ -18,6 +18,19 @@ from reportlab.lib.units import inch
 from reportlab.lib import colors
 import io
 import tempfile
+import time
+import hashlib
+from functools import wraps
+
+# Production Security and Rate Limiting
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    from flask_talisman import Talisman
+    SECURITY_AVAILABLE = True
+except ImportError:
+    SECURITY_AVAILABLE = False
+    print("⚠️  Security packages not available. Installing security middleware...")
 
 # MongoDB imports (optional - will work without MongoDB)
 try:
@@ -28,21 +41,129 @@ except ImportError:
     MONGODB_AVAILABLE = False
     print("MongoDB not available. Conversation logging will be disabled.")
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set up logging for production
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('saathi.log') if os.path.exists('.') else logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, origins=['*'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
-# Simple error handling
+# Production CORS configuration
+if os.environ.get('RAILWAY_ENVIRONMENT_NAME') == 'production':
+    # Production: Restrict CORS to your domain
+    CORS(app, origins=['https://your-domain.railway.app'], methods=['GET', 'POST', 'OPTIONS'])
+else:
+    # Development: Allow all origins
+    CORS(app, origins=['*'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+
+# Initialize security middleware
+if SECURITY_AVAILABLE:
+    # Rate limiting
+    limiter = Limiter(
+        key_func=get_remote_address,
+        app=app,
+        default_limits=["200 per day", "50 per hour", "10 per minute"],
+        storage_uri="memory://",
+        headers_enabled=True,
+    )
+    
+    # Security headers
+    Talisman(
+        app,
+        force_https=True if os.environ.get('RAILWAY_ENVIRONMENT_NAME') == 'production' else False,
+        strict_transport_security=True,
+        content_security_policy={
+            'default-src': "'self'",
+            'script-src': "'self' 'unsafe-inline' 'unsafe-eval'",
+            'style-src': "'self' 'unsafe-inline'",
+            'img-src': "'self' data: https:",
+            'font-src': "'self'",
+            'connect-src': "'self'",
+        }
+    )
+else:
+    # Fallback rate limiting without flask-limiter
+    request_counts = defaultdict(lambda: {'count': 0, 'reset_time': time.time() + 3600})
+    
+    def simple_rate_limit(max_requests=50, window=3600):
+        def decorator(f):
+            @wraps(f)
+            def decorated_function(*args, **kwargs):
+                client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
+                current_time = time.time()
+                
+                if current_time > request_counts[client_ip]['reset_time']:
+                    request_counts[client_ip] = {'count': 0, 'reset_time': current_time + window}
+                
+                if request_counts[client_ip]['count'] >= max_requests:
+                    return jsonify({
+                        "error": "Rate limit exceeded. Please try again later.",
+                        "status": "error"
+                    }), 429
+                
+                request_counts[client_ip]['count'] += 1
+                return f(*args, **kwargs)
+            return decorated_function
+        return decorator
+    
+    # Apply simple rate limiting to chat endpoint
+    limiter = None
+
+# Production-ready error handling and monitoring
+error_counts = defaultdict(int)
+uptime_start = time.time()
+
 @app.errorhandler(Exception)
 def handle_exception(e):
-    logger.error(f"Unhandled exception: {str(e)}")
+    error_counts['total'] += 1
+    error_type = type(e).__name__
+    error_counts[error_type] += 1
+    
+    logger.error(f"Unhandled exception [{error_type}]: {str(e)}")
+    
+    # Don't expose internal errors in production
+    if os.environ.get('RAILWAY_ENVIRONMENT_NAME') == 'production':
+        return jsonify({
+            "error": "Internal server error", 
+            "status": "error",
+            "message": "Please try again or contact support",
+            "error_id": hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
+        }), 500
+    else:
+        return jsonify({
+            "error": "Internal server error", 
+            "status": "error",
+            "message": str(e),
+            "type": error_type
+        }), 500
+
+@app.errorhandler(404)
+def not_found(error):
+    error_counts['404'] += 1
+    return jsonify({"error": "Endpoint not found", "status": "error"}), 404
+
+@app.errorhandler(429)
+def rate_limit_exceeded(error):
+    error_counts['429'] += 1
+    return jsonify({
+        "error": "Rate limit exceeded", 
+        "status": "error",
+        "message": "Please wait before making more requests"
+    }), 429
+
+@app.errorhandler(500)
+def internal_error(error):
+    error_counts['500'] += 1
     return jsonify({
         "error": "Internal server error", 
         "status": "error",
-        "message": "Please try again or contact support"
+        "message": "Please try again later"
     }), 500
 
 # Static file serving routes
@@ -578,22 +699,43 @@ def call_gemini_api(messages, user_language='english'):
 
 @app.route('/health')
 def health_check():
-    """Health check endpoint - Simple and reliable"""
+    """Enhanced health check endpoint with production metrics"""
     try:
+        current_time = time.time()
+        uptime_seconds = current_time - uptime_start
+        uptime_hours = uptime_seconds / 3600
+        
         return jsonify({
             "status": "healthy",
             "app": "Saathi Legal Assistant - Gemini Powered",
-            "version": "2.0.0",
+            "version": "2.1.0-production",
             "api_configured": is_api_configured(),
             "model": GEMINI_MODEL,
             "provider": "Google Gemini",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "uptime": {
+                "seconds": round(uptime_seconds),
+                "hours": round(uptime_hours, 2),
+                "start_time": datetime.fromtimestamp(uptime_start).isoformat()
+            },
+            "metrics": {
+                "total_errors": error_counts['total'],
+                "error_404": error_counts['404'],
+                "error_500": error_counts['500'],
+                "error_429": error_counts['429']
+            },
+            "features": {
+                "rate_limiting": SECURITY_AVAILABLE,
+                "database_logging": MONGODB_AVAILABLE,
+                "security_headers": SECURITY_AVAILABLE,
+                "production_mode": os.environ.get('RAILWAY_ENVIRONMENT_NAME') == 'production'
+            }
         })
     except Exception as e:
         logger.error(f"Health check error: {str(e)}")
         return jsonify({
             "status": "error",
-            "error": str(e)
+            "error": "Health check failed"
         }), 500
 
 @app.route('/generate-letter', methods=['POST'])
@@ -1113,6 +1255,23 @@ def get_user_history(user_name):
 def chat():
     """Main chat endpoint using Gemini API with rate limiting"""
     global conversation_history
+    
+    # Apply rate limiting if security packages not available
+    if not SECURITY_AVAILABLE:
+        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
+        current_time = time.time()
+        
+        if current_time > request_counts[client_ip]['reset_time']:
+            request_counts[client_ip] = {'count': 0, 'reset_time': current_time + 3600}
+        
+        if request_counts[client_ip]['count'] >= 30:  # 30 requests per hour
+            return jsonify({
+                "reply": "Rate limit exceeded. Please wait before making more requests.",
+                "error": "RATE_LIMIT_EXCEEDED",
+                "status": "error"
+            }), 429
+        
+        request_counts[client_ip]['count'] += 1
     
     if not is_api_configured():
         return jsonify({
