@@ -93,8 +93,19 @@ def home():
     <h1>🏛️ Saathi Legal Assistant</h1>
     <p>Your AI-powered legal companion is running!</p>
     <p>Status: Server Online ✅</p>
+    <a href="/test">Test Minimal Version</a>
 </body>
 </html>''', 200
+
+@app.route('/test')
+def test_page():
+    """Test minimal page to troubleshoot issues"""
+    try:
+        return send_file('test_minimal.html')
+    except FileNotFoundError:
+        return '''<!DOCTYPE html>
+<html><head><title>Test</title></head>
+<body><h1>Test page - Server is working ✅</h1></body></html>''', 200
 
 @app.route('/manifest.json')
 def serve_manifest():
@@ -879,9 +890,24 @@ def templates_page():
 def get_templates():
     """Get available document templates"""
     try:
-        from document_generator import DocumentGenerator
-        generator = DocumentGenerator()
-        templates = generator.get_available_templates()
+        # Temporary fallback - document generator not available
+        templates = {
+            "rent_agreement": {
+                "name": "Rent Agreement",
+                "description": "Standard residential rent agreement template",
+                "fields": ["tenant_name", "landlord_name", "property_address", "monthly_rent"]
+            },
+            "employment_contract": {
+                "name": "Employment Contract", 
+                "description": "Basic employment contract template",
+                "fields": ["employee_name", "employer_name", "position", "salary"]
+            },
+            "legal_notice": {
+                "name": "Legal Notice",
+                "description": "Formal legal notice template",
+                "fields": ["recipient_name", "issue_description", "deadline"]
+            }
+        }
         return jsonify(templates)
     except Exception as e:
         logger.error(f"Error getting templates: {str(e)}")
@@ -891,9 +917,28 @@ def get_templates():
 def get_template_questions(template_id):
     """Get questions for a specific template"""
     try:
-        from document_generator import DocumentGenerator
-        generator = DocumentGenerator()
-        questions = generator.get_template_questions(template_id)
+        # Temporary fallback - document generator not available
+        template_questions = {
+            "rent_agreement": [
+                {"field": "tenant_name", "question": "What is the tenant's full name?", "type": "text"},
+                {"field": "landlord_name", "question": "What is the landlord's full name?", "type": "text"},
+                {"field": "property_address", "question": "What is the complete property address?", "type": "text"},
+                {"field": "monthly_rent", "question": "What is the monthly rent amount?", "type": "number"}
+            ],
+            "employment_contract": [
+                {"field": "employee_name", "question": "What is the employee's full name?", "type": "text"},
+                {"field": "employer_name", "question": "What is the employer's company name?", "type": "text"},
+                {"field": "position", "question": "What is the job position/title?", "type": "text"},
+                {"field": "salary", "question": "What is the annual salary?", "type": "number"}
+            ],
+            "legal_notice": [
+                {"field": "recipient_name", "question": "Who is the recipient of this notice?", "type": "text"},
+                {"field": "issue_description", "question": "Describe the legal issue:", "type": "textarea"},
+                {"field": "deadline", "question": "What is the response deadline?", "type": "date"}
+            ]
+        }
+        
+        questions = template_questions.get(template_id)
         if questions:
             return jsonify(questions)
         else:
@@ -916,9 +961,12 @@ def generate_document_api():
         if not template_id:
             return jsonify({"error": "Template ID required"}), 400
         
-        from document_generator import DocumentGenerator
-        generator = DocumentGenerator()
-        document = generator.generate_document(template_id, user_data)
+        # Temporary fallback - document generator not available
+        document = {
+            "content": f"Document template '{template_id}' with user data: {user_data}",
+            "filename": f"{template_id}_document.txt",
+            "type": "text/plain"
+        }
         
         if document:
             # Log document generation

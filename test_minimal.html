@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saathi Legal Assistant - Test</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Saathi Legal Assistant</h1>
+            <p>Your AI-powered legal companion for consultation, document generation, and legal guidance</p>
+        </div>
+
+        <div class="main-content">
+            <div class="intro-section">
+                <h2>Welcome! Let's get started</h2>
+                <p>Please enter your details for a personalized consultation experience:</p>
+                
+                <div class="user-details">
+                    <input type="text" id="userName" placeholder="Your full name" maxlength="100">
+                    <input type="tel" id="userPhone" placeholder="Your phone number" maxlength="15">
+                    <button class="save-name-btn" onclick="saveDetails()">SAVE DETAILS ⚖️</button>
+                </div>
+            </div>
+
+            <div class="feature-cards">
+                <div class="feature-card">
+                    <h3>💬 AI Legal Consultation</h3>
+                    <p>Get instant answers to your legal questions with our advanced AI assistant trained on Indian law</p>
+                    <div class="feature-cta">Ask Legal Questions Now →</div>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📄 Smart Templates</h3>
+                    <p>Create professional legal documents instantly with our smart templates</p>
+                    <div class="feature-cta">Generate Legal Documents →</div>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🧮 Rights Calculator</h3>
+                    <p>Calculate your legal entitlements - gratuity, PF, notice pay, stamp duty</p>
+                    <div class="feature-cta">Check Your Rights →</div>
+                </div>
+            </div>
+
+            <div class="consultation-section">
+                <button class="start-consulting-btn" onclick="startConsultation()">🚀 START CONSULTATION</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 Saathi Legal Assistant. Built with ❤️ for the legal community.</p>
+            <p>Made in India 🇮🇳 | Powered by AI</p>
+        </div>
+    </div>
+
+    <script>
+        function saveDetails() {
+            console.log('Save details clicked');
+        }
+
+        function startConsultation() {
+            console.log('Start consultation clicked');
+            window.location.href = '/chat.html';
+        }
+    </script>
+</body>
+</html>
