@@ -1287,4 +1287,14 @@ if __name__ == '__main__':
     print(f"🔑 API Configured: {is_api_configured()}")
     print(f"🌐 Running on {host}:{port}")
     
+    # For development only - Gunicorn will handle this in production
     app.run(host=host, port=port, debug=False)
+
+# Ensure the app is available for WSGI servers like Gunicorn
+if __name__ != '__main__':
+    # Production startup logging
+    port = int(os.environ.get('PORT', 8080))
+    print(f"🚀 Saathi Legal Assistant - Production Mode")
+    print(f"🤖 Model: {GEMINI_MODEL}")
+    print(f"🔑 API Configured: {is_api_configured()}")
+    print(f"🌐 Production server on port {port}")
