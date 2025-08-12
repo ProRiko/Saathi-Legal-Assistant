@@ -33,12 +33,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+CORS(app, origins=['*'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
-# Import device compatibility handler
-from device_compatibility import DeviceCompatibilityHandler, device_compatible_endpoint
-
-# Set up comprehensive device compatibility
-device_handler = DeviceCompatibilityHandler(app)
+# Simple error handling
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.error(f"Unhandled exception: {str(e)}")
+    return jsonify({
+        "error": "Internal server error", 
+        "status": "error",
+        "message": "Please try again or contact support"
+    }), 500
 
 # Static file serving routes
 @app.route('/styles.css')
@@ -73,27 +78,23 @@ def serve_enhanced_ux_js():
     except FileNotFoundError:
         return "Enhanced UX JS file not found", 404
 
-@app.route('/device-compatibility.css')
-@device_compatible_endpoint
-def serve_device_compatibility_css():
-    """Serve the device compatibility CSS file"""
+# Root route - simple and reliable
+@app.route('/')
+def home():
+    """Main landing page"""
     try:
-        return send_file('device-compatibility.css', mimetype='text/css')
+        return send_file('landing.html')
     except FileNotFoundError:
-        return "Device compatibility CSS file not found", 404
-
-@app.route('/device-test.html')
-@device_compatible_endpoint
-def serve_device_test():
-    """Serve the device compatibility test page"""
-    try:
-        return send_file('device-test.html')
-    except FileNotFoundError:
-        return "Device test page not found", 404
-    try:
-        return send_file('enhanced-ux.js', mimetype='application/javascript')
-    except FileNotFoundError:
-        return "Enhanced UX JS file not found", 404
+        # Fallback HTML for emergencies
+        return '''<!DOCTYPE html>
+<html>
+<head><title>Saathi Legal Assistant</title></head>
+<body>
+    <h1>🏛️ Saathi Legal Assistant</h1>
+    <p>Your AI-powered legal companion is running!</p>
+    <p>Status: Server Online ✅</p>
+</body>
+</html>''', 200
 
 @app.route('/manifest.json')
 def serve_manifest():
@@ -565,60 +566,24 @@ def call_gemini_api(messages, user_language='english'):
         return None
 
 @app.route('/health')
-@device_compatible_endpoint
 def health_check():
-    """Health check endpoint - Device compatible"""
-    return device_handler.device_compatible_response({
-        "status": "healthy",
-        "app": "Saathi Legal Assistant - Gemini Powered",
-        "version": "2.0.0",
-        "api_configured": is_api_configured(),
-        "model": GEMINI_MODEL,
-        "provider": "Google Gemini",
-        "timestamp": datetime.utcnow().isoformat(),
-        "device_info": {
-            "user_agent": request.headers.get('User-Agent', 'Unknown')[:100],
-            "origin": request.headers.get('Origin', 'Unknown'),
-            "host": request.headers.get('Host', 'Unknown')
-        }
-    })
-
-@app.route('/device-diagnostic', methods=['GET', 'POST'])
-@device_compatible_endpoint
-def device_diagnostic():
-    """Diagnostic endpoint to help debug device access issues"""
-    from device_compatibility import get_device_info
-    
-    device_info = get_device_info()
-    
-    # Additional diagnostic information
-    diagnostic_info = {
-        "endpoint": "device-diagnostic",
-        "method": request.method,
-        "timestamp": datetime.utcnow().isoformat(),
-        "device_info": device_info,
-        "request_headers": dict(request.headers),
-        "api_configured": is_api_configured(),
-        "server_status": "running",
-        "cors_enabled": True,
-        "compatibility_layer": "active",
-        "recommendations": []
-    }
-    
-    # Add recommendations based on device type
-    if device_info['is_mobile']:
-        diagnostic_info["recommendations"].append("Mobile device detected - using mobile-optimized headers")
-    
-    if device_info['is_android']:
-        diagnostic_info["recommendations"].append("Android device - ensuring WebView compatibility")
-    
-    if device_info['is_ios']:
-        diagnostic_info["recommendations"].append("iOS device - optimizing for Safari constraints")
-    
-    if not device_info['origin']:
-        diagnostic_info["recommendations"].append("No Origin header - this may cause CORS issues")
-    
-    return device_handler.device_compatible_response(diagnostic_info)
+    """Health check endpoint - Simple and reliable"""
+    try:
+        return jsonify({
+            "status": "healthy",
+            "app": "Saathi Legal Assistant - Gemini Powered",
+            "version": "2.0.0",
+            "api_configured": is_api_configured(),
+            "model": GEMINI_MODEL,
+            "provider": "Google Gemini",
+            "timestamp": datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Health check error: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
 
 @app.route('/generate-letter', methods=['POST'])
 def generate_letter():
@@ -1097,7 +1062,6 @@ def get_user_history(user_name):
         }), 500
 
 @app.route('/chat', methods=['POST'])
-@device_compatible_endpoint
 def chat():
     """Main chat endpoint using Gemini API with rate limiting"""
     global conversation_history
