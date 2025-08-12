@@ -431,6 +431,30 @@
 
     <script>
         function searchLegalHelp() {
+            const searchBtn = document.querySelector('.search-btn');
+            const originalText = searchBtn.innerHTML;
+            
+            // Show loading state
+            searchBtn.classList.add('btn-loading');
+            searchBtn.innerHTML = '🔍 Searching...';
+            searchBtn.disabled = true;
+            
+            // Add loading message
+            showSearchLoading(true);
+            
+            // Simulate search delay for better UX
+            setTimeout(() => {
+                performSearch();
+                
+                // Hide loading state
+                searchBtn.classList.remove('btn-loading');
+                searchBtn.innerHTML = originalText;
+                searchBtn.disabled = false;
+                showSearchLoading(false);
+            }, 1200); // 1.2 second delay for realistic feel
+        }
+
+        function performSearch() {
             const location = document.getElementById('locationSearch').value.toLowerCase().trim();
             const helpType = document.getElementById('helpType').value;
             const specialization = document.getElementById('specialization').value;
@@ -546,6 +570,58 @@
             document.getElementById('helpType').value = 'all';
             document.getElementById('specialization').value = 'all';
             searchLegalHelp();
+        }
+
+        // Loading indicator functions
+        function showSearchLoading(show) {
+            let loadingDiv = document.getElementById('searchLoadingIndicator');
+            
+            if (show) {
+                if (!loadingDiv) {
+                    loadingDiv = document.createElement('div');
+                    loadingDiv.id = 'searchLoadingIndicator';
+                    loadingDiv.innerHTML = `
+                        <div style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin: 20px 0;
+                            padding: 20px;
+                            background: rgba(139, 69, 19, 0.1);
+                            border: 1px solid rgba(139, 69, 19, 0.3);
+                            border-radius: 10px;
+                        ">
+                            <div class="spinner" style="
+                                width: 30px;
+                                height: 30px;
+                                border: 3px solid rgba(139, 69, 19, 0.1);
+                                border-left: 3px solid #8b4513;
+                                border-radius: 50%;
+                                animation: spin 1s linear infinite;
+                            "></div>
+                            <span style="margin-left: 15px; color: #f4f1e8; font-size: 1.1em;">
+                                Searching legal help database...
+                            </span>
+                        </div>
+                    `;
+                    
+                    const helpResults = document.getElementById('helpResults');
+                    helpResults.parentNode.insertBefore(loadingDiv, helpResults);
+                }
+                loadingDiv.style.display = 'block';
+                
+                // Add blur effect to results
+                document.getElementById('helpResults').style.opacity = '0.5';
+                document.getElementById('helpResults').style.pointerEvents = 'none';
+            } else {
+                if (loadingDiv) {
+                    loadingDiv.style.display = 'none';
+                }
+                
+                // Remove blur effect
+                document.getElementById('helpResults').style.opacity = '1';
+                document.getElementById('helpResults').style.pointerEvents = 'auto';
+            }
         }
     </script>
 </body>

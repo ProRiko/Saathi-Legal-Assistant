@@ -30,6 +30,41 @@
 
                 <!-- Main Content -->
         <div class="main-content">
+            <!-- Onboarding Wizard -->
+            <div id="onboardingWizard" class="onboarding-wizard">
+                <div class="wizard-overlay">
+                    <div class="wizard-content">
+                        <h2>🎯 Welcome to Saathi Legal Assistant!</h2>
+                        <p>Let us guide you through your legal journey in 3 simple steps:</p>
+                        
+                        <div class="wizard-steps">
+                            <div class="step-card active" data-step="1">
+                                <div class="step-number">1</div>
+                                <h3>📝 Tell us about yourself</h3>
+                                <p>Enter your name and contact details for personalized assistance</p>
+                            </div>
+                            
+                            <div class="step-card" data-step="2">
+                                <div class="step-number">2</div>
+                                <h3>🎯 Choose your need</h3>
+                                <p>Select whether you need legal advice, documents, or rights information</p>
+                            </div>
+                            
+                            <div class="step-card" data-step="3">
+                                <div class="step-number">3</div>
+                                <h3>🚀 Get instant help</h3>
+                                <p>Receive AI-powered legal guidance in your preferred language</p>
+                            </div>
+                        </div>
+                        
+                        <div class="wizard-actions">
+                            <button class="wizard-btn secondary" onclick="skipWizard()">Skip Tutorial</button>
+                            <button class="wizard-btn primary" onclick="startWizard()">Get Started</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Device Compatibility Notice -->
             <div id="deviceNotice" class="device-notice" style="display: none;">
                 <h3>📱 Device Access Help</h3>
@@ -71,37 +106,42 @@
 
             <!-- Features Section -->
             <div class="features">
-                <div class="feature-card">
+                <div class="feature-card" onclick="startConsultation('chat')" style="cursor: pointer;">
                     <div class="feature-icon">💬</div>
                     <h3>AI Legal Consultation</h3>
                     <p>Get instant answers to your legal questions with our advanced AI assistant trained on Indian law</p>
+                    <div class="feature-cta">Ask Legal Questions Now →</div>
                 </div>
 
-                <div class="feature-card" onclick="window.location.href='/templates.html'" style="cursor: pointer;">
+                <div class="feature-card" onclick="startConsultation('documents')" style="cursor: pointer;">
                     <div class="feature-icon">📄</div>
                     <h3>Smart Templates</h3>
                     <p>Create professional legal documents instantly with our smart templates - rent agreements, legal notices, contracts</p>
+                    <div class="feature-cta">Generate Legal Documents →</div>
                 </div>
 
                 <div class="feature-card" onclick="openCalculatorModal()" style="cursor: pointer;">
                     <div class="feature-icon">🧮</div>
                     <h3>Rights Calculator</h3>
                     <p>Calculate your legal entitlements - gratuity, PF, notice pay, stamp duty, refunds, and more</p>
+                    <div class="feature-cta">Check Your Rights →</div>
                 </div>
 
-                <div class="feature-card" onclick="window.location.href='/legal-help.html'" style="cursor: pointer;">
+                <div class="feature-card" onclick="window.location.href='legal_help.html'" style="cursor: pointer;">
                     <div class="feature-icon">🏛️</div>
                     <h3>Find Legal Help</h3>
                     <p>Connect with qualified lawyers, legal aid centers, courts, and NGOs in your area</p>
+                    <div class="feature-cta">Find Legal Experts →</div>
                 </div>
 
-                <div class="feature-card" onclick="window.location.href='/case-tracker.html'" style="cursor: pointer;">
+                <div class="feature-card" onclick="window.location.href='case_tracker.html'" style="cursor: pointer;">
                     <div class="feature-icon">📋</div>
                     <h3>Legal Case Tracker</h3>
                     <p>Track your legal cases, court dates, deadlines, and case progress all in one place</p>
+                    <div class="feature-cta">Track My Cases →</div>
                 </div>
 
-                <div class="feature-card" onclick="window.location.href='/language-selection.html'" style="cursor: pointer;">
+                <div class="feature-card" onclick="window.location.href='language_selection.html'" style="cursor: pointer;">
                     <div class="feature-icon">🌍</div>
                     <h3>Multi-Language Support</h3>
                     <p>Get legal assistance in Hindi, Marathi, Tamil, Telugu, Gujarati, Bengali, Kannada, Punjabi, and English</p>
@@ -436,68 +476,233 @@
         }
         
         function calculateGratuity() {
-            const salary = parseFloat(document.getElementById('salary').value);
-            const years = parseInt(document.getElementById('years').value);
-            const months = parseInt(document.getElementById('months').value) || 0;
+            const salaryInput = document.getElementById('salary');
+            const yearsInput = document.getElementById('years');
+            const monthsInput = document.getElementById('months');
             
-            if (!salary || !years) {
-                alert('Please enter salary and years of service');
+            // Clear previous validation errors
+            clearValidationErrors([salaryInput, yearsInput, monthsInput]);
+            
+            const salary = parseFloat(salaryInput.value);
+            const years = parseInt(yearsInput.value);
+            const months = parseInt(monthsInput.value) || 0;
+            
+            // Input validation
+            const errors = [];
+            
+            if (!salary || salary <= 0) {
+                errors.push({ field: salaryInput, message: 'Please enter a valid monthly salary' });
+            } else if (salary > 10000000) {
+                errors.push({ field: salaryInput, message: 'Salary seems too high. Please check the amount' });
+            }
+            
+            if (!years || years < 0) {
+                errors.push({ field: yearsInput, message: 'Please enter years of service (0 or more)' });
+            } else if (years > 50) {
+                errors.push({ field: yearsInput, message: 'Years of service seems too high. Please check' });
+            }
+            
+            if (months < 0 || months > 11) {
+                errors.push({ field: monthsInput, message: 'Extra months should be between 0-11' });
+            }
+            
+            if (errors.length > 0) {
+                showValidationErrors(errors);
                 return;
             }
             
-            if (years < 5) {
-                showResult('gratuityResult', 'Not Eligible', 'Gratuity requires minimum 5 years of continuous service');
-                return;
-            }
+            // Show loading state
+            const calculateBtn = event.target;
+            const originalText = calculateBtn.innerHTML;
+            calculateBtn.innerHTML = '🔄 Calculating...';
+            calculateBtn.disabled = true;
             
-            const totalYears = years + (months >= 6 ? 1 : 0);
-            const gratuity = Math.min((salary * 15 * totalYears) / 26, 2000000);
-            const formula = `(₹${salary.toLocaleString()} × 15 × ${totalYears}) ÷ 26`;
-            
-            showResult('gratuityResult', `₹${gratuity.toLocaleString('en-IN')}`, 
-                `Formula: ${formula}<br>Years considered: ${totalYears}<br>Maximum limit: ₹20,00,000`);
+            setTimeout(() => {
+                // Gratuity eligibility check
+                if (years < 5) {
+                    showCalculatorResult('gratuityResult', 'Not Eligible ❌', 
+                        'Gratuity requires minimum 5 years of continuous service.<br><strong>Note:</strong> Death/disability exceptions may apply.', 
+                        'warning');
+                } else {
+                    const totalYears = years + (months >= 6 ? 1 : 0);
+                    const gratuity = Math.min((salary * 15 * totalYears) / 26, 2000000);
+                    const formula = `(₹${salary.toLocaleString()} × 15 × ${totalYears}) ÷ 26`;
+                    
+                    showCalculatorResult('gratuityResult', `₹${gratuity.toLocaleString('en-IN')} ✅`, 
+                        `<strong>Formula:</strong> ${formula}<br>
+                         <strong>Years considered:</strong> ${totalYears} years<br>
+                         <strong>Maximum limit:</strong> ₹20,00,000<br>
+                         <strong>Tax:</strong> Exempt up to ₹20,00,000`, 
+                        'success');
+                }
+                
+                // Reset button
+                calculateBtn.innerHTML = originalText;
+                calculateBtn.disabled = false;
+            }, 800);
         }
         
         function calculatePF() {
-            const basic = parseFloat(document.getElementById('basicSalary').value);
-            const years = parseFloat(document.getElementById('pfYears').value);
-            const rate = parseFloat(document.getElementById('interest').value) / 100;
+            const basicInput = document.getElementById('basicSalary');
+            const yearsInput = document.getElementById('pfYears');
+            const interestInput = document.getElementById('interest');
             
-            if (!basic || !years) {
-                alert('Please enter basic salary and years of service');
+            // Clear previous validation errors
+            clearValidationErrors([basicInput, yearsInput, interestInput]);
+            
+            const basic = parseFloat(basicInput.value);
+            const years = parseFloat(yearsInput.value);
+            const rate = parseFloat(interestInput.value) / 100;
+            
+            // Input validation
+            const errors = [];
+            
+            if (!basic || basic <= 0) {
+                errors.push({ field: basicInput, message: 'Please enter a valid basic salary' });
+            } else if (basic > 5000000) {
+                errors.push({ field: basicInput, message: 'Basic salary seems too high. Please check the amount' });
+            }
+            
+            if (!years || years < 0) {
+                errors.push({ field: yearsInput, message: 'Please enter years of service (0 or more)' });
+            } else if (years > 50) {
+                errors.push({ field: yearsInput, message: 'Years of service seems too high. Please check' });
+            }
+            
+            if (!rate || rate < 0 || rate > 0.20) {
+                errors.push({ field: interestInput, message: 'Interest rate should be between 0% and 20%' });
+            }
+            
+            if (errors.length > 0) {
+                showValidationErrors(errors);
                 return;
             }
             
-            const monthlyContribution = basic * 0.24;
-            const annualContribution = monthlyContribution * 12;
-            const balance = years > 0 ? annualContribution * (Math.pow(1 + rate, years) - 1) / rate : 0;
+            // Show loading state
+            const calculateBtn = event.target;
+            const originalText = calculateBtn.innerHTML;
+            calculateBtn.innerHTML = '🔄 Calculating...';
+            calculateBtn.disabled = true;
             
-            showResult('pfResult', `₹${balance.toLocaleString('en-IN')}`, 
-                `Monthly contribution: ₹${monthlyContribution.toLocaleString('en-IN')}<br>Annual contribution: ₹${annualContribution.toLocaleString('en-IN')}<br>Interest rate: ${(rate*100).toFixed(1)}%`);
+            setTimeout(() => {
+                const monthlyContribution = Math.min(basic * 0.24, 21600); // PF cap
+                const annualContribution = monthlyContribution * 12;
+                const balance = years > 0 ? annualContribution * (Math.pow(1 + rate, years) - 1) / rate : 0;
+                
+                showCalculatorResult('pfResult', `₹${balance.toLocaleString('en-IN')} ✅`, 
+                    `<strong>Monthly contribution:</strong> ₹${monthlyContribution.toLocaleString('en-IN')}<br>
+                     <strong>Annual contribution:</strong> ₹${annualContribution.toLocaleString('en-IN')}<br>
+                     <strong>Interest rate:</strong> ${(rate*100).toFixed(1)}%<br>
+                     <strong>Withdrawal rules:</strong> Partial withdrawal after 5 years`, 
+                    'success');
+                
+                // Reset button
+                calculateBtn.innerHTML = originalText;
+                calculateBtn.disabled = false;
+            }, 800);
         }
         
         function calculateStampDuty() {
-            const value = parseFloat(document.getElementById('propertyValue').value);
-            const rate = parseFloat(document.getElementById('state').value);
+            const valueInput = document.getElementById('propertyValue');
+            const stateSelect = document.getElementById('state');
             
-            if (!value) {
-                alert('Please enter property value');
+            // Clear previous validation errors
+            clearValidationErrors([valueInput]);
+            
+            const value = parseFloat(valueInput.value);
+            const rate = parseFloat(stateSelect.value);
+            
+            // Input validation
+            const errors = [];
+            
+            if (!value || value <= 0) {
+                errors.push({ field: valueInput, message: 'Please enter a valid property value' });
+            } else if (value < 100000) {
+                errors.push({ field: valueInput, message: 'Property value seems too low. Please check the amount' });
+            } else if (value > 1000000000) {
+                errors.push({ field: valueInput, message: 'Property value seems too high. Please check the amount' });
+            }
+            
+            if (errors.length > 0) {
+                showValidationErrors(errors);
                 return;
             }
             
-            const stampDuty = value * rate;
+            // Show loading state
+            const calculateBtn = event.target;
+            const originalText = calculateBtn.innerHTML;
+            calculateBtn.innerHTML = '🔄 Calculating...';
+            calculateBtn.disabled = true;
             
-            showResult('stampResult', `₹${stampDuty.toLocaleString('en-IN')}`, 
-                `Property value: ₹${value.toLocaleString('en-IN')}<br>Stamp duty rate: ${(rate*100)}%<br>Calculation: ₹${value.toLocaleString('en-IN')} × ${(rate*100)}%`);
+            setTimeout(() => {
+                const stampDuty = value * rate;
+                const registrationFee = Math.min(value * 0.01, 30000); // 1% capped at ₹30,000
+                const total = stampDuty + registrationFee;
+                
+                showCalculatorResult('stampResult', `₹${stampDuty.toLocaleString('en-IN')} ✅`, 
+                    `<strong>Stamp Duty:</strong> ₹${stampDuty.toLocaleString('en-IN')}<br>
+                     <strong>Registration Fee:</strong> ₹${registrationFee.toLocaleString('en-IN')}<br>
+                     <strong>Total Cost:</strong> ₹${total.toLocaleString('en-IN')}<br>
+                     <strong>Rate Applied:</strong> ${(rate*100).toFixed(1)}%`, 
+                    'success');
+                
+                // Reset button
+                calculateBtn.innerHTML = originalText;
+                calculateBtn.disabled = false;
+            }, 800);
+        }
+        
+        // Helper functions for validation and results
+        function clearValidationErrors(inputs) {
+            inputs.forEach(input => {
+                input.style.borderColor = 'rgba(139, 69, 19, 0.3)';
+                input.style.backgroundColor = 'rgba(244, 241, 232, 0.15)';
+                
+                // Remove existing error messages
+                const existingError = input.parentNode.querySelector('.validation-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+            });
+        }
+        
+        function showValidationErrors(errors) {
+            errors.forEach(error => {
+                // Style the field
+                error.field.style.borderColor = '#dc3545';
+                error.field.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+                
+                // Add error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'validation-error';
+                errorDiv.style.cssText = 'color: #dc3545; font-size: 0.9em; margin-top: 5px; font-weight: bold;';
+                errorDiv.textContent = error.message;
+                
+                error.field.parentNode.insertBefore(errorDiv, error.field.nextSibling);
+            });
+        }
+        
+        function showCalculatorResult(elementId, amount, details, type = 'success') {
+            const element = document.getElementById(elementId);
+            const bgColor = type === 'success' ? 'rgba(40, 167, 69, 0.1)' : 'rgba(255, 193, 7, 0.1)';
+            const borderColor = type === 'success' ? 'rgba(40, 167, 69, 0.3)' : 'rgba(255, 193, 7, 0.3)';
+            
+            element.style.background = bgColor;
+            element.style.border = `1px solid ${borderColor}`;
+            element.innerHTML = `
+                <div style="text-align: center;">
+                    <h4 style="color: #f4f1e8; margin: 0 0 15px 0; font-size: 1.5em;">${amount}</h4>
+                    <div style="color: #d4c4a8; line-height: 1.6;">${details}</div>
+                </div>
+            `;
+            element.style.display = 'block';
+            
+            // Scroll to result
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
         
         function showResult(elementId, amount, details) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = `
-                <div style="font-size: 1.8em; color: #8b4513; font-weight: bold; margin-bottom: 10px;">${amount}</div>
-                <div style="color: #f4f1e8; line-height: 1.6;">${details}</div>
-            `;
-            element.style.display = 'block';
+            showCalculatorResult(elementId, amount, details, 'success');
         }
 
         // Language functionality
@@ -581,5 +786,6 @@
     </div>
     </script>
     <script src="enhanced-ux.js"></script>
+    <script src="onboarding.js"></script>
 </body>
 </html>

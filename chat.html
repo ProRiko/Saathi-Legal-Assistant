@@ -208,13 +208,36 @@ body>
             }
         }
 
-        function showTyping(show) {
+        function showTyping(show, customMessage = null) {
             const typingIndicator = document.getElementById('typingIndicator');
-            typingIndicator.style.display = show ? 'block' : 'none';
             
             if (show) {
+                if (customMessage) {
+                    const messageBubble = typingIndicator.querySelector('.message-bubble');
+                    messageBubble.innerHTML = `
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span style="margin-left: 10px;">${customMessage}</span>
+                    `;
+                }
+                typingIndicator.style.display = 'block';
                 const messagesArea = document.getElementById('messagesArea');
                 messagesArea.scrollTop = messagesArea.scrollHeight;
+            } else {
+                typingIndicator.style.display = 'none';
+                // Reset to default message
+                const messageBubble = typingIndicator.querySelector('.message-bubble');
+                messageBubble.innerHTML = `
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <span style="margin-left: 10px;">Saathi is thinking...</span>
+                `;
             }
         }
 
@@ -279,22 +302,28 @@ body>
             messageInput.value = '';
             messageInput.style.height = 'auto';
             
-            // Disable send button and show typing with timeout protection
+            // Show loading state with improved UI
             sendBtn.disabled = true;
-            sendBtn.innerHTML = '⏳ Sending...';
-            showTyping(true);
+            sendBtn.classList.add('btn-loading');
+            showTyping(true, 'Analyzing your legal question...');
+            showLoadingMessage('Connecting to Saathi Legal AI...');
             
             // Set timeout for response (30 seconds)
             const responseTimeout = setTimeout(() => {
                 showTyping(false);
                 sendBtn.disabled = false;
+                sendBtn.classList.remove('btn-loading');
                 sendBtn.innerHTML = '📨 Send';
-                showError('Response timeout. Please try again with a shorter message.');
+                hideLoadingMessage();
+                showError('Response timeout. Our AI is taking longer than usual. Please try again with a shorter question.');
             }, 30000);
             
             try {
                 // Log the conversation
                 await logConversation(message, 'user');
+                
+                // Update loading message
+                updateLoadingMessage('Processing with Google Gemini AI...');
                 
                 const response = await fetch('/chat', {
                     method: 'POST',
@@ -312,7 +341,9 @@ body>
                 
                 clearTimeout(responseTimeout);
                 showTyping(false);
+                sendBtn.classList.remove('btn-loading');
                 sendBtn.innerHTML = '📨 Send';
+                hideLoadingMessage();
                 
                 if (response.status === 429) {
                     const data = await response.json();
@@ -329,6 +360,7 @@ body>
                 if (data.status === 'success' && data.reply) {
                     addMessage(data.reply, 'assistant');
                     await logConversation(data.reply, 'assistant');
+                    showSuccessMessage('Response received successfully! 📋');
                     
                     // Show language confirmation if first message
                     if (messageCount === 1 && currentLanguage !== 'english') {
@@ -388,6 +420,71 @@ body>
             } catch (error) {
                 console.log('Logging failed, but continuing...', error);
             }
+        }
+
+        // Loading indicator functions
+        let loadingMessageElement = null;
+
+        function showLoadingMessage(message) {
+            if (loadingMessageElement) {
+                hideLoadingMessage();
+            }
+
+            loadingMessageElement = document.createElement('div');
+            loadingMessageElement.className = 'loading-message';
+            loadingMessageElement.innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <span class="loading-text">${message}</span>
+                </div>
+            `;
+            
+            const messagesArea = document.getElementById('messagesArea');
+            messagesArea.appendChild(loadingMessageElement);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function updateLoadingMessage(newMessage) {
+            if (loadingMessageElement) {
+                const loadingText = loadingMessageElement.querySelector('.loading-text');
+                if (loadingText) {
+                    loadingText.textContent = newMessage;
+                }
+            }
+        }
+
+        function hideLoadingMessage() {
+            if (loadingMessageElement && loadingMessageElement.parentNode) {
+                loadingMessageElement.parentNode.removeChild(loadingMessageElement);
+                loadingMessageElement = null;
+            }
+        }
+
+        function showSuccessMessage(message) {
+            showPopupMessage(message, 'success');
+        }
+
+        function showPopupMessage(message, type = 'success') {
+            const popup = document.createElement('div');
+            popup.className = `message-popup ${type}`;
+            popup.innerHTML = `
+                <button class="message-close" onclick="this.parentElement.remove()">×</button>
+                <div>${message}</div>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.style.animation = 'slideOutRight 0.5s ease-out forwards';
+                    setTimeout(() => {
+                        if (popup.parentNode) {
+                            popup.parentNode.removeChild(popup);
+                        }
+                    }, 500);
+                }
+            }, 5000);
         }
 
         function goBack() {
