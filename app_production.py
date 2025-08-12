@@ -587,7 +587,7 @@ def health_check():
             "api_configured": is_api_configured(),
             "model": GEMINI_MODEL,
             "provider": "Google Gemini",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         })
     except Exception as e:
         logger.error(f"Health check error: {str(e)}")
@@ -1247,7 +1247,7 @@ def reset_conversation():
         return jsonify({
             "message": "Conversation reset successfully",
             "status": "success",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now().isoformat()
         })
     except Exception as e:
         logger.error(f"Error resetting conversation: {str(e)}")
@@ -1266,7 +1266,7 @@ def get_config():
         "provider": "Google Gemini",
         "api_configured": is_api_configured(),
         "max_tokens": MAX_TOKENS,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now().isoformat()
     })
 
 # Error handlers
