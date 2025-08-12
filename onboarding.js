@@ -35,7 +35,7 @@ class OnboardingWizard {
         wizard.style.display = 'none';
         
         wizard.innerHTML = `
-            <div class="wizard-overlay" onclick="onboardingWizard.skipWizard()"></div>
+            <div class="wizard-overlay" onclick="if(window.onboardingWizard) onboardingWizard.skipWizard()"></div>
             <div class="wizard-content">
                 <h2>Welcome to Saathi Legal Assistant! 🏛️</h2>
                 <p style="color: rgba(244, 241, 232, 0.8); margin-bottom: 30px;">
@@ -53,13 +53,13 @@ class OnboardingWizard {
                 </div>
                 
                 <div class="wizard-actions">
-                    <button class="wizard-btn secondary" onclick="onboardingWizard.previousStep()" id="prev-btn" style="display: none;">
+                    <button class="wizard-btn secondary" onclick="if(window.onboardingWizard) onboardingWizard.previousStep()" id="prev-btn" style="display: none;">
                         ← Previous
                     </button>
-                    <button class="wizard-btn secondary" onclick="onboardingWizard.skipWizard()">
+                    <button class="wizard-btn secondary" onclick="if(window.onboardingWizard) onboardingWizard.skipWizard()">
                         Skip Tour
                     </button>
-                    <button class="wizard-btn primary" onclick="onboardingWizard.nextStep()" id="next-btn">
+                    <button class="wizard-btn primary" onclick="if(window.onboardingWizard) onboardingWizard.nextStep()" id="next-btn">
                         Next Step →
                     </button>
                 </div>
@@ -236,7 +236,15 @@ class OnboardingWizard {
     // Method to reset onboarding (for testing)
     resetOnboarding() {
         localStorage.removeItem('saathi_onboarding_completed');
-        location.reload();
+        this.currentStep = 0;
+        this.updateUI();
+        this.showWizard();
+    }
+
+    // Method to manually show wizard
+    forceShowWizard() {
+        document.getElementById('onboarding-wizard').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 }
 
@@ -296,10 +304,20 @@ document.head.appendChild(styleSheet);
 let onboardingWizard;
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        onboardingWizard = new OnboardingWizard();
+        try {
+            onboardingWizard = new OnboardingWizard();
+            window.onboardingWizard = onboardingWizard; // Make it globally accessible
+        } catch (error) {
+            console.error('Error initializing onboarding wizard:', error);
+        }
     });
 } else {
-    onboardingWizard = new OnboardingWizard();
+    try {
+        onboardingWizard = new OnboardingWizard();
+        window.onboardingWizard = onboardingWizard; // Make it globally accessible
+    } catch (error) {
+        console.error('Error initializing onboarding wizard:', error);
+    }
 }
 
 // Global function for console testing

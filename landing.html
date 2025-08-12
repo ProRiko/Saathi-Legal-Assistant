@@ -274,6 +274,59 @@
             saveBtn.innerHTML = '✓ Details Saved';
         }
 
+        // Wizard control functions
+        function startWizard() {
+            try {
+                if (typeof onboardingWizard !== 'undefined' && onboardingWizard) {
+                    // Hide the intro wizard
+                    const introWizard = document.querySelector('.intro-wizard');
+                    if (introWizard) {
+                        introWizard.style.display = 'none';
+                    }
+                    
+                    // Reset and show the onboarding wizard
+                    onboardingWizard.resetOnboarding();
+                    
+                    // Show success message
+                    showSuccess('Welcome! Let\'s start your legal journey! 🚀');
+                } else {
+                    // Fallback if onboarding wizard isn't loaded
+                    console.log('Onboarding wizard not loaded, redirecting to consultation');
+                    startConsultation();
+                }
+            } catch (error) {
+                console.error('Error starting wizard:', error);
+                showError('Unable to start wizard. Redirecting to consultation...');
+                setTimeout(startConsultation, 2000);
+            }
+        }
+
+        function skipWizard() {
+            try {
+                // Hide the intro wizard
+                const introWizard = document.querySelector('.intro-wizard');
+                if (introWizard) {
+                    introWizard.style.display = 'none';
+                }
+                
+                // Mark onboarding as completed
+                if (typeof onboardingWizard !== 'undefined' && onboardingWizard) {
+                    onboardingWizard.skipWizard();
+                } else {
+                    localStorage.setItem('saathi_onboarding_completed', 'true');
+                }
+                
+                showSuccess('Skipped tutorial. You can explore features directly! 👍');
+            } catch (error) {
+                console.error('Error skipping wizard:', error);
+                // Fallback - just hide intro wizard
+                const introWizard = document.querySelector('.intro-wizard');
+                if (introWizard) {
+                    introWizard.style.display = 'none';
+                }
+            }
+        }
+
         // Error handling functions
         function showError(message, inputElement = null) {
             const errorDiv = document.getElementById('errorMessage') || createErrorDiv();
