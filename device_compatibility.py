@@ -19,10 +19,10 @@ class DeviceCompatibilityHandler:
         self.logger = logging.getLogger(__name__)
     
     def setup_cors(self):
-        """Configure comprehensive CORS for all devices"""
+        """Configure comprehensive CORS for all devices AND automated requests"""
         CORS(self.app, 
-             origins=['*'],  # Allow all origins
-             methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+             origins=['*'],  # Allow all origins including bots
+             methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
              allow_headers=[
                 'Content-Type', 
                 'Authorization', 
@@ -31,38 +31,43 @@ class DeviceCompatibilityHandler:
                 'X-Requested-With',
                 'Accept',
                 'Accept-Version',
+                'Accept-Encoding',
+                'Accept-Language',
                 'Content-Length',
                 'Content-MD5',
                 'Date',
                 'X-Api-Version',
-                'X-CSRF-Token'
+                'X-CSRF-Token',
+                'User-Agent',
+                'X-Forwarded-For',
+                'X-Real-IP'
              ],
              supports_credentials=True,
-             expose_headers=['Content-Range', 'X-Content-Range']
+             expose_headers=['Content-Range', 'X-Content-Range'],
+             max_age=3600  # Cache preflight for 1 hour
         )
     
     def setup_headers(self):
-        """Add comprehensive headers for device compatibility"""
+        """Add comprehensive headers for device compatibility AND bot access"""
         @self.app.after_request
         def after_request(response):
-            # CORS headers for all devices
+            # CORS headers for all devices and bots
             response.headers.add('Access-Control-Allow-Origin', '*')
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Accept-Version,Content-Length,Content-MD5,Date,X-Api-Version,X-CSRF-Token')
-            response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Accept-Version,Accept-Encoding,Accept-Language,Content-Length,Content-MD5,Date,X-Api-Version,X-CSRF-Token,User-Agent')
+            response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD')
             response.headers.add('Access-Control-Allow-Credentials', 'true')
             
-            # Security headers that work across devices
+            # Security headers that don't block bots
             response.headers.add('X-Content-Type-Options', 'nosniff')
-            response.headers.add('X-Frame-Options', 'SAMEORIGIN')
-            response.headers.add('Referrer-Policy', 'strict-origin-when-cross-origin')
+            response.headers.add('Referrer-Policy', 'no-referrer-when-downgrade')
             
-            # Mobile compatibility headers
-            response.headers.add('Cache-Control', 'no-cache, no-store, must-revalidate')
-            response.headers.add('Pragma', 'no-cache')
-            response.headers.add('Expires', '0')
+            # Bot-friendly caching
+            response.headers.add('Cache-Control', 'public, max-age=300')  # 5 minutes cache
             
-            # Android WebView compatibility
-            response.headers.add('X-UA-Compatible', 'IE=edge')
+            # Remove restrictive headers for bots
+            if 'bot' in request.headers.get('User-Agent', '').lower() or 'crawler' in request.headers.get('User-Agent', '').lower():
+                response.headers.pop('X-Frame-Options', None)
+                response.headers.pop('Content-Security-Policy', None)
             
             return response
     
