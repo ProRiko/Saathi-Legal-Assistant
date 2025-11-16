@@ -238,6 +238,7 @@ def serve_manifest():
 
 # New Feature Routes
 @app.route('/case-tracker.html')
+@app.route('/case_tracker.html')
 def serve_case_tracker():
     """Serve the legal case tracker page"""
     try:
