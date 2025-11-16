@@ -72,3 +72,4 @@ Thumbs.db
 .env.backup
 backend/.env.backup
 config_backup.py
+frontend/node_modules/

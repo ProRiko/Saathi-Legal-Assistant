@@ -63,6 +63,16 @@ Saathi is a free, AI-powered legal assistant that provides instant legal informa
 - **GitHub** - Version control
 - **Environment Variables** - Secure configuration
 
+#### Render quick start
+1. **Blueprint file**: `render.yaml` is checked in—Render will auto-detect it and pre-fill build/start commands plus required env vars.
+2. **Build command**: `pip install -r requirements.txt`
+3. **Start command**: `gunicorn --config gunicorn.conf.py app_production:app`
+4. **Python version**: keep the environment variable `PYTHON_VERSION=3.11.9` (Render currently defaults to Python 3.13 which breaks some wheels).
+5. **Core secrets**: configure `GEMINI_API_KEY`, `GEMINI_MODEL`, `ALLOWED_ORIGINS`, `SECRET_KEY`, and any MongoDB connection keys from `.env.template`.
+6. **Redeploy**: trigger a fresh deploy and confirm `/health` returns HTTP 200 before announcing the service.
+
+> ℹ️ Pillow is no longer part of the production requirements because PDF generation with ReportLab does not depend on it. This keeps the build lean and avoids failing wheels on newer Python versions.
+
 ## 📊 **Performance**
 
 - ⚡ **Response Time**: 3-4 seconds average
