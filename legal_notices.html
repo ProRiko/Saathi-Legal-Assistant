@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Notice Generator - Saathi Legal Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="enhanced-ux.css">
+    <style>
+        body {
+            background: radial-gradient(circle at top, #1f2c3d, #0f1724);
+            color: #f4f1e8;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .page-shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #f4f1e8;
+        }
+        .page-header p {
+            color: #c7c2b7;
+            font-size: 1.05rem;
+        }
+        .notice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .notice-card {
+            background: rgba(19, 26, 38, 0.9);
+            border: 1px solid rgba(244, 241, 232, 0.08);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, border 0.2s ease;
+        }
+        .notice-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+        .notice-card h3 {
+            margin: 0 0 10px;
+            color: #f7dba7;
+            font-size: 1.2rem;
+        }
+        .notice-card p {
+            color: #dcd3c3;
+            flex: 1;
+        }
+        .notice-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 12px 0;
+        }
+        .notice-tag {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            color: #f4f1e8;
+        }
+        .notice-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+        .notice-actions button,
+        .notice-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            text-decoration: none;
+        }
+        .notice-actions .download-btn {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #1a1309;
+        }
+        .notice-actions .learn-btn {
+            background: transparent;
+            color: #f4f1e8;
+            border: 1px solid rgba(244, 241, 232, 0.25);
+        }
+        .notice-actions button:hover,
+        .notice-actions a:hover {
+            opacity: 0.85;
+        }
+        .notice-meta {
+            font-size: 0.85rem;
+            color: #bdb7ad;
+            margin-top: 6px;
+        }
+        .notice-empty,
+        .notice-error {
+            text-align: center;
+            padding: 40px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #f4f1e8;
+            margin-top: 30px;
+        }
+        .page-actions {
+            margin: 30px 0;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .page-actions a {
+            text-decoration: none;
+            color: #1a1309;
+            background: #f7dba7;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .page-actions a.secondary {
+            background: transparent;
+            color: #f4f1e8;
+            border: 1px solid rgba(244, 241, 232, 0.3);
+        }
+        @media (max-width: 600px) {
+            .page-shell {
+                padding: 25px 15px 60px;
+            }
+            .page-header h1 {
+                font-size: 1.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <div class="page-header">
+            <p style="letter-spacing: 3px; text-transform: uppercase; color: #f7dba7;">Legal Notice Generator</p>
+            <h1>Instant Professional Notices</h1>
+            <p>Download advocate-ready notices for common disputes in seconds. Each template follows Indian legal requirements and can be customized with your details.</p>
+            <div class="page-actions">
+                <a href="/">← Back to Saathi Home</a>
+                <a href="/case-tracker.html" class="secondary">Go to Case Tracker</a>
+            </div>
+        </div>
+
+        <div id="noticeGrid" class="notice-grid"></div>
+        <div id="noticeState"></div>
+    </div>
+
+    <script>
+        async function loadNotices() {
+            const grid = document.getElementById('noticeGrid');
+            const state = document.getElementById('noticeState');
+            grid.innerHTML = '';
+            state.textContent = 'Loading notices...';
+
+            try {
+                const res = await fetch('/api/legal-notices');
+                if (!res.ok) throw new Error('Failed to load templates');
+                const data = await res.json();
+
+                state.textContent = '';
+                if (!data.notices || !data.notices.length) {
+                    state.innerHTML = '<div class="notice-empty">No templates available yet. Check back soon!</div>';
+                    return;
+                }
+
+                data.notices.forEach((notice) => {
+                    const card = document.createElement('div');
+                    card.className = 'notice-card';
+                    card.innerHTML = `
+                        <div>
+                            <h3>${notice.title}</h3>
+                            <p>${notice.description}</p>
+                            <div class="notice-tags">
+                                ${(notice.tags || []).map(tag => `<span class="notice-tag">${tag}</span>`).join('')}
+                            </div>
+                            <div class="notice-meta">Format: PDF template · Last updated ${new Date().getFullYear()}</div>
+                        </div>
+                        <div class="notice-actions">
+                            <a class="download-btn" href="/notices/${notice.slug}" target="_blank" rel="noopener">
+                                ⬇️ Download PDF
+                            </a>
+                            <a class="learn-btn" href="/chat.html" target="_blank" rel="noopener">
+                                Ask Saathi
+                            </a>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                console.error(error);
+                state.innerHTML = '<div class="notice-error">Unable to load notices right now. Please refresh in a moment.</div>';
+            }
+        }
+
+        loadNotices();
+    </script>
+</body>
+</html>

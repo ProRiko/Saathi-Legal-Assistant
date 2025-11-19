@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Rights Calculators - Saathi Legal Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="enhanced-ux.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top, #172033, #0c121c 55%, #070a11);
+            color: #f4f1e8;
+        }
+        .page-shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px 120px;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        .page-header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #f7dba7;
+        }
+        .page-header p {
+            color: #d7d0c5;
+            font-size: 1.05rem;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .tagline {
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: rgba(247, 219, 167, 0.8);
+        }
+        .page-actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .page-actions a {
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .page-actions a.primary {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #1a1309;
+        }
+        .page-actions a.secondary {
+            border: 1px solid rgba(244, 241, 232, 0.3);
+            color: #f4f1e8;
+        }
+        .tip-bar {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 18px;
+            padding: 18px 22px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .tip-bar span {
+            font-size: 1.4rem;
+        }
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 22px;
+        }
+        .calc-card {
+            background: rgba(19, 26, 38, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .calc-card h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            color: #f7dba7;
+        }
+        .calc-card p {
+            margin: 0;
+            color: #d6d0c4;
+            font-size: 0.95rem;
+        }
+        label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(244, 241, 232, 0.8);
+        }
+        input, select {
+            width: 100%;
+            margin-top: 6px;
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(244, 241, 232, 0.15);
+            background: rgba(244, 241, 232, 0.05);
+            color: #f4f1e8;
+            font-size: 1rem;
+        }
+        button {
+            background: linear-gradient(120deg, #8b5cf6, #ec4899);
+            color: #fff;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+        .status-line {
+            min-height: 20px;
+            font-size: 0.9rem;
+            color: #b8b0a3;
+        }
+        .status-line.error {
+            color: #f87171;
+        }
+        .status-line.success {
+            color: #34d399;
+        }
+        .calc-result {
+            background: rgba(244, 241, 232, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            display: none;
+        }
+        .calc-result.active {
+            display: block;
+        }
+        .result-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f7dba7;
+            margin-bottom: 10px;
+        }
+        .result-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .result-list li {
+            margin-bottom: 6px;
+            color: #d7d0c5;
+        }
+        .faq-card {
+            margin-top: 35px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(244, 241, 232, 0.1);
+        }
+        .faq-card h3 {
+            margin-top: 0;
+            color: #f7dba7;
+        }
+        .faq-card ul {
+            padding-left: 18px;
+            color: #dcd5c7;
+        }
+        @media (max-width: 700px) {
+            .page-shell {
+                padding: 30px 16px 80px;
+            }
+            .page-header h1 {
+                font-size: 2.1rem;
+            }
+            .tip-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <header class="page-header">
+            <p class="tagline">Saathi Legal Assistant</p>
+            <h1>Legal Rights Calculators</h1>
+            <p>Estimate notice periods, overtime payouts, maternity benefits, and consumer compensation with India-focused formulas. These tools provide indicative values so you can have informed conversations with HR, service providers, or legal counsel.</p>
+            <div class="page-actions">
+                <a class="primary" href="/">← Back to Saathi Home</a>
+                <a class="secondary" href="/legal-notices.html">Legal Notice Generator</a>
+                <a class="secondary" href="/agreement-templates.html">Agreement Templates</a>
+            </div>
+        </header>
+
+        <div class="tip-bar">
+            <span>⚠️</span>
+            <div>
+                These calculators follow common interpretations of Indian labour and consumer laws. They are informational and not a substitute for personalised legal advice. Always confirm with your HR department, union representative, or lawyer.
+            </div>
+        </div>
+
+        <section class="calc-grid">
+            <article class="calc-card" id="noticeCalculator">
+                <div>
+                    <h2>Notice Period Advisor</h2>
+                    <p>Get a benchmark notice period based on company type and continuous service.</p>
+                </div>
+                <form id="noticeForm">
+                    <label for="companyType">Company / Sector</label>
+                    <select id="companyType" required>
+                        <option value="it_services">IT / Services</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="startup">Startup / Early Stage</option>
+                        <option value="government">Government / PSU</option>
+                    </select>
+                    <label for="yearsOfService">Years of Continuous Service</label>
+                    <input type="number" id="yearsOfService" min="0" step="0.1" placeholder="e.g. 3.5" required>
+                    <button type="submit">Calculate Notice Period</button>
+                </form>
+                <p id="noticeStatus" class="status-line"></p>
+                <div id="noticeResult" class="calc-result"></div>
+            </article>
+
+            <article class="calc-card" id="hoursCalculator">
+                <div>
+                    <h2>Working Hours & Overtime</h2>
+                    <p>Check Factories Act compliance and estimated overtime payout for the week.</p>
+                </div>
+                <form id="hoursForm">
+                    <label for="weeklyHours">Total Hours Worked This Week</label>
+                    <input type="number" id="weeklyHours" min="0" step="0.5" placeholder="e.g. 52" required>
+                    <label for="hourlyRate">Hourly Rate (₹)</label>
+                    <input type="number" id="hourlyRate" min="0" step="1" placeholder="e.g. 350" required>
+                    <button type="submit">Review Compliance</button>
+                </form>
+                <p id="hoursStatus" class="status-line"></p>
+                <div id="hoursResult" class="calc-result"></div>
+            </article>
+
+            <article class="calc-card" id="maternityCalculator">
+                <div>
+                    <h2>Maternity Benefit Estimator</h2>
+                    <p>Estimate eligibility and payable amount under the Maternity Benefit Act.</p>
+                </div>
+                <form id="maternityForm">
+                    <label for="daysWorked">Days Worked in the Last 12 Months</label>
+                    <input type="number" id="daysWorked" min="0" step="1" placeholder="e.g. 240" required>
+                    <label for="avgDailyWage">Average Daily Wage (₹)</label>
+                    <input type="number" id="avgDailyWage" min="0" step="1" placeholder="e.g. 1500" required>
+                    <label for="childrenCount">No. of Existing Children</label>
+                    <select id="childrenCount">
+                        <option value="1">No existing child / expecting first or second child</option>
+                        <option value="2">Second child</option>
+                        <option value="3">Third child or more</option>
+                    </select>
+                    <button type="submit">Check Eligibility</button>
+                </form>
+                <p id="maternityStatus" class="status-line"></p>
+                <div id="maternityResult" class="calc-result"></div>
+            </article>
+
+            <article class="calc-card" id="consumerCalculator">
+                <div>
+                    <h2>Consumer Compensation</h2>
+                    <p>Combine refund, out-of-pocket costs, and delay penalties for a demand notice.</p>
+                </div>
+                <form id="consumerForm">
+                    <label for="purchaseAmount">Purchase / Service Amount (₹)</label>
+                    <input type="number" id="purchaseAmount" min="0" step="100" placeholder="e.g. 25000" required>
+                    <label for="issueType">Issue Type</label>
+                    <select id="issueType">
+                        <option value="defective_product">Defective Product</option>
+                        <option value="service_deficiency">Service Deficiency</option>
+                        <option value="refund_delay">Refund Delay</option>
+                    </select>
+                    <label for="delayDays">Delay / Inconvenience Days</label>
+                    <input type="number" id="delayDays" min="0" step="1" value="0">
+                    <label for="outOfPocket">Out-of-Pocket Expenses (₹)</label>
+                    <input type="number" id="outOfPocket" min="0" step="100" value="0">
+                    <button type="submit">Estimate Compensation</button>
+                </form>
+                <p id="consumerStatus" class="status-line"></p>
+                <div id="consumerResult" class="calc-result"></div>
+            </article>
+        </section>
+
+        <section class="faq-card">
+            <h3>How to use these estimates responsibly?</h3>
+            <ul>
+                <li>Use the outputs to start conversations; final entitlements depend on contracts, company policy, and adjudicating authorities.</li>
+                <li>Share the generated numbers in emails or legal notices only after verifying with a qualified professional.</li>
+                <li>For maternity benefits, maintain payslips and attendance records to support eligibility.</li>
+                <li>For consumer disputes, preserve invoices, chats, and complaint numbers to attach with notices.</li>
+            </ul>
+            <p style="margin-top: 18px; color: #bdb6aa;">Need a customised demand letter? Combine this calculator with the <a href="/legal-notices.html" style="color: #f7dba7;">Legal Notice Generator</a> or ask Saathi in chat.</p>
+        </section>
+    </div>
+
+    <script>
+        const currencyFormat = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
+
+        function setStatus(id, message, tone = 'info') {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = message;
+            el.classList.remove('error', 'success');
+            if (tone === 'error') {
+                el.classList.add('error');
+            } else if (tone === 'success') {
+                el.classList.add('success');
+            }
+        }
+
+        function showResult(id, markup) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = markup;
+            el.classList.add('active');
+        }
+
+        async function postCalculator(url, payload) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Unable to calculate right now.');
+            }
+            return data.result;
+        }
+
+        document.getElementById('noticeForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setStatus('noticeStatus', 'Evaluating entitlement...', 'info');
+            try {
+                const payload = {
+                    companyType: document.getElementById('companyType').value,
+                    yearsOfService: document.getElementById('yearsOfService').value
+                };
+                const result = await postCalculator('/api/calculators/notice-period', payload);
+                const markup = `
+                    <div class="result-number">${result.notice_days} days</div>
+                    <p>Statutory minimum: ${result.statutory_min} days · Cap: ${result.statutory_cap} days</p>
+                    <p style="color:#bdb6aa;">${result.rationale}</p>
+                `;
+                setStatus('noticeStatus', 'Recommendation ready ✓', 'success');
+                showResult('noticeResult', markup);
+            } catch (error) {
+                console.error(error);
+                setStatus('noticeStatus', error.message, 'error');
+            }
+        });
+
+        document.getElementById('hoursForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setStatus('hoursStatus', 'Checking compliance...', 'info');
+            try {
+                const payload = {
+                    totalWeeklyHours: document.getElementById('weeklyHours').value,
+                    hourlyRate: document.getElementById('hourlyRate').value
+                };
+                const result = await postCalculator('/api/calculators/work-hours', payload);
+                const badge = result.compliant ? '✅ Within limit' : '⚠️ Overtime triggered';
+                const markup = `
+                    <div class="result-number">${badge}</div>
+                    <ul class="result-list">
+                        <li>Total this week: <strong>${result.total_week_hours} hrs</strong></li>
+                        <li>Legal limit: ${result.legal_limit_hours} hrs/week</li>
+                        <li>Overtime accrued: ${result.overtime_hours} hrs</li>
+                        <li>Estimated overtime pay: <strong>${currencyFormat.format(result.overtime_pay)}</strong></li>
+                    </ul>
+                    <p style="color:#bdb6aa;">${result.message}. Overtime assumed at 2x hourly rate.</p>
+                `;
+                setStatus('hoursStatus', 'Analysis ready ✓', 'success');
+                showResult('hoursResult', markup);
+            } catch (error) {
+                console.error(error);
+                setStatus('hoursStatus', error.message, 'error');
+            }
+        });
+
+        document.getElementById('maternityForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setStatus('maternityStatus', 'Evaluating benefits...', 'info');
+            try {
+                const payload = {
+                    daysWorked: document.getElementById('daysWorked').value,
+                    averageDailyWage: document.getElementById('avgDailyWage').value,
+                    childrenCount: document.getElementById('childrenCount').value
+                };
+                const result = await postCalculator('/api/calculators/maternity-benefit', payload);
+                const badge = result.eligible ? '✅ Eligible' : '⚠️ Not yet eligible';
+                const markup = `
+                    <div class="result-number">${badge}</div>
+                    <p>Payable leave: ${result.payable_weeks} weeks (${result.payable_days} days)</p>
+                    <p>Estimated benefit: <strong>${currencyFormat.format(result.estimated_benefit)}</strong></p>
+                    <p style="color:#bdb6aa;">${result.note}</p>
+                `;
+                setStatus('maternityStatus', result.eligible ? 'Eligible ✓' : 'Needs more qualifying days', result.eligible ? 'success' : 'info');
+                showResult('maternityResult', markup);
+            } catch (error) {
+                console.error(error);
+                setStatus('maternityStatus', error.message, 'error');
+            }
+        });
+
+        document.getElementById('consumerForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setStatus('consumerStatus', 'Crunching numbers...', 'info');
+            try {
+                const payload = {
+                    purchaseAmount: document.getElementById('purchaseAmount').value,
+                    issueType: document.getElementById('issueType').value,
+                    delayDays: document.getElementById('delayDays').value,
+                    outOfPocket: document.getElementById('outOfPocket').value
+                };
+                const result = await postCalculator('/api/calculators/consumer-compensation', payload);
+                const markup = `
+                    <div class="result-number">${currencyFormat.format(result.recommended_total)}</div>
+                    <ul class="result-list">
+                        <li>Refundable amount: ${currencyFormat.format(result.refundable_amount)}</li>
+                        <li>Compensation component: ${currencyFormat.format(result.compensation_component)}</li>
+                        <li>Delay damages: ${currencyFormat.format(result.delay_compensation)}</li>
+                        <li>Out-of-pocket costs: ${currencyFormat.format(result.out_of_pocket)}</li>
+                    </ul>
+                    <p style="color:#bdb6aa;">${result.note}</p>
+                `;
+                setStatus('consumerStatus', 'Estimated claim value ready ✓', 'success');
+                showResult('consumerResult', markup);
+            } catch (error) {
+                console.error(error);
+                setStatus('consumerStatus', error.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

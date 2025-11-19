@@ -4,6 +4,7 @@ Railway.app deployment ready with Google Gemini API
 Enhanced with Legal Document Generation - Production Ready
 """
 import os
+from typing import Any, Dict
 from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string
 from flask_cors import CORS
 import requests
@@ -255,6 +256,33 @@ def serve_legal_help():
             return f.read()
     except FileNotFoundError:
         return "Legal help directory not found", 404
+
+@app.route('/legal-notices.html')
+def serve_legal_notices():
+    """Serve the legal notices landing page"""
+    try:
+        with open('legal_notices.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Legal notices page not found", 404
+
+@app.route('/agreement-templates.html')
+def serve_agreement_templates():
+    """Serve the agreement templates landing page"""
+    try:
+        with open('agreement_templates.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Agreement templates page not found", 404
+
+@app.route('/legal-calculators.html')
+def serve_legal_calculators():
+    """Serve the advanced legal calculators page"""
+    try:
+        with open('legal_calculators.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Legal calculators page not found", 404
 
 @app.route('/language-selection.html')
 def serve_language_selection():
@@ -621,6 +649,583 @@ def create_pdf_document(title, content, filename):
     except Exception as e:
         logger.error(f"Error creating PDF: {str(e)}")
         return None
+
+"""Pre-generated Legal Notice Templates"""
+LEGAL_NOTICE_TEMPLATES = {
+    "salary-not-paid": {
+        "title": "LEGAL NOTICE FOR NON-PAYMENT OF SALARY",
+        "description": "Formally demand pending salary payments from an employer with statutory references.",
+        "tags": ["employment", "salary", "wages"],
+        "content": """
+LEGAL NOTICE FOR NON-PAYMENT OF SALARY
+
+To,
+[Employer Name]
+[Company Name]
+[Company Address]
+
+Date: [Current Date]
+
+Subject: Demand for Release of Pending Salary
+
+Sir/Madam,
+
+1. I was employed with your organization as [Designation] from [Start Date] to [End Date/current date].
+2. Salary for the months of [Pending Months] amounting to ₹[Amount] remains unpaid despite repeated reminders.
+3. Non-payment of salary violates Section 5 of the Payment of Wages Act, 1936 and relevant provisions of the Shops & Establishments Act.
+
+DEMAND:
+Release the entire pending salary with statutory interest within seven (7) days of receiving this notice. Failing compliance, I shall be constrained to initiate legal proceedings before the Labour Commissioner/appropriate court at your cost.
+
+Yours faithfully,
+[Employee Name]
+[Address]
+[Phone]
+[Email]
+
+*This template is for informational purposes only. Consult a licensed advocate before issuing any legal notice.*
+        """,
+    },
+    "rent-default": {
+        "title": "NOTICE TO TENANT FOR RENT DEFAULT",
+        "description": "Ask a tenant to clear outstanding rent or vacate the premises within a statutory window.",
+        "tags": ["property", "landlord", "rent"],
+        "content": """
+NOTICE TO TENANT FOR RENT DEFAULT
+
+To,
+[Tenant Name]
+[Property Address]
+
+Date: [Current Date]
+
+Subject: Demand for Payment of Outstanding Rent & Possession
+
+Sir/Madam,
+
+1. You occupy the above premises as a tenant under Rent Agreement dated [Agreement Date] at a monthly rent of ₹[Rent Amount].
+2. Rent for the period [Pending Period] amounting to ₹[Outstanding Amount] is unpaid.
+3. Under Section 106 of the Transfer of Property Act, 1882, you are hereby called upon to pay the entire arrears within fifteen (15) days OR vacate and hand over peaceful possession of the premises.
+
+In case of failure, eviction proceedings and recovery of damages will be initiated without further notice.
+
+Sincerely,
+[Landlord Name]
+[Address]
+[Phone]
+
+*This template is for informational purposes only. Consult a licensed advocate before issuing any legal notice.*
+        """,
+    },
+    "consumer-complaint": {
+        "title": "LEGAL NOTICE UNDER CONSUMER PROTECTION ACT, 2019",
+        "description": "Alert a seller/service provider about deficiency and demand redressal before filing a consumer case.",
+        "tags": ["consumer", "refund", "product"],
+        "content": """
+LEGAL NOTICE UNDER CONSUMER PROTECTION ACT, 2019
+
+To,
+[Company/Seller Name]
+[Address]
+
+Date: [Current Date]
+
+Subject: Deficiency in Service / Defective Goods
+
+Dear Sir/Madam,
+
+1. I purchased/availed [Product/Service] on [Purchase Date] for ₹[Amount] evidenced by Invoice No. [Number].
+2. The product/service is defective / deficient because [Issue Description].
+3. Under Sections 2(11) & 2(47) of the Consumer Protection Act, 2019, you are liable to rectify the defect, replace the product, or refund the consideration with compensation.
+
+DEMAND:
+Kindly resolve the issue by [Desired Remedy] within fifteen (15) days failing which I shall file a complaint before the appropriate Consumer Disputes Redressal Commission seeking compensation, litigation costs, and punitive damages.
+
+Sincerely,
+[Consumer Name]
+[Address]
+[Contact]
+
+*This template is for informational purposes only. Consult a licensed advocate before issuing any legal notice.*
+        """,
+    },
+    "cheque-bounce": {
+        "title": "SECTION 138 NI ACT NOTICE FOR DISHONOURED CHEQUE",
+        "description": "Serve a statutory notice within 30 days of cheque return demanding payment under Section 138.",
+        "tags": ["banking", "cheque", "ni-act"],
+        "content": """
+NOTICE UNDER SECTION 138 OF THE NEGOTIABLE INSTRUMENTS ACT, 1881
+
+To,
+[Drawer Name]
+[Address]
+
+Date: [Current Date]
+
+Subject: Demand notice for dishonoured cheque
+
+Sir/Madam,
+
+1. You issued Cheque No. [Cheque Number] dated [Cheque Date] for ₹[Amount] drawn on [Bank].
+2. The cheque was presented within its validity but returned unpaid on [Return Date] with remark "[Return Reason]".
+3. You are hereby called upon under Section 138 to make payment of ₹[Amount] within fifteen (15) days from receipt of this notice.
+
+Failure will compel me to initiate criminal prosecution punishable with imprisonment up to two years and/or fine up to twice the cheque amount, in addition to civil recovery.
+
+Regards,
+[Payee Name]
+[Address]
+[Phone]
+
+*This template is for informational purposes only. Consult a licensed advocate before issuing any legal notice.*
+        """,
+    }
+}
+
+
+def generate_notice_pdf(notice_key: str):
+    """Create a PDF for a pre-defined legal notice template."""
+    template = LEGAL_NOTICE_TEMPLATES.get(notice_key)
+    if not template:
+        return None
+    return create_pdf_document(template["title"], template["content"], f"{notice_key}.pdf")
+
+
+"""Pre-generated Agreement Templates"""
+AGREEMENT_TEMPLATES = {
+    "rent-agreement": {
+        "title": "RESIDENTIAL RENT AGREEMENT",
+        "description": "Standard 11-month rent agreement with clauses for deposit, maintenance, and termination.",
+        "tags": ["property", "lease", "housing"],
+        "content": """
+RENT AGREEMENT
+
+This Rent Agreement is executed on [Date] between:
+
+LANDLORD: [Landlord Name], residing at [Address]
+TENANT: [Tenant Name], residing at [Address]
+
+1. PROPERTY: Residential premises at [Property Address].
+2. TERM: 11 months commencing from [Start Date] to [End Date].
+3. RENT: ₹[Monthly Rent] payable on or before the 5th of each month.
+4. DEPOSIT: ₹[Security Deposit] refundable at the end of tenancy subject to deductions for damages/unpaid dues.
+5. USAGE: Residential use only; no subletting without written consent.
+6. MAINTENANCE: Minor repairs up to ₹1000/month by tenant; structural repairs by landlord.
+7. TERMINATION: Either party may terminate with 30-day written notice.
+
+Signed:
+Landlord ____________________  Date: _______
+Tenant   ____________________  Date: _______
+
+Witness 1: __________________  Witness 2: __________________
+
+*Template is for reference only. Consult an advocate for registration/stamping requirements.*
+        """,
+    },
+    "freelance-contract": {
+        "title": "FREELANCE SERVICES AGREEMENT",
+        "description": "Defines scope, deliverables, payment, and IP ownership for freelancers.",
+        "tags": ["services", "freelance", "contract"],
+        "content": """
+FREELANCE SERVICES AGREEMENT
+
+This Agreement is made on [Date] between:
+
+CLIENT: [Client Name], having office at [Address]
+FREELANCER: [Freelancer Name], residing at [Address]
+
+1. PROJECT SCOPE: [Describe Deliverables].
+2. TIMELINE: Work begins on [Start Date] and completes by [End Date].
+3. FEES: Fixed fee of ₹[Amount] payable [Milestones/30 days].
+4. INTELLECTUAL PROPERTY: Upon full payment, all work product and IP transfer to Client; Freelancer may showcase work in portfolio unless NDA signed.
+5. CONFIDENTIALITY: Parties agree not to disclose confidential information received during engagement.
+6. TERMINATION: Either party may terminate with 7-day notice; Client pays for work completed till termination.
+7. GOVERNING LAW: This agreement is governed by Indian law.
+
+Signed:
+Client __________________  Date: _______
+Freelancer _____________  Date: _______
+
+*Template is informational. Customize clauses for tax, GST, or jurisdictional needs.*
+        """,
+    },
+    "employment-offer": {
+        "title": "EMPLOYMENT OFFER LETTER",
+        "description": "Issue a formal offer letter with role, salary, benefits, and joining requirements.",
+        "tags": ["employment", "HR", "offer"],
+        "content": """
+EMPLOYMENT OFFER LETTER
+
+Date: [Date]
+
+To,
+[Candidate Name]
+[Address]
+
+Subject: Offer of Employment – [Role]
+
+Dear [Name],
+
+We are pleased to offer you the position of [Designation] with [Company] effective [Joining Date]. Key terms:
+
+• CTC: ₹[Amount] per annum (breakup annexed)
+• Probation: [Months] months
+• Working Hours: [Days/Hours]
+• Leave: [Details]
+• Benefits: [PF/Insurance/etc.]
+
+Please report with originals of KYC, education, experience certificates. This offer is subject to background verification and acceptance of company policies.
+
+Kindly sign and return a copy of this letter as acceptance.
+
+For [Company Name]
+
+________________________
+[Authorized Signatory]
+
+I accept the offer under the stated terms.
+
+Signature: __________________ Date: ______
+
+*Template for reference. Adapt to state-specific Shops & Establishments requirements.*
+        """,
+    },
+    "nda": {
+        "title": "MUTUAL NON-DISCLOSURE AGREEMENT (NDA)",
+        "description": "Mutual confidentiality agreement for sharing sensitive business information.",
+        "tags": ["confidentiality", "NDA", "business"],
+        "content": """
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This NDA is made on [Date] between:
+
+Party A: [Company A]
+Party B: [Company B]
+
+1. CONFIDENTIAL INFORMATION: Includes all non-public business, technical, or financial information disclosed orally or in writing.
+2. PURPOSE: Parties intend to explore [Purpose].
+3. OBLIGATIONS: Recipients shall protect information with reasonable care, use solely for Purpose, and not disclose to third parties.
+4. EXCLUSIONS: Information already known, publicly available, or independently developed is excluded.
+5. TERM: Confidentiality obligations survive for three (3) years from date of disclosure.
+6. GOVERNING LAW: Indian law; courts at [Jurisdiction].
+
+IN WITNESS WHEREOF, parties execute this NDA on the date first written.
+
+Party A __________________   Party B __________________
+Name: ____________________   Name: ____________________
+Title: _____________________  Title: _____________________
+
+*Template is informational. Consider stamping/registration per state laws.*
+        """,
+    },
+    "sale-of-goods": {
+        "title": "SALE OF GOODS AGREEMENT",
+        "description": "Documents sale of goods between buyer and seller with warranties and delivery terms.",
+        "tags": ["commerce", "goods", "sales"],
+        "content": """
+SALE OF GOODS AGREEMENT
+
+This Agreement is dated [Date] between:
+
+SELLER: [Seller Name], having office at [Address]
+BUYER: [Buyer Name], having office at [Address]
+
+1. GOODS: Seller agrees to sell and Buyer agrees to purchase [Description of Goods].
+2. PRICE: Total consideration ₹[Amount], payable [Advance/On Delivery].
+3. DELIVERY: Goods shall be delivered on/before [Delivery Date] at [Location]. Risk passes upon delivery; title transfers upon full payment.
+4. WARRANTY: Goods shall conform to specifications and be free from defects for [Warranty Period].
+5. INDEMNITY: Buyer indemnifies Seller against misuse; Seller indemnifies Buyer against IP infringement.
+6. GOVERNING LAW: Indian Contract Act, 1872; disputes at [Jurisdiction].
+
+Signed:
+Seller __________________  Date: _______
+Buyer  __________________  Date: _______
+
+*Template for reference. Include GST/E-way bill clauses as needed.*
+        """,
+    }
+}
+
+
+def generate_agreement_pdf(agreement_key: str):
+    template = AGREEMENT_TEMPLATES.get(agreement_key)
+    if not template:
+        return None
+    return create_pdf_document(template["title"], template["content"], f"{agreement_key}.pdf")
+
+
+def _safe_float(value: Any, default: float | None = None) -> float | None:
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_int(value: Any, default: int | None = None) -> int | None:
+    try:
+        if value is None:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _calculator_error(message: str, status_code: int = 400):
+    return jsonify({"status": "error", "message": message}), status_code
+
+
+def calculate_notice_period(company_type: str, years_of_service: float) -> Dict[str, Any]:
+    company_rules = {
+        "it_services": {"base": 30, "per_year": 5, "cap": 90},
+        "manufacturing": {"base": 15, "per_year": 4, "cap": 60},
+        "startup": {"base": 14, "per_year": 3, "cap": 45},
+        "government": {"base": 30, "per_year": 7, "cap": 120},
+    }
+    rules = company_rules.get(company_type, company_rules["it_services"])
+    recommended = rules["base"] + max(0, years_of_service) * rules["per_year"]
+    recommended = min(rules["cap"], round(recommended / 5) * 5)
+    rationale = (
+        "Recommendation derived from Shops & Establishments norms for "
+        f"{company_type.replace('_', ' ').title()} and years of service." )
+    return {
+        "notice_days": int(max(rules["base"], recommended)),
+        "statutory_min": rules["base"],
+        "statutory_cap": rules["cap"],
+        "rationale": rationale
+    }
+
+
+def calculate_work_hours(total_week_hours: float, hourly_rate: float) -> Dict[str, Any]:
+    legal_limit = 48
+    overtime_hours = max(0.0, total_week_hours - legal_limit)
+    compliance = total_week_hours <= legal_limit
+    overtime_pay = overtime_hours * hourly_rate * 2  # double rate per Factories Act guidance
+    return {
+        "total_week_hours": round(total_week_hours, 2),
+        "legal_limit_hours": legal_limit,
+        "overtime_hours": round(overtime_hours, 2),
+        "overtime_pay": round(overtime_pay, 2),
+        "compliant": compliance,
+        "message": "Within prescribed limit" if compliance else "Overtime pay required"
+    }
+
+
+def calculate_maternity_benefit(days_worked: int, avg_daily_wage: float, children_count: int) -> Dict[str, Any]:
+    eligible = days_worked >= 80
+    if children_count <= 2:
+        weeks = 26
+    else:
+        weeks = 12
+    payable_days = weeks * 7
+    total_benefit = avg_daily_wage * payable_days if eligible else 0
+    return {
+        "eligible": eligible,
+        "required_days": 80,
+        "payable_weeks": weeks,
+        "payable_days": payable_days,
+        "estimated_benefit": round(total_benefit, 2),
+        "note": "Eligibility based on Maternity Benefit (Amendment) Act, 2017"
+    }
+
+
+def calculate_consumer_compensation(purchase_amount: float, issue_type: str, delay_days: int, out_of_pocket: float) -> Dict[str, Any]:
+    issue_multiplier = {
+        "defective_product": 0.1,
+        "service_deficiency": 0.15,
+        "refund_delay": 0.12,
+    }
+    multiplier = issue_multiplier.get(issue_type, 0.1)
+    penalty = purchase_amount * multiplier
+    delay_comp = max(0, delay_days) * 100
+    total = purchase_amount + out_of_pocket + penalty + delay_comp
+    return {
+        "refundable_amount": round(purchase_amount, 2),
+        "compensation_component": round(penalty, 2),
+        "delay_compensation": round(delay_comp, 2),
+        "out_of_pocket": round(out_of_pocket, 2),
+        "recommended_total": round(total, 2),
+        "note": "Indicative computation referencing Consumer Protection Act, 2019"
+    }
+
+
+@app.route('/api/calculators/notice-period', methods=['POST'])
+def api_notice_period():
+    payload: Dict[str, Any] = request.get_json(silent=True) or {}
+    company_raw = payload.get('companyType', 'it_services')
+    company_type = str(company_raw or 'it_services').lower()
+    years = _safe_float(payload.get('yearsOfService'), None)
+
+    if years is None or years < 0:
+        return _calculator_error("Please provide yearsOfService as a non-negative number.")
+
+    allowed_company_types = {"it_services", "manufacturing", "startup", "government"}
+    if company_type not in allowed_company_types:
+        company_type = 'it_services'
+
+    result = calculate_notice_period(company_type, years)
+    return jsonify({
+        "status": "success",
+        "input": {
+            "companyType": company_type,
+            "yearsOfService": years
+        },
+        "result": result
+    })
+
+
+@app.route('/api/calculators/work-hours', methods=['POST'])
+def api_work_hours():
+    payload: Dict[str, Any] = request.get_json(silent=True) or {}
+    total_hours = _safe_float(payload.get('totalWeeklyHours'), None)
+    hourly_rate = _safe_float(payload.get('hourlyRate'), None)
+
+    if total_hours is None or total_hours < 0:
+        return _calculator_error("Provide totalWeeklyHours as a non-negative number.")
+    if hourly_rate is None or hourly_rate < 0:
+        return _calculator_error("Provide hourlyRate as a non-negative number.")
+
+    result = calculate_work_hours(total_hours, hourly_rate)
+    return jsonify({
+        "status": "success",
+        "input": {
+            "totalWeeklyHours": total_hours,
+            "hourlyRate": hourly_rate
+        },
+        "result": result
+    })
+
+
+@app.route('/api/calculators/maternity-benefit', methods=['POST'])
+def api_maternity_benefit():
+    payload: Dict[str, Any] = request.get_json(silent=True) or {}
+    days_worked = _safe_int(payload.get('daysWorked'), None)
+    avg_daily_wage = _safe_float(payload.get('averageDailyWage'), None)
+    children_count = _safe_int(payload.get('childrenCount'), 1) or 1
+
+    if days_worked is None or days_worked < 0:
+        return _calculator_error("daysWorked must be 0 or more")
+    if avg_daily_wage is None or avg_daily_wage <= 0:
+        return _calculator_error("averageDailyWage must be greater than 0")
+    if children_count < 1:
+        children_count = 1
+
+    result = calculate_maternity_benefit(days_worked, avg_daily_wage, children_count)
+    return jsonify({
+        "status": "success",
+        "input": {
+            "daysWorked": days_worked,
+            "averageDailyWage": avg_daily_wage,
+            "childrenCount": children_count
+        },
+        "result": result
+    })
+
+
+@app.route('/api/calculators/consumer-compensation', methods=['POST'])
+def api_consumer_compensation():
+    payload: Dict[str, Any] = request.get_json(silent=True) or {}
+    purchase_amount = _safe_float(payload.get('purchaseAmount'), None)
+    issue_raw = payload.get('issueType', 'defective_product')
+    issue_type = str(issue_raw or 'defective_product').lower()
+    delay_days = _safe_int(payload.get('delayDays'), 0) or 0
+    out_of_pocket = _safe_float(payload.get('outOfPocket'), 0.0) or 0.0
+
+    if purchase_amount is None or purchase_amount <= 0:
+        return _calculator_error("purchaseAmount must be greater than 0")
+    if out_of_pocket < 0:
+        return _calculator_error("outOfPocket cannot be negative")
+    if delay_days < 0:
+        delay_days = 0
+
+    allowed_issue_types = {"defective_product", "service_deficiency", "refund_delay"}
+    if issue_type not in allowed_issue_types:
+        issue_type = 'defective_product'
+
+    result = calculate_consumer_compensation(purchase_amount, issue_type, delay_days, out_of_pocket)
+    return jsonify({
+        "status": "success",
+        "input": {
+            "purchaseAmount": purchase_amount,
+            "issueType": issue_type,
+            "delayDays": delay_days,
+            "outOfPocket": out_of_pocket
+        },
+        "result": result
+    })
+
+
+@app.route('/api/agreements', methods=['GET'])
+def list_agreements():
+    agreements = [
+        {
+            "slug": key,
+            "title": data["title"],
+            "description": data["description"],
+            "tags": data["tags"]
+        }
+        for key, data in AGREEMENT_TEMPLATES.items()
+    ]
+    return jsonify({
+        "status": "success",
+        "count": len(agreements),
+        "agreements": agreements
+    })
+
+
+@app.route('/agreements/<agreement_key>', methods=['GET'])
+def download_agreement_template(agreement_key: str):
+    pdf_data = generate_agreement_pdf(agreement_key)
+    if not pdf_data:
+        return jsonify({
+            "status": "error",
+            "error": "AGREEMENT_NOT_FOUND",
+            "message": "Agreement template not available"
+        }), 404
+
+    filename = f"{agreement_key}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@app.route('/api/legal-notices', methods=['GET'])
+def list_legal_notices():
+    """Return metadata for the available legal notice templates."""
+    notices = [
+        {
+            "slug": key,
+            "title": data["title"],
+            "description": data["description"],
+            "tags": data["tags"]
+        }
+        for key, data in LEGAL_NOTICE_TEMPLATES.items()
+    ]
+    return jsonify({
+        "status": "success",
+        "count": len(notices),
+        "notices": notices
+    })
+
+
+@app.route('/notices/<notice_key>', methods=['GET'])
+def download_legal_notice(notice_key: str):
+    """Stream the requested legal notice as a PDF download."""
+    pdf_data = generate_notice_pdf(notice_key)
+    if not pdf_data:
+        return jsonify({
+            "status": "error",
+            "error": "NOTICE_NOT_FOUND",
+            "message": "Notice template not available"
+        }), 404
+
+    filename = f"{notice_key}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 def call_gemini_api(messages, user_language='english'):
     """Call Google Gemini API with language support"""
