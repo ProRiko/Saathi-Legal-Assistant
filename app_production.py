@@ -4,12 +4,13 @@ Railway.app deployment ready with Google Gemini API
 Enhanced with Legal Document Generation - Production Ready
 """
 import os
+import uuid
 from typing import Any, Dict
 from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string
 from flask_cors import CORS
 import requests
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 from collections import defaultdict, deque
 from reportlab.lib.pagesizes import letter, A4
@@ -54,6 +55,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONSENT_LOG_PATH = os.path.join(BASE_DIR, 'consent_logs.jsonl')
+CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
 
 # Production CORS configuration
 if os.environ.get('RAILWAY_ENVIRONMENT_NAME') == 'production':
@@ -200,15 +204,42 @@ def serve_enhanced_ux_js():
     except FileNotFoundError:
         return "Enhanced UX JS file not found", 404
 
+
+@app.route('/consent-modal.js')
+def serve_consent_script():
+    """Serve the global consent modal script"""
+    try:
+        return send_file('consent-modal.js', mimetype='application/javascript')
+    except FileNotFoundError:
+        return "Consent script not found", 404
+
+
+def inject_consent_modal(html: str) -> str:
+    """Ensure every rendered HTML page loads the consent modal script."""
+    if 'consent-modal.js' in html:
+        return html
+    if '</body>' in html:
+        return html.replace('</body>', f"{CONSENT_SCRIPT_TAG}\n</body>")
+    return f"{html}{CONSENT_SCRIPT_TAG}"
+
+
+def render_html_with_consent(filename: str, missing_message: str = "Page not found"):
+    """Read an HTML file, inject consent script, and handle missing files gracefully."""
+    try:
+        with open(filename, 'r', encoding='utf-8') as file_handle:
+            return inject_consent_modal(file_handle.read())
+    except FileNotFoundError:
+        return missing_message, 404
+
 # Root route - simple and reliable
 @app.route('/')
 def home():
     """Main landing page"""
     try:
-        return send_file('landing.html')
+        return render_html_with_consent('landing.html')
     except FileNotFoundError:
         # Fallback HTML for emergencies
-        return '''<!DOCTYPE html>
+        fallback = '''<!DOCTYPE html>
 <html>
 <head><title>Saathi Legal Assistant</title></head>
 <body>
@@ -217,17 +248,19 @@ def home():
     <p>Status: Server Online ✅</p>
     <a href="/test">Test Minimal Version</a>
 </body>
-</html>''', 200
+</html>'''
+        return inject_consent_modal(fallback), 200
 
 @app.route('/test')
 def test_page():
     """Test minimal page to troubleshoot issues"""
     try:
-        return send_file('test_minimal.html')
+        return render_html_with_consent('test_minimal.html')
     except FileNotFoundError:
-        return '''<!DOCTYPE html>
+        fallback = '''<!DOCTYPE html>
 <html><head><title>Test</title></head>
-<body><h1>Test page - Server is working ✅</h1></body></html>''', 200
+<body><h1>Test page - Server is working ✅</h1></body></html>'''
+        return inject_consent_modal(fallback), 200
 
 @app.route('/manifest.json')
 def serve_manifest():
@@ -242,65 +275,37 @@ def serve_manifest():
 @app.route('/case_tracker.html')
 def serve_case_tracker():
     """Serve the legal case tracker page"""
-    try:
-        with open('case_tracker.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Case tracker not found", 404
+    return render_html_with_consent('case_tracker.html', 'Case tracker not found')
 
 @app.route('/legal-help.html')
 def serve_legal_help():
     """Serve the legal help directory page"""
-    try:
-        with open('legal_help.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Legal help directory not found", 404
+    return render_html_with_consent('legal_help.html', 'Legal help directory not found')
 
 @app.route('/legal-notices.html')
 def serve_legal_notices():
     """Serve the legal notices landing page"""
-    try:
-        with open('legal_notices.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Legal notices page not found", 404
+    return render_html_with_consent('legal_notices.html', 'Legal notices page not found')
 
 @app.route('/agreement-templates.html')
 def serve_agreement_templates():
     """Serve the agreement templates landing page"""
-    try:
-        with open('agreement_templates.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Agreement templates page not found", 404
+    return render_html_with_consent('agreement_templates.html', 'Agreement templates page not found')
 
 @app.route('/legal-calculators.html')
 def serve_legal_calculators():
     """Serve the advanced legal calculators page"""
-    try:
-        with open('legal_calculators.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Legal calculators page not found", 404
+    return render_html_with_consent('legal_calculators.html', 'Legal calculators page not found')
 
 @app.route('/language-selection.html')
 def serve_language_selection():
     """Serve the language selection page"""
-    try:
-        with open('language_selection.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Language selection page not found", 404
+    return render_html_with_consent('language_selection.html', 'Language selection page not found')
 
 @app.route('/calculator.html') 
 def serve_calculator():
     """Serve the simple calculator page"""
-    try:
-        with open('simple_calculator.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Calculator page not found", 404
+    return render_html_with_consent('simple_calculator.html', 'Calculator page not found')
 
 @app.route('/version')
 def version_check():
@@ -976,6 +981,16 @@ def _calculator_error(message: str, status_code: int = 400):
     return jsonify({"status": "error", "message": message}), status_code
 
 
+def log_consent_event(event: Dict[str, Any]) -> None:
+    """Persist consent approvals for compliance tracking."""
+    try:
+        with open(CONSENT_LOG_PATH, 'a', encoding='utf-8') as log_file:
+            log_file.write(json.dumps(event) + '\n')
+    except Exception as exc:
+        logger.error("Failed to persist consent event: %s", exc)
+        raise
+
+
 def calculate_notice_period(company_type: str, years_of_service: float) -> Dict[str, Any]:
     company_rules = {
         "it_services": {"base": 30, "per_year": 5, "cap": 90},
@@ -1153,6 +1168,36 @@ def api_consumer_compensation():
             "outOfPocket": out_of_pocket
         },
         "result": result
+    })
+
+
+@app.route('/api/consent', methods=['POST'])
+def record_consent():
+    """Capture user consent decisions before unlocking the experience."""
+    payload = request.get_json(silent=True) or {}
+    session_id = payload.get('session_id') or f"anon_{uuid.uuid4().hex}"
+    timestamp = payload.get('timestamp') or datetime.now(timezone.utc).isoformat()
+    scope = payload.get('scope') or 'core-app-access'
+
+    event = {
+        "session_id": session_id,
+        "timestamp": timestamp,
+        "scope": scope,
+        "ip": request.remote_addr,
+        "user_agent": request.headers.get('User-Agent', ''),
+    }
+
+    try:
+        log_consent_event(event)
+    except Exception:
+        return jsonify({
+            "status": "error",
+            "message": "Unable to record consent at this time"
+        }), 500
+
+    return jsonify({
+        "status": "success",
+        "message": "Consent recorded"
     })
 
 
