@@ -312,9 +312,16 @@ def serve_legal_calculators():
     return render_html_with_consent('legal_calculators.html', 'Legal calculators page not found')
 
 @app.route('/language-selection.html')
+@app.route('/language_selection.html')
 def serve_language_selection():
     """Serve the language selection page"""
     return render_html_with_consent('language_selection.html', 'Language selection page not found')
+
+
+@app.route('/privacy.html')
+def serve_privacy_policy():
+    """Serve the privacy policy page"""
+    return render_html_with_consent('privacy.html', 'Privacy policy not found')
 
 @app.route('/calculator.html') 
 def serve_calculator():

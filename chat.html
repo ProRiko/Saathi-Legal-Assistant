@@ -14,8 +14,27 @@
     <link rel="stylesheet" href="enhanced-ux.css">
     <link rel="stylesheet" href="device-compatibility.css">
     <title>Saathi Legal Assistant - Chat</title>
+    <style>
+        .info-banner {
+            margin: 10px 0 20px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.04);
+            color: #dcd3c3;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .info-banner strong {
+            color: #f7dba7;
+        }
+        .info-banner a {
+            color: #f7dba7;
+        }
+    </style>
 </head>
-body>
+<body>
     <!-- Header -->
     <div class="header">
         <h1>🏛️ Saathi Legal Assistant</h1>
@@ -40,6 +59,12 @@ body>
 
     <!-- Chat Container -->
     <div class="chat-container">
+        <div class="info-banner">
+            <span>⚖️</span>
+            <div>
+                <strong>General legal information only.</strong> Chat responses are not a substitute for professional advice. Review sensitive details with a qualified advocate and read our <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.
+            </div>
+        </div>
         <!-- Rate limit warning -->
         <div id="rateLimitWarning" class="rate-limit-warning">
             ⏰ Rate limit reached. Please wait <span id="countdown"></span> before sending another message.

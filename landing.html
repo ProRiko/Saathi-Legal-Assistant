@@ -74,6 +74,29 @@
                 text-align: center;
             }
         }
+        .info-banner {
+            margin: 20px 0 30px;
+            padding: 18px 22px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #f4f1e8;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .info-banner strong {
+            color: #f7dba7;
+        }
+        .info-banner a {
+            color: #f7dba7;
+            text-decoration: underline;
+        }
+        .footer a {
+            color: #f7dba7;
+            text-decoration: none;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -116,18 +139,6 @@
                     </ul>
                 </div>
             </div>
-            <!-- User Details Section -->
-            <div class="name-section">
-                <h2>Welcome! Let's get started</h2>
-                <p>Please enter your details for a personalized consultation experience:</p>
-                <div class="name-input-group">
-                    <input type="text" id="userName" class="name-input" placeholder="Enter your full name" maxlength="50" style="margin-bottom: 10px;">
-                    <input type="tel" id="userPhone" class="name-input" placeholder="Enter your phone number (10 digits)" maxlength="10" pattern="[0-9]{10}">
-                    <button onclick="saveDetails()" class="save-name-btn">Save Details</button>
-                </div>
-                <div id="welcomeMessage" class="welcome-message" style="display: none;"></div>
-            </div>
-
             <!-- Legal Disclaimer -->
             <div class="disclaimer">
                 <div class="disclaimer-icon">⚖️</div>
@@ -139,6 +150,13 @@
                 <p>• We are <strong>not responsible</strong> for the accuracy, completeness, or legal validity of AI-generated content</p>
                 <p>• <strong>Your conversations may be logged</strong> to improve our services</p>
                 <p><strong>By proceeding, you acknowledge and accept these terms.</strong></p>
+            </div>
+
+            <div class="info-banner">
+                <span>ℹ️</span>
+                <div>
+                    <strong>Information only:</strong> Saathi shares general legal guidance, not attorney-client advice. Review our <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a> to learn how your inputs are handled.
+                </div>
             </div>
 
             <!-- Features Section -->
@@ -192,7 +210,7 @@
                     <div class="feature-cta">Download Templates →</div>
                 </div>
 
-                <div class="feature-card" onclick="window.location.href='case-tracker.html'" style="cursor: pointer;">
+                <div class="feature-card" onclick="openCaseTracker()" style="cursor: pointer;">
                     <div class="feature-icon">📋</div>
                     <h3>Legal Case Tracker</h3>
                     <p>Track your legal cases, court dates, deadlines, and case progress all in one place</p>
@@ -234,7 +252,7 @@
                     <a href="/legal-help.html" class="quick-action-btn">
                         🏛️ Find Legal Help
                     </a>
-                    <a href="/case-tracker.html" class="quick-action-btn">
+                    <a href="#" onclick="openCaseTracker()" class="quick-action-btn">
                         📋 Track Cases
                     </a>
                     <a href="/language-selection.html" class="quick-action-btn">
@@ -244,6 +262,18 @@
                         💬 Ask Legal Questions
                     </a>
                 </div>
+            </div>
+
+            <!-- User Details Section -->
+            <div class="name-section" id="personalizationBlock">
+                <h2>Save your details (optional)</h2>
+                <p>Personalize reminders and the Case Tracker by sharing your name and phone. You can also continue as a guest.</p>
+                <div class="name-input-group">
+                    <input type="text" id="userName" class="name-input" placeholder="Enter your full name" maxlength="50" style="margin-bottom: 10px;">
+                    <input type="tel" id="userPhone" class="name-input" placeholder="Enter your phone number (10 digits)" maxlength="10" pattern="[0-9]{10}">
+                    <button onclick="saveDetails()" class="save-name-btn">Save Details</button>
+                </div>
+                <div id="welcomeMessage" class="welcome-message" style="display: none;"></div>
             </div>
 
             <!-- CTA Section -->
@@ -261,7 +291,7 @@
         <!-- Footer -->
         <div class="footer">
             <p>&copy; 2025 Saathi Legal Assistant. Built with ❤️ for the legal community.</p>
-            <p>Made in India 🇮🇳 | Powered by AI</p>
+            <p>Made in India 🇮🇳 | Powered by AI <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p>
         </div>
     </div>
 
@@ -420,11 +450,6 @@
         
         // Start consultation
         function startConsultation() {
-            if (!userName || !userPhone) {
-                alert('Please save your details first');
-                return;
-            }
-            
             // Show loading
             document.getElementById('loading').style.display = 'block';
             document.getElementById('startBtn').style.display = 'none';
@@ -436,8 +461,8 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    user_name: userName,
-                    user_phone: userPhone,
+                    user_name: userName || 'Guest',
+                    user_phone: userPhone || '',
                     timestamp: new Date().toISOString(),
                     session_id: generateSessionId()
                 })
@@ -458,6 +483,15 @@
         // Generate unique session ID
         function generateSessionId() {
             return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function openCaseTracker() {
+            if (!userName || !userPhone) {
+                alert('Please save your name and phone to use the Case Tracker.');
+                document.getElementById('personalizationBlock').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            window.location.href = 'case-tracker.html';
         }
         
         // Allow Enter key to save details
