@@ -21,6 +21,9 @@ Saathi is a free, AI-powered legal assistant that provides instant legal informa
 - ⚡ **Instant Responses** - Get help in seconds, 24/7
 - 🛡️ **Privacy First** - No personal data stored or tracked
 - 🎯 **Smart Intent Detection** - Categorizes questions (property, employment, family law, etc.)
+- ⚠️ **Legal Notice Generator** - Advocate-style PDF notices for salary delays, rent defaults, and consumer issues
+- 📄 **Agreement Templates** - Ready-to-sign NDAs, freelance contracts, and sale-of-goods drafts
+- 🧮 **Compliance Calculators** - Estimate notice period, overtime pay, maternity benefits, and consumer compensation
 
 ## 🏛️ **Legal Areas Covered**
 
@@ -52,6 +55,7 @@ Saathi is a free, AI-powered legal assistant that provides instant legal informa
 - **Flask** - Web framework
 - **OpenRouter API** - AI language model access
 - **Mistral 7B** - AI model for legal responses
+- **ReportLab** - PDF engine powering notices and agreements
 
 ### Frontend  
 - **HTML5/CSS3** - Modern web interface
@@ -72,6 +76,23 @@ Saathi is a free, AI-powered legal assistant that provides instant legal informa
 6. **Redeploy**: trigger a fresh deploy and confirm `/health` returns HTTP 200 before announcing the service.
 
 > ℹ️ Pillow is no longer part of the production requirements because PDF generation with ReportLab does not depend on it. This keeps the build lean and avoids failing wheels on newer Python versions.
+
+## 📄 Ready-Made Documents
+
+- **Legal Notice Generator** (`/legal-notices.html`) fetches `/api/legal-notices` and offers instant PDF downloads at `/notices/<slug>`.
+- **Agreement Templates** (`/agreement-templates.html`) lists `/api/agreements` and streams PDF drafts from `/agreements/<slug>`.
+- Templates live in `app_production.py`, so updating copy or adding formats is a simple dictionary edit plus optional landing card tweak.
+
+## 🧮 Compliance Calculators
+
+| Calculator | Endpoint | Sample Payload |
+|------------|----------|----------------|
+| Notice Period | `POST /api/calculators/notice-period` | `{ "companyType": "it_services", "yearsOfService": 3.5 }` |
+| Working Hours & Overtime | `POST /api/calculators/work-hours` | `{ "totalWeeklyHours": 55, "hourlyRate": 320 }` |
+| Maternity Benefit | `POST /api/calculators/maternity-benefit` | `{ "daysWorked": 120, "averageDailyWage": 1500, "childrenCount": 1 }` |
+| Consumer Compensation | `POST /api/calculators/consumer-compensation` | `{ "purchaseAmount": 8500, "issueType": "refund_delay", "delayDays": 12, "outOfPocket": 600 }` |
+
+The new UI (`legal_calculators.html`) consumes these APIs to render result cards with INR formatting, compliance tips, and links back to the AI chat for deeper help.
 
 ## 📊 **Performance**
 
