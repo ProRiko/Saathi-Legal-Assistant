@@ -59,13 +59,27 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONSENT_LOG_PATH = os.path.join(BASE_DIR, 'consent_logs.jsonl')
 CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
 
-# Production CORS configuration
-if os.environ.get('RAILWAY_ENVIRONMENT_NAME') == 'production':
-    # Production: Restrict CORS to your domain
-    CORS(app, origins=['https://your-domain.railway.app'], methods=['GET', 'POST', 'OPTIONS'])
-else:
-    # Development: Allow all origins
-    CORS(app, origins=['*'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+
+def parse_allowed_origins() -> list[str]:
+    """Read ALLOWED_ORIGINS env var (comma-separated) for flexible deployments."""
+    raw = os.getenv('ALLOWED_ORIGINS', '*')
+    if not raw:
+        return ['*']
+    if raw.strip() == '*':
+        return ['*']
+    origins = [origin.strip() for origin in raw.split(',') if origin.strip()]
+    return origins or ['*']
+
+
+ALLOWED_ORIGINS = parse_allowed_origins()
+ALLOW_WILDCARD = ALLOWED_ORIGINS == ['*']
+CORS_ORIGIN = '*' if ALLOW_WILDCARD else ALLOWED_ORIGINS
+CORS_CREDENTIALS = not ALLOW_WILDCARD
+
+CORS(app,
+     origins=CORS_ORIGIN,
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     supports_credentials=CORS_CREDENTIALS)
 
 # Initialize security middleware
 if SECURITY_AVAILABLE:
@@ -787,6 +801,42 @@ Regards,
     }
 }
 
+# Template review metadata is stored separately so content writers can update
+# review dates and risk tags without digging through the full template text.
+REVIEW_METADATA_DEFAULT = {
+    "reviewed_on": "Not reviewed yet",
+    "reviewed_by": "Not reviewed yet",
+    "risk_level": "Unverified",
+    "sample_preview": "Sample preview is coming soon."
+}
+
+LEGAL_NOTICE_METADATA = {
+    "salary-not-paid": {
+        "reviewed_on": "2025-10-05",
+        "reviewed_by": "Senior Legal Analyst",
+        "risk_level": "medium",
+        "sample_preview": "Dear HR Team, This is to demand the release of my pending salary for April and May 2025 within seven days, failing which I shall approach the Labour Commissioner."
+    },
+    "rent-default": {
+        "reviewed_on": "2025-09-20",
+        "reviewed_by": "Property Law Specialist",
+        "risk_level": "medium",
+        "sample_preview": "Tenant is hereby directed to clear ₹45,000 arrears within 15 days or hand over peaceful possession of Flat 203, Green Meadows, pursuant to Section 106 TPA."
+    },
+    "consumer-complaint": {
+        "reviewed_on": "2025-08-30",
+        "reviewed_by": "Consumer Rights Advocate",
+        "risk_level": "low",
+        "sample_preview": "I purchased a washing machine on 12 Aug 2025 for ₹28,500. The motor failed within 10 days; kindly replace the unit or refund the price with compensation within 15 days."
+    },
+    "cheque-bounce": {
+        "reviewed_on": "2025-11-01",
+        "reviewed_by": "Banking Law Counsel",
+        "risk_level": "high",
+        "sample_preview": "Cheque No. 123456 dated 10 Oct 2025 for ₹2,40,000 was returned for insufficient funds. Payment is demanded within fifteen days to avoid NI Act prosecution."
+    }
+}
+
 
 def generate_notice_pdf(notice_key: str):
     """Create a PDF for a pre-defined legal notice template."""
@@ -950,6 +1000,46 @@ Buyer  __________________  Date: _______
         """,
     }
 }
+
+AGREEMENT_TEMPLATE_METADATA = {
+    "rent-agreement": {
+        "reviewed_on": "2025-10-18",
+        "reviewed_by": "Real Estate Counsel",
+        "risk_level": "medium",
+        "sample_preview": "11-month lease between Mr. Rao (landlord) and Ms. Kapoor (tenant) for Flat 5B, ₹32,000 monthly rent with ₹1,50,000 refundable deposit and 30-day termination clause."
+    },
+    "freelance-contract": {
+        "reviewed_on": "2025-09-05",
+        "reviewed_by": "Contracts Lead",
+        "risk_level": "low",
+        "sample_preview": "Freelancer agrees to deliver brand guidelines by 15 Nov for ₹75,000 with IP transfer upon payment and a 7-day termination window."
+    },
+    "employment-offer": {
+        "reviewed_on": "2025-10-28",
+        "reviewed_by": "HR Compliance Manager",
+        "risk_level": "medium",
+        "sample_preview": "Offer to Ms. Shah for Senior Product Manager with ₹36 LPA CTC, 6-month probation, and joining on 2 Dec subject to background verification."
+    },
+    "nda": {
+        "reviewed_on": "2025-07-12",
+        "reviewed_by": "Corporate Counsel",
+        "risk_level": "low",
+        "sample_preview": "Mutual NDA between TechLabs and VendorCo to explore a cybersecurity pilot, confidentiality surviving three years with Bangalore jurisdiction."
+    },
+    "sale-of-goods": {
+        "reviewed_on": "2025-09-30",
+        "reviewed_by": "Commercial Contracts Specialist",
+        "risk_level": "medium",
+        "sample_preview": "Seller agrees to ship 200 smart meters at ₹8,000 each with delivery in 30 days, warranty of 12 months, and Ahmedabad jurisdiction."
+    }
+}
+
+
+def get_template_metadata(source: Dict[str, Dict[str, str]], slug: str) -> Dict[str, str]:
+    """Merge defaults with per-template metadata so UI always has complete info."""
+    merged = REVIEW_METADATA_DEFAULT.copy()
+    merged.update(source.get(slug, {}))
+    return merged
 
 
 def generate_agreement_pdf(agreement_key: str):
@@ -1203,15 +1293,19 @@ def record_consent():
 
 @app.route('/api/agreements', methods=['GET'])
 def list_agreements():
-    agreements = [
-        {
+    agreements = []
+    for key, data in AGREEMENT_TEMPLATES.items():
+        meta = get_template_metadata(AGREEMENT_TEMPLATE_METADATA, key)
+        agreements.append({
             "slug": key,
             "title": data["title"],
             "description": data["description"],
-            "tags": data["tags"]
-        }
-        for key, data in AGREEMENT_TEMPLATES.items()
-    ]
+            "tags": data["tags"],
+            "reviewed_on": meta["reviewed_on"],
+            "reviewed_by": meta["reviewed_by"],
+            "risk_level": meta["risk_level"],
+            "sample_preview": meta["sample_preview"],
+        })
     return jsonify({
         "status": "success",
         "count": len(agreements),
@@ -1239,15 +1333,19 @@ def download_agreement_template(agreement_key: str):
 @app.route('/api/legal-notices', methods=['GET'])
 def list_legal_notices():
     """Return metadata for the available legal notice templates."""
-    notices = [
-        {
+    notices = []
+    for key, data in LEGAL_NOTICE_TEMPLATES.items():
+        meta = get_template_metadata(LEGAL_NOTICE_METADATA, key)
+        notices.append({
             "slug": key,
             "title": data["title"],
             "description": data["description"],
-            "tags": data["tags"]
-        }
-        for key, data in LEGAL_NOTICE_TEMPLATES.items()
-    ]
+            "tags": data["tags"],
+            "reviewed_on": meta["reviewed_on"],
+            "reviewed_by": meta["reviewed_by"],
+            "risk_level": meta["risk_level"],
+            "sample_preview": meta["sample_preview"],
+        })
     return jsonify({
         "status": "success",
         "count": len(notices),

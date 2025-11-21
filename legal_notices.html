@@ -37,6 +37,46 @@
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 20px;
         }
+        .cta-banner {
+            margin: 30px 0 36px;
+            padding: 28px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(247, 107, 28, 0.12));
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 18px;
+        }
+        .cta-banner h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #f7dba7;
+        }
+        .cta-banner p {
+            margin: 6px 0 0;
+            color: #dcd3c3;
+        }
+        .cta-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .cta-actions a {
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 12px 20px;
+            font-weight: 600;
+        }
+        .cta-actions .primary {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #1a1309;
+        }
+        .cta-actions .secondary {
+            border: 1px solid rgba(244, 241, 232, 0.35);
+            color: #f4f1e8;
+        }
         .notice-card {
             background: rgba(19, 26, 38, 0.9);
             border: 1px solid rgba(244, 241, 232, 0.08);
@@ -79,6 +119,7 @@
             justify-content: space-between;
             align-items: center;
             margin-top: 12px;
+            gap: 10px;
         }
         .notice-actions button,
         .notice-actions a {
@@ -103,6 +144,11 @@
             color: #f4f1e8;
             border: 1px solid rgba(244, 241, 232, 0.25);
         }
+        .notice-actions .sample-btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f7dba7;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
         .notice-actions button:hover,
         .notice-actions a:hover {
             opacity: 0.85;
@@ -112,6 +158,31 @@
             color: #bdb7ad;
             margin-top: 6px;
         }
+        .notice-review {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        .review-pill {
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #f4f1e8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .risk-pill {
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            text-transform: capitalize;
+        }
+        .risk-pill.low { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .risk-pill.medium { background: rgba(249, 168, 37, 0.2); color: #fbbf24; }
+        .risk-pill.high { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+        .risk-pill.unverified { background: rgba(255, 255, 255, 0.1); color: #e5e7eb; }
         .notice-empty,
         .notice-error {
             text-align: center;
@@ -140,12 +211,64 @@
             color: #f4f1e8;
             border: 1px solid rgba(244, 241, 232, 0.3);
         }
+        .sample-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .sample-modal.active {
+            display: flex;
+        }
+        .sample-modal::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+        }
+        .modal-card {
+            position: relative;
+            background: #111827;
+            border-radius: 20px;
+            padding: 28px;
+            width: min(520px, 90vw);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+            z-index: 1;
+        }
+        .modal-card h3 {
+            margin-top: 0;
+            color: #f7dba7;
+        }
+        .modal-card p {
+            color: #dcd3c3;
+            white-space: pre-line;
+        }
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: transparent;
+            border: none;
+            color: #f4f1e8;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
         @media (max-width: 600px) {
             .page-shell {
                 padding: 25px 15px 60px;
             }
             .page-header h1 {
                 font-size: 1.9rem;
+            }
+            .cta-banner {
+                flex-direction: column;
+            }
+            .cta-actions {
+                width: 100%;
+                justify-content: flex-start;
             }
         }
     </style>
@@ -162,31 +285,95 @@
             </div>
         </div>
 
+        <div class="cta-banner">
+            <div>
+                <h2>Need a human-ready draft?</h2>
+                <p>Preview vetted language, download PDFs, or jump into chat before sending your notice.</p>
+            </div>
+            <div class="cta-actions">
+                <a class="primary" href="/chat.html">💬 Chat with Saathi</a>
+                <a class="secondary" href="/legal-calculators.html">🧮 Check Entitlements</a>
+            </div>
+        </div>
+
         <div id="noticeGrid" class="notice-grid"></div>
         <div id="noticeState"></div>
     </div>
 
+    <div id="sampleModal" class="sample-modal" aria-hidden="true">
+        <div class="modal-card">
+            <button class="modal-close" type="button" aria-label="Close preview" onclick="closeSampleModal()">×</button>
+            <p class="review-pill" id="modalMeta"></p>
+            <span class="risk-pill" id="modalRisk"></span>
+            <h3 id="modalTitle"></h3>
+            <p id="modalSample"></p>
+        </div>
+    </div>
+
     <script>
+        const noticeState = document.getElementById('noticeState');
+        const modal = document.getElementById('sampleModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalSample = document.getElementById('modalSample');
+        const modalMeta = document.getElementById('modalMeta');
+        const modalRisk = document.getElementById('modalRisk');
+
+        function corsHelpMessage() {
+            return `Unable to reach Saathi APIs from ${window.location.origin}. If you're self-hosting, add this origin to ALLOWED_ORIGINS.`;
+        }
+
+        function normalizedRisk(level) {
+            return String(level || 'unverified').toLowerCase();
+        }
+
+        function openSampleModal(notice) {
+            modalTitle.textContent = notice.title;
+            modalSample.textContent = notice.sample_preview || 'Sample preview coming soon.';
+            modalMeta.textContent = `Reviewed on ${notice.reviewed_on} · ${notice.reviewed_by}`;
+            const risk = normalizedRisk(notice.risk_level);
+            modalRisk.textContent = `${risk} risk`;
+            modalRisk.className = `risk-pill ${risk}`;
+            modal.setAttribute('aria-hidden', 'false');
+            modal.classList.add('active');
+        }
+
+        function closeSampleModal() {
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.classList.contains('active')) {
+                closeSampleModal();
+            }
+        });
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeSampleModal();
+            }
+        });
+
         async function loadNotices() {
             const grid = document.getElementById('noticeGrid');
-            const state = document.getElementById('noticeState');
             grid.innerHTML = '';
-            state.textContent = 'Loading notices...';
+            noticeState.textContent = 'Loading notices...';
 
             try {
                 const res = await fetch('/api/legal-notices');
                 if (!res.ok) throw new Error('Failed to load templates');
                 const data = await res.json();
 
-                state.textContent = '';
+                noticeState.textContent = '';
                 if (!data.notices || !data.notices.length) {
-                    state.innerHTML = '<div class="notice-empty">No templates available yet. Check back soon!</div>';
+                    noticeState.innerHTML = '<div class="notice-empty">No templates available yet. Check back soon!</div>';
                     return;
                 }
 
                 data.notices.forEach((notice) => {
                     const card = document.createElement('div');
                     card.className = 'notice-card';
+                    const riskClass = normalizedRisk(notice.risk_level);
                     card.innerHTML = `
                         <div>
                             <h3>${notice.title}</h3>
@@ -194,9 +381,14 @@
                             <div class="notice-tags">
                                 ${(notice.tags || []).map(tag => `<span class="notice-tag">${tag}</span>`).join('')}
                             </div>
-                            <div class="notice-meta">Format: PDF template · Last updated ${new Date().getFullYear()}</div>
+                            <div class="notice-meta">Format: PDF template</div>
+                            <div class="notice-review">
+                                <span class="review-pill">Reviewed on ${notice.reviewed_on} · ${notice.reviewed_by}</span>
+                                <span class="risk-pill ${riskClass}">${riskClass} risk</span>
+                            </div>
                         </div>
                         <div class="notice-actions">
+                            <button class="sample-btn" type="button">👁 Preview Sample</button>
                             <a class="download-btn" href="/notices/${notice.slug}" target="_blank" rel="noopener">
                                 ⬇️ Download PDF
                             </a>
@@ -205,11 +397,14 @@
                             </a>
                         </div>
                     `;
+                    const previewBtn = card.querySelector('.sample-btn');
+                    previewBtn.addEventListener('click', () => openSampleModal(notice));
                     grid.appendChild(card);
                 });
             } catch (error) {
                 console.error(error);
-                state.innerHTML = '<div class="notice-error">Unable to load notices right now. Please refresh in a moment.</div>';
+                const message = error instanceof TypeError ? corsHelpMessage() : 'Unable to load notices right now. Please refresh in a moment.';
+                noticeState.innerHTML = `<div class="notice-error">${message}</div>`;
             }
         }
 

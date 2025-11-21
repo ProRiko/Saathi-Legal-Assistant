@@ -148,6 +148,13 @@ Add your preferred linters/test suites as needed.
 
 > 📝 The `render.yaml` also works as infrastructure-as-code if you prefer `render blueprint deploy` workflows.
 
+### Configuring CORS & Allowed Origins
+
+- `ALLOWED_ORIGINS` accepts a comma-separated list (e.g., `https://saathi.example.com,https://admin.example.com`).
+- Use `*` during local development, but **never** in production—list each domain that will host the HTML.
+- The frontend now surfaces an explicit CORS hint if it cannot talk to the Flask API: “Add <origin> to ALLOWED_ORIGINS.” Use that origin string verbatim when updating your env vars.
+- Restart the Render service (or your local server) after changing the variable so Flask reloads the whitelist.
+
 ## 📄 API Reference Snapshot
 
 | Endpoint | Method | Purpose |

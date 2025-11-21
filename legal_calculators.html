@@ -80,6 +80,45 @@
         }
         .calc-card {
             background: rgba(19, 26, 38, 0.92);
+        .cta-banner {
+            margin: 30px 0;
+            padding: 28px;
+            border-radius: 24px;
+            background: linear-gradient(120deg, rgba(138, 180, 248, 0.12), rgba(247, 107, 28, 0.1));
+            border: 1px solid rgba(138, 180, 248, 0.25);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            align-items: center;
+        }
+        .cta-banner h2 {
+            margin: 0;
+            color: #f7dba7;
+        }
+        .cta-banner p {
+            margin: 8px 0 0;
+            color: #d7d0c5;
+        }
+        .cta-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .cta-actions a {
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 12px 20px;
+            font-weight: 600;
+        }
+        .cta-actions .primary {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #1a1309;
+        }
+        .cta-actions .secondary {
+            border: 1px solid rgba(244, 241, 232, 0.3);
+            color: #f4f1e8;
+        }
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 20px;
             padding: 24px;
@@ -97,6 +136,32 @@
             margin: 0;
             color: #d6d0c4;
             font-size: 0.95rem;
+        }
+        .calc-meta {
+            margin-top: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .meta-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
+        .meta-pills span {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f4f1e8;
+        }
+        .calc-meta p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #bcb5a8;
         }
         label {
             font-size: 0.85rem;
@@ -191,6 +256,9 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+            .cta-banner {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -207,6 +275,17 @@
             </div>
         </header>
 
+        <div class="cta-banner">
+            <div>
+                <h2>Preview compliance logic</h2>
+                <p>Each calculator references the latest Indian labour and consumer rules. Review the sample scenarios below.</p>
+            </div>
+            <div class="cta-actions">
+                <a class="primary" href="/chat.html">💬 Ask a Lawyer Bot</a>
+                <a class="secondary" href="/agreement-templates.html">📄 Download Templates</a>
+            </div>
+        </div>
+
         <div class="tip-bar">
             <span>⚠️</span>
             <div>
@@ -219,6 +298,7 @@
                 <div>
                     <h2>Notice Period Advisor</h2>
                     <p>Get a benchmark notice period based on company type and continuous service.</p>
+                    <div class="calc-meta" data-calculator="notice-period"></div>
                 </div>
                 <form id="noticeForm">
                     <label for="companyType">Company / Sector</label>
@@ -240,6 +320,7 @@
                 <div>
                     <h2>Working Hours & Overtime</h2>
                     <p>Check Factories Act compliance and estimated overtime payout for the week.</p>
+                    <div class="calc-meta" data-calculator="work-hours"></div>
                 </div>
                 <form id="hoursForm">
                     <label for="weeklyHours">Total Hours Worked This Week</label>
@@ -256,6 +337,7 @@
                 <div>
                     <h2>Maternity Benefit Estimator</h2>
                     <p>Estimate eligibility and payable amount under the Maternity Benefit Act.</p>
+                    <div class="calc-meta" data-calculator="maternity"></div>
                 </div>
                 <form id="maternityForm">
                     <label for="daysWorked">Days Worked in the Last 12 Months</label>
@@ -278,6 +360,7 @@
                 <div>
                     <h2>Consumer Compensation</h2>
                     <p>Combine refund, out-of-pocket costs, and delay penalties for a demand notice.</p>
+                    <div class="calc-meta" data-calculator="consumer"></div>
                 </div>
                 <form id="consumerForm">
                     <label for="purchaseAmount">Purchase / Service Amount (₹)</label>
@@ -333,17 +416,66 @@
             el.classList.add('active');
         }
 
+        function corsHelpMessage() {
+            return `Unable to reach Saathi APIs from ${window.location.origin}. Add this origin to ALLOWED_ORIGINS if you host your own instance.`;
+        }
+
         async function postCalculator(url, payload) {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
-            if (!response.ok || data.status !== 'success') {
-                throw new Error(data.message || 'Unable to calculate right now.');
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (!response.ok || data.status !== 'success') {
+                    throw new Error(data.message || 'Unable to calculate right now.');
+                }
+                return data.result;
+            } catch (error) {
+                if (error instanceof TypeError) {
+                    throw new Error(corsHelpMessage());
+                }
+                throw error;
             }
-            return data.result;
+        }
+
+        function hydrateCalculatorMeta() {
+            const metadata = {
+                'notice-period': {
+                    reviewed_on: '2025-10-10',
+                    reviewed_by: 'Labour Counsel',
+                    sample: 'Example: 3.5 years in IT services recommends ~40 days with a statutory cap of 90 days.'
+                },
+                'work-hours': {
+                    reviewed_on: '2025-09-22',
+                    reviewed_by: 'Factories Act Specialist',
+                    sample: '52 hour work week at ₹350/hr triggers 4 overtime hours paid at double rate.'
+                },
+                'maternity': {
+                    reviewed_on: '2025-08-30',
+                    reviewed_by: 'Women & Child Law Analyst',
+                    sample: '240 working days with ₹1,500/day qualifies for 26 weeks (~₹273,000) benefit.'
+                },
+                'consumer': {
+                    reviewed_on: '2025-11-04',
+                    reviewed_by: 'Consumer Court Practitioner',
+                    sample: '₹25,000 faulty appliance refund + ₹2,500 penalty + ₹5,000 expenses recommended when refund delayed 15 days.'
+                }
+            };
+
+            document.querySelectorAll('.calc-meta').forEach((block) => {
+                const key = block.dataset.calculator;
+                const info = metadata[key];
+                if (!info) return;
+                block.innerHTML = `
+                    <div class="meta-pills">
+                        <span>Reviewed on ${info.reviewed_on}</span>
+                        <span>${info.reviewed_by}</span>
+                    </div>
+                    <p>${info.sample}</p>
+                `;
+            });
         }
 
         document.getElementById('noticeForm').addEventListener('submit', async (event) => {
@@ -449,6 +581,8 @@
                 setStatus('consumerStatus', error.message, 'error');
             }
         });
+
+        hydrateCalculatorMeta();
     </script>
 </body>
 </html>

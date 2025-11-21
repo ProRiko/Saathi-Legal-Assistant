@@ -15,6 +15,66 @@
     <link rel="stylesheet" href="enhanced-ux.css">
     <link rel="stylesheet" href="device-compatibility.css">
     <title>Saathi Legal Assistant - Your AI Legal Companion</title>
+    <style>
+        .hero-cta-banner {
+            margin: 30px auto 10px;
+            padding: 24px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(247, 219, 167, 0.15), rgba(118, 75, 162, 0.15));
+            border: 1px solid rgba(247, 219, 167, 0.3);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+        }
+        .hero-cta-banner h2 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: #f7dba7;
+        }
+        .hero-cta-banner p {
+            margin: 6px 0 0;
+            color: #dcd3c3;
+        }
+        .hero-cta-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .hero-cta-actions a,
+        .hero-cta-actions button {
+            text-decoration: none;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 22px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #1a1309;
+        }
+        .hero-cta-actions .primary {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+        }
+        .hero-cta-actions .secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f4f1e8;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        @media (max-width: 720px) {
+            .hero-cta-banner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .hero-cta-actions {
+                width: 100%;
+            }
+            .hero-cta-actions a,
+            .hero-cta-actions button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -26,6 +86,18 @@
             </div>
             <h1>Saathi Legal Assistant</h1>
             <p>Your AI-powered legal companion for consultation, document generation, and legal guidance</p>
+        </div>
+
+        <div class="hero-cta-banner">
+            <div>
+                <h2>Need answers fast?</h2>
+                <p>Jump into chat, browse legal notices, or run compliance calculators in two clicks.</p>
+            </div>
+            <div class="hero-cta-actions">
+                <button class="primary" type="button" onclick="startConsultation()">💬 Start Chat</button>
+                <a class="secondary" href="/legal-notices.html">⚠️ Legal Notices</a>
+                <a class="secondary" href="/legal-calculators.html">🧮 Calculators</a>
+            </div>
         </div>
 
                 <!-- Main Content -->
