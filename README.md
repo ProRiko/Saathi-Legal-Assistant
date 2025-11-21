@@ -1,129 +1,185 @@
 # 🏛️ Saathi Legal Assistant
 
-**AI-Powered Legal Information System for Indian Law - UPDATED**
+> AI-powered legal guidance, document templates, and compliance calculators crafted for Indian law and deployed on **Render**.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/saathi-legal-assistant)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://dashboard.render.com/deploy?repo=https://github.com/ProRiko/Saathi-Legal-Assistant)
 
-> **Saathi** (साथी) means "companion" in Hindi - Your trusted companion for legal guidance in India.
+## 🔗 Quick Links
 
-## 🎯 **What is Saathi Legal Assistant?**
+- **Live Demo (Render)**: https://saathi-legal-assistant.onrender.com
+- **Landing Experience**: `landing.html` (static HTML served by Flask)
+- **Blueprint**: `render.yaml` (Render auto-detects build/start commands and env vars)
 
-Saathi is a free, AI-powered legal assistant that provides instant legal information and guidance based on Indian law. Built with compassion and technology, it aims to make legal help accessible to everyone.
+## ✨ Feature Highlights
 
-**🌐 LIVE NOW**: https://web-production-62a3.up.railway.app/
+- 🤖 **AI Legal Copilot** – Gemini-powered chat (multi-language) with intent detection, memory, and guardrails.
+- ⚠️ **Legal Notice Generator** – Advocate-style notices (salary delay, rent default, consumer complaint, cheque bounce) rendered as PDFs.
+- 📄 **Agreement Templates** – Ready-to-sign rent agreements, NDAs, freelance contracts, offer letters, and sale-of-goods drafts.
+- 🧮 **Compliance Calculators** – Notice period, overtime & working hours, maternity benefits, and consumer compensation estimators.
+- 📋 **Case Tracker & Legal Help Directory** – Static tools for case logging plus curated legal aid resources.
+- 🌐 **Responsive Landing Page** – Accessible on mobile/desktop with device diagnostics, language selector, and quick actions.
 
-### ✨ **Features**
-
-- 🤖 **AI-Powered Responses** - Intelligent legal guidance using Mistral AI
-- 🇮🇳 **Indian Law Focused** - Specialized knowledge of Indian legal system
-- 📱 **Mobile Friendly** - Works perfectly on phones, tablets, and desktops  
-- 🆓 **Completely Free** - No registration, no payment required
-- ⚡ **Instant Responses** - Get help in seconds, 24/7
-- 🛡️ **Privacy First** - No personal data stored or tracked
-- 🎯 **Smart Intent Detection** - Categorizes questions (property, employment, family law, etc.)
-- ⚠️ **Legal Notice Generator** - Advocate-style PDF notices for salary delays, rent defaults, and consumer issues
-- 📄 **Agreement Templates** - Ready-to-sign NDAs, freelance contracts, and sale-of-goods drafts
-- 🧮 **Compliance Calculators** - Estimate notice period, overtime pay, maternity benefits, and consumer compensation
-
-## 🏛️ **Legal Areas Covered**
+## 🏛️ Legal Areas Covered
 
 | Category | Examples |
 |----------|----------|
-| 🏠 **Property Law** | Landlord-tenant disputes, security deposits, rent issues |
-| 💼 **Employment Law** | Salary disputes, wrongful termination, workplace rights |
-| 👨‍👩‍👧‍👦 **Family Law** | Marriage, divorce, custody, domestic issues |
-| 🛍️ **Consumer Rights** | Defective products, refunds, warranty claims |
-| ⚖️ **Criminal Law** | Arrests, bail, false accusations, police matters |
-| 📄 **Contract Law** | Agreements, breaches, terms and conditions |
-| 🏛️ **Civil Law** | Damages, compensation, negligence cases |
+| 🏠 Property Law | Landlord-tenant disputes, security deposits, rent issues |
+| 💼 Employment Law | Salary disputes, wrongful termination, workplace rights |
+| 👨‍👩‍👧‍👦 Family Law | Marriage, divorce, custody, domestic issues |
+| 🛍️ Consumer Rights | Defective products, refunds, warranty claims |
+| ⚖️ Criminal Law | Arrests, bail, false accusations, police matters |
+| 📄 Contract Law | Agreements, breaches, terms and conditions |
+| 🏛️ Civil Law | Damages, compensation, negligence cases |
 
-## 🚀 **Try It Live**
+## 📦 Product Modules
 
-**Web App**: [https://web-production-62a3.up.railway.app/](https://web-production-62a3.up.railway.app/)
+### 1. AI Legal Copilot
+- Routes: `/api/chat`, `/chat.html`
+- Inline language choice (English + 8 Indian languages) with response mirroring.
+- Rate-limited endpoints and security middleware.
 
-### 💬 **Example Questions**
+### 2. Legal Notice Generator
+- UI: `legal_notices.html`
+- API: `GET /api/legal-notices`, `GET /notices/<slug>`
+- Notices (salary not paid, rent default, consumer complaint, cheque bounce) rendered through ReportLab for advocate-ready PDFs.
 
-- "My landlord is not returning my security deposit. What can I do?"
-- "I was fired without proper notice. Is this legal in India?"
-- "What documents do I need for marriage registration?"
-- "Can I get a refund for a defective product I bought online?"
+### 3. Agreement Templates
+- UI: `agreement_templates.html`
+- API: `GET /api/agreements`, `GET /agreements/<slug>`
+- Templates stored as dictionaries in `app_production.py`; editing copy or adding tags is a quick metadata update.
 
-## 🛠️ **Technology Stack**
+### 4. Compliance Calculators
+- UI: `legal_calculators.html`
+- APIs:
+	- `POST /api/calculators/notice-period`
+	- `POST /api/calculators/work-hours`
+	- `POST /api/calculators/maternity-benefit`
+	- `POST /api/calculators/consumer-compensation`
+- Calculator cards perform validation, format INR outputs, and summarize compliance notes.
 
-### Backend
-- **Python 3.12** - Core language
-- **Flask** - Web framework
-- **OpenRouter API** - AI language model access
-- **Mistral 7B** - AI model for legal responses
-- **ReportLab** - PDF engine powering notices and agreements
+### 5. Auxiliary Tools
+- `case_tracker.html` for manual case logging.
+- `legal_help.html` to surface legal aid centers, NGOs, and courts.
+- `language_selection.html` plus device diagnostics for accessibility.
 
-### Frontend  
-- **HTML5/CSS3** - Modern web interface
-- **JavaScript** - Interactive features
-- **Responsive Design** - Mobile-first approach
+## 🧱 Architecture Overview
 
-### Deployment
-- **Railway.app** - Cloud hosting platform
-- **GitHub** - Version control
-- **Environment Variables** - Secure configuration
+| Layer | Tech | Notes |
+|-------|------|-------|
+| Backend | Flask (`app_production.py`) | Single entrypoint with chat, PDF generation, calculators, security, and static file serving. |
+| Templates | ReportLab | Reusable `create_pdf_document` helper streams advocate-ready PDFs. |
+| Frontend | Static HTML/CSS/JS (`landing.html`, `legal_*.html`) | Hosted by Flask; optional React prototype lives under `frontend/`. |
+| Data | `use_cases/legal_questions.json`, optional MongoDB | Conversational context logging + canned FAQ prompts. |
+| Deployment | Render (free plan) | `render.yaml` configures build/start commands and env vars. |
 
-#### Render quick start
-1. **Blueprint file**: `render.yaml` is checked in—Render will auto-detect it and pre-fill build/start commands plus required env vars.
-2. **Build command**: `pip install -r requirements.txt`
-3. **Start command**: `gunicorn --config gunicorn.conf.py app_production:app`
-4. **Python version**: keep the environment variable `PYTHON_VERSION=3.11.9` (Render currently defaults to Python 3.13 which breaks some wheels).
-5. **Core secrets**: configure `GEMINI_API_KEY`, `GEMINI_MODEL`, `ALLOWED_ORIGINS`, `SECRET_KEY`, and any MongoDB connection keys from `.env.template`.
-6. **Redeploy**: trigger a fresh deploy and confirm `/health` returns HTTP 200 before announcing the service.
+## 🛠️ Local Development
 
-> ℹ️ Pillow is no longer part of the production requirements because PDF generation with ReportLab does not depend on it. This keeps the build lean and avoids failing wheels on newer Python versions.
+### Prerequisites
+- Python 3.12+
+- Node 18+ (only if you plan to work inside `frontend/` React prototype)
+- A Gemini API key (Google AI Studio) for chat completion.
 
-## 📄 Ready-Made Documents
+### Setup Steps
+```bash
+git clone https://github.com/ProRiko/Saathi-Legal-Assistant.git
+cd Saathi-Legal-Assistant
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+cp .env.template .env
+```
 
-- **Legal Notice Generator** (`/legal-notices.html`) fetches `/api/legal-notices` and offers instant PDF downloads at `/notices/<slug>`.
-- **Agreement Templates** (`/agreement-templates.html`) lists `/api/agreements` and streams PDF drafts from `/agreements/<slug>`.
-- Templates live in `app_production.py`, so updating copy or adding formats is a simple dictionary edit plus optional landing card tweak.
+Fill the `.env` with at least:
 
-## 🧮 Compliance Calculators
+| Variable | Description |
+|----------|-------------|
+| `GEMINI_API_KEY` | Google Gemini key used by the chat + calculators. |
+| `GEMINI_MODEL` | Defaults to `gemini-1.5-flash`. |
+| `SECRET_KEY` | Flask session secret. |
+| `ALLOWED_ORIGINS` | CORS whitelist (use `*` for development). |
+| `MONGODB_URI` / `MONGO_DB_NAME` / `MONGO_COLLECTION_NAME` | Optional logging store. |
 
-| Calculator | Endpoint | Sample Payload |
-|------------|----------|----------------|
-| Notice Period | `POST /api/calculators/notice-period` | `{ "companyType": "it_services", "yearsOfService": 3.5 }` |
-| Working Hours & Overtime | `POST /api/calculators/work-hours` | `{ "totalWeeklyHours": 55, "hourlyRate": 320 }` |
-| Maternity Benefit | `POST /api/calculators/maternity-benefit` | `{ "daysWorked": 120, "averageDailyWage": 1500, "childrenCount": 1 }` |
-| Consumer Compensation | `POST /api/calculators/consumer-compensation` | `{ "purchaseAmount": 8500, "issueType": "refund_delay", "delayDays": 12, "outOfPocket": 600 }` |
+Then start the server:
 
-The new UI (`legal_calculators.html`) consumes these APIs to render result cards with INR formatting, compliance tips, and links back to the AI chat for deeper help.
+```bash
+python app_production.py
+```
 
-## 📊 **Performance**
+Visit `http://127.0.0.1:5000/` for the landing page. Static calculators/notices pages can be accessed directly (e.g., `/legal-calculators.html`).
 
-- ⚡ **Response Time**: 3-4 seconds average
-- 🔄 **Availability**: 99.9% uptime
-- 👥 **Concurrent Users**: Supports hundreds simultaneously  
-- 🌐 **Global Access**: Available worldwide
-- 📱 **Mobile Optimized**: Perfect experience on all devices
+### Optional React Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+Proxy API calls to `http://127.0.0.1:5000` as needed.
 
-## 🔒 **Privacy & Security**
+## 🧪 Smoke Tests
 
-- ✅ **No Data Collection** - Conversations are not stored
-- ✅ **HTTPS Encryption** - All communications encrypted
-- ✅ **No Registration** - Use instantly without accounts
-- ✅ **Anonymous Usage** - Complete privacy protection
-- ⚠️ **Legal Disclaimer** - General information only, not legal advice
+Use Python's bytecode compilation to catch syntax issues before deploying:
 
-## ⚖️ **Important Legal Notice**
+```bash
+python -m compileall app_production.py
+```
 
-> **Disclaimer**: Saathi Legal Assistant provides general legal information only. It is not a substitute for professional legal advice. Always consult with a qualified attorney for advice specific to your situation. The information provided may not be current or complete.
+Add your preferred linters/test suites as needed.
+
+## ☁️ Deploy to Render
+
+1. Push your fork to GitHub.
+2. Click **Deploy to Render** above (or create a new Web Service in the Render dashboard pointing to this repo).
+3. Render will auto-read `render.yaml`, pre-filling:
+	 - Build: `pip install -r requirements.txt`
+	 - Start: `gunicorn --config gunicorn.conf.py app_production:app`
+	 - Region: Singapore (free plan)
+4. Set the environment variables:
+
+| Key | Value / Notes |
+|-----|---------------|
+| `PYTHON_VERSION` | `3.11.9` (avoids wheel issues on Render's default Python 3.13). |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | Gemini access; keep the API key secret. |
+| `SECRET_KEY` | Strong random string. |
+| `ALLOWED_ORIGINS` | Public domain(s) for CORS. |
+| `MONGODB_URI`, `MONGO_DB_NAME`, `MONGO_COLLECTION_NAME` | Optional; required only if you enable persistent conversation logging. |
+
+5. Deploy. Once healthy, Render assigns `https://<service>.onrender.com`. Update the README's Live Demo link with the generated domain.
+6. Hit `/health` or `/version` to confirm the instance is responding before sharing publicly.
+
+> 📝 The `render.yaml` also works as infrastructure-as-code if you prefer `render blueprint deploy` workflows.
+
+## 📄 API Reference Snapshot
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/chat` | POST | Gemini-powered conversational replies with optional multilingual output. |
+| `/api/legal-notices` | GET | Returns metadata for each notice template. |
+| `/notices/<slug>` | GET | Streams PDF notice download. |
+| `/api/agreements` | GET | Lists agreement templates with tags and descriptions. |
+| `/agreements/<slug>` | GET | Streams PDF agreement download. |
+| `/api/calculators/notice-period` | POST | Computes recommended notice days based on company type/tenure. |
+| `/api/calculators/work-hours` | POST | Flags overtime and calculates double-rate payout. |
+| `/api/calculators/maternity-benefit` | POST | Estimates payable weeks/days and eligibility under MB Act. |
+| `/api/calculators/consumer-compensation` | POST | Suggests consumer dispute compensation package. |
+| `/health`, `/version` | GET | Lightweight health/version checks for monitoring. |
+
+## 📁 Key Files
+
+- `app_production.py` – Flask app, calculators, PDF dictionaries, rate limiting, and route handlers.
+- `legal_notices.html`, `agreement_templates.html`, `legal_calculators.html` – Feature-specific landing pages.
+- `landing.html` – Primary marketing and onboarding surface.
+- `render.yaml` – Render IaC blueprint.
+- `requirements.txt` – Python dependencies (ReportLab, Flask, Gunicorn, etc.).
+
+## 🔒 Privacy & Legal Notice
+
+- ✅ No accounts or personal-data storage.
+- ✅ HTTPS via Render.
+- ✅ Rate limiting + security headers guard abuse.
+- ⚠️ AI answers are informational only; always consult a qualified advocate before taking legal action.
+
+> **Disclaimer**: Saathi Legal Assistant provides general legal information only. It is not a substitute for professional legal advice. Always consult a qualified attorney for guidance specific to your case.
 
 ---
 
-### 🚀 **Ready to Help India?**
-
-Every star, share, and contribution helps make legal information more accessible to millions of people in India. Together, we can bridge the gap between people and legal knowledge.
-
-**[🌐 Try Saathi Legal Assistant Now](https://web-production-62a3.up.railway.app/)**
-
----
-
-*Made with ❤️ for the people of India 🇮🇳*
-
-**Status**: ✅ LIVE AND WORKING
+*Built with ❤️ for India 🇮🇳 — now running on Render's free tier so anyone can deploy a full-fledged legal companion at zero cost.*
