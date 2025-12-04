@@ -277,6 +277,19 @@
     </style>
 </head>
 <body>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="site-nav__brand">
+            <a href="/">Saathi Legal Assistant</a>
+        </div>
+        <div class="site-nav__links">
+            <a href="/">Home</a>
+            <a href="/tools.html">Tools</a>
+            <a href="/legal-notices.html">Notices</a>
+            <a href="/agreement-templates.html">Agreements</a>
+            <a href="/legal-calculators.html" class="is-active">Calculators</a>
+            <a href="/chat.html">Chat</a>
+        </div>
+    </nav>
     <div class="page-shell">
         <header class="page-header">
             <p class="tagline">Saathi Legal Assistant</p>
@@ -306,6 +319,8 @@
                 <a class="secondary" href="/agreement-templates.html">📄 Download Templates</a>
             </div>
         </div>
+
+        <div id="calculatorPrefill" class="prefill-callout" hidden></div>
 
         <div class="tip-bar">
             <span>⚠️</span>
@@ -381,7 +396,7 @@
                 <div>
                     <h2>Consumer Compensation</h2>
                     <p>Combine refund, out-of-pocket costs, and delay penalties for a demand notice.</p>
-                    <div class="calc-meta" data-calculator="consumer"></div>
+                    <div class="calc-meta" data-calculator="consumer-compensation"></div>
                 </div>
                 <form id="consumerForm">
                     <label for="purchaseAmount">Purchase / Service Amount (₹)</label>
@@ -417,6 +432,15 @@
 
     <script>
         const currencyFormat = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
+        const PREFILL_KEY = 'saathi_prefill_tool';
+        const prefillBanner = document.getElementById('calculatorPrefill');
+        let calculatorPrefill = consumePrefill('calculator');
+        const calculatorFormMap = {
+            'notice-period': { formId: 'noticeForm', cardId: 'noticeCalculator', label: 'Notice Period Advisor' },
+            'work-hours': { formId: 'hoursForm', cardId: 'hoursCalculator', label: 'Working Hours & Overtime' },
+            'maternity': { formId: 'maternityForm', cardId: 'maternityCalculator', label: 'Maternity Benefit Estimator' },
+            'consumer-compensation': { formId: 'consumerForm', cardId: 'consumerCalculator', label: 'Consumer Compensation Calculator' }
+        };
 
         function setStatus(id, message, tone = 'info') {
             const el = document.getElementById(id);
@@ -461,42 +485,103 @@
             }
         }
 
-        function hydrateCalculatorMeta() {
-            const metadata = {
-                'notice-period': {
-                    reviewed_on: '2025-10-10',
-                    reviewed_by: 'Labour Counsel',
-                    sample: 'Example: 3.5 years in IT services recommends ~40 days with a statutory cap of 90 days.'
-                },
-                'work-hours': {
-                    reviewed_on: '2025-09-22',
-                    reviewed_by: 'Factories Act Specialist',
-                    sample: '52 hour work week at ₹350/hr triggers 4 overtime hours paid at double rate.'
-                },
-                'maternity': {
-                    reviewed_on: '2025-08-30',
-                    reviewed_by: 'Women & Child Law Analyst',
-                    sample: '240 working days with ₹1,500/day qualifies for 26 weeks (~₹273,000) benefit.'
-                },
-                'consumer': {
-                    reviewed_on: '2025-11-04',
-                    reviewed_by: 'Consumer Court Practitioner',
-                    sample: '₹25,000 faulty appliance refund + ₹2,500 penalty + ₹5,000 expenses recommended when refund delayed 15 days.'
+        function consumePrefill(expectedCategory) {
+            const raw = window.sessionStorage.getItem(PREFILL_KEY);
+            if (!raw) return null;
+            try {
+                const parsed = JSON.parse(raw);
+                if (!expectedCategory || parsed.category === expectedCategory) {
+                    window.sessionStorage.removeItem(PREFILL_KEY);
+                    return parsed;
                 }
-            };
+            } catch (error) {
+                console.warn('Unable to parse prefill data', error);
+                window.sessionStorage.removeItem(PREFILL_KEY);
+            }
+            return null;
+        }
 
-            document.querySelectorAll('.calc-meta').forEach((block) => {
-                const key = block.dataset.calculator;
-                const info = metadata[key];
-                if (!info) return;
-                block.innerHTML = `
-                    <div class="meta-pills">
-                        <span>Reviewed on ${info.reviewed_on}</span>
-                        <span>${info.reviewed_by}</span>
-                    </div>
-                    <p>${info.sample}</p>
-                `;
+        function highlightCalculatorCard(slug) {
+            const meta = calculatorFormMap[slug];
+            if (!meta) return;
+            const card = document.getElementById(meta.cardId);
+            if (!card) return;
+            card.classList.add('prefill-focus');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function applyCalculatorPrefill() {
+            let target = calculatorPrefill;
+            if (!target) {
+                const params = new URLSearchParams(window.location.search);
+                const slug = params.get('prefill');
+                if (slug) {
+                    target = { slug, value: slug };
+                }
+            }
+            if (!target) return;
+            const slug = target.value || target.slug;
+            if (!slug) return;
+            highlightCalculatorCard(slug);
+            if (!target.fields) {
+                if (prefillBanner) {
+                    prefillBanner.hidden = false;
+                    prefillBanner.textContent = 'Highlighted calculator is ready—enter your details to run the sample.';
+                }
+                return;
+            }
+            Object.entries(target.fields).forEach(([fieldId, fieldValue]) => {
+                const input = document.getElementById(fieldId);
+                if (input) {
+                    input.value = fieldValue;
+                }
             });
+            if (target.autoSubmit) {
+                const meta = calculatorFormMap[slug];
+                if (!meta) return;
+                const form = document.getElementById(meta.formId);
+                if (form && form.reportValidity()) {
+                    form.requestSubmit();
+                    if (prefillBanner) {
+                        prefillBanner.hidden = false;
+                        prefillBanner.textContent = `${meta.label} prefilled with sample inputs.`;
+                    }
+                }
+            } else if (prefillBanner) {
+                prefillBanner.hidden = false;
+                prefillBanner.textContent = 'Sample inputs inserted below—review and hit Calculate to see the output.';
+            }
+        }
+
+        async function hydrateCalculatorMeta() {
+            try {
+                const response = await fetch('/api/tools');
+                if (!response.ok) throw new Error('Unable to fetch tool metadata');
+                const data = await response.json();
+                const calculators = (data.tools || []).filter(tool => tool.category === 'calculator');
+                const metaMap = {};
+                calculators.forEach(tool => {
+                    metaMap[tool.slug] = tool;
+                });
+                document.querySelectorAll('.calc-meta').forEach((block) => {
+                    const key = block.dataset.calculator;
+                    const info = metaMap[key];
+                    if (!info) return;
+                    const riskLevel = String(info.risk_level || 'unverified').toLowerCase();
+                    const friendlyRisk = riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1);
+                    block.innerHTML = `
+                        <div class="meta-pills">
+                            <span>Reviewed ${info.reviewed_on}</span>
+                            <span>${info.reviewed_by}</span>
+                            <span>Risk: ${friendlyRisk}</span>
+                        </div>
+                        <p>${info.when_to_consult || 'Consult a lawyer if the dispute value exceeds ₹50,000 or if ownership is contested.'}</p>
+                    `;
+                });
+                applyCalculatorPrefill();
+            } catch (error) {
+                console.warn('Calculator metadata unavailable', error);
+            }
         }
 
         document.getElementById('noticeForm').addEventListener('submit', async (event) => {

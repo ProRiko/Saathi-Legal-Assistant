@@ -172,6 +172,16 @@
             color: #bdb7ad;
             margin-top: 6px;
         }
+        .notice-meta-line {
+            font-size: 0.9rem;
+            color: #d0cabd;
+            margin-top: 8px;
+        }
+        .notice-consult {
+            font-size: 0.85rem;
+            color: #f7dba7;
+            margin-top: 4px;
+        }
         .notice-review {
             display: flex;
             flex-wrap: wrap;
@@ -288,6 +298,19 @@
     </style>
 </head>
 <body>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="site-nav__brand">
+            <a href="/">Saathi Legal Assistant</a>
+        </div>
+        <div class="site-nav__links">
+            <a href="/">Home</a>
+            <a href="/tools.html">Tools</a>
+            <a href="/legal-notices.html" class="is-active">Notices</a>
+            <a href="/agreement-templates.html">Agreements</a>
+            <a href="/legal-calculators.html">Calculators</a>
+            <a href="/chat.html">Chat</a>
+        </div>
+    </nav>
     <div class="page-shell">
         <div class="page-header">
             <p style="letter-spacing: 3px; text-transform: uppercase; color: #f7dba7;">Legal Notice Generator</p>
@@ -316,6 +339,7 @@
                 <a class="secondary" href="/legal-calculators.html">🧮 Check Entitlements</a>
             </div>
         </div>
+            <div id="prefillCallout" class="prefill-callout" hidden></div>
 
         <div id="noticeGrid" class="notice-grid"></div>
         <div id="noticeState"></div>
@@ -338,6 +362,43 @@
         const modalSample = document.getElementById('modalSample');
         const modalMeta = document.getElementById('modalMeta');
         const modalRisk = document.getElementById('modalRisk');
+        const PREFILL_KEY = 'saathi_prefill_tool';
+        const prefillBanner = document.getElementById('prefillCallout');
+        const pendingPrefill = consumePrefill('legal_notice');
+
+        function consumePrefill(expectedCategory) {
+            const raw = window.sessionStorage.getItem(PREFILL_KEY);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (!expectedCategory || parsed.category === expectedCategory) {
+                        window.sessionStorage.removeItem(PREFILL_KEY);
+                        return parsed;
+                    }
+                } catch (error) {
+                    console.warn('Unable to read prefill data', error);
+                    window.sessionStorage.removeItem(PREFILL_KEY);
+                }
+            }
+            const params = new URLSearchParams(window.location.search);
+            const slug = params.get('template') || params.get('prefill');
+            return slug ? { slug } : null;
+        }
+
+        function highlightPrefillCard(slug) {
+            if (!slug) return;
+            const card = document.querySelector(`[data-template-slug="${slug}"]`);
+            if (!card) return;
+            card.classList.add('prefill-focus');
+            card.setAttribute('tabindex', '-1');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (prefillBanner) {
+                prefillBanner.hidden = false;
+                const title = card.querySelector('h3');
+                const readable = title ? title.textContent : 'Selected template';
+                prefillBanner.textContent = `Ready to use: ${readable} is highlighted below.`;
+            }
+        }
 
         function corsHelpMessage() {
             return `Unable to reach Saathi APIs from ${window.location.origin}. If you're self-hosting, add this origin to ALLOWED_ORIGINS.`;
@@ -394,7 +455,10 @@
                 data.notices.forEach((notice) => {
                     const card = document.createElement('div');
                     card.className = 'notice-card';
+                    card.dataset.templateSlug = notice.slug;
                     const riskClass = normalizedRisk(notice.risk_level);
+                    const riskLabel = riskClass.charAt(0).toUpperCase() + riskClass.slice(1);
+                    const consultLine = notice.when_to_consult || 'Consult a lawyer if the dispute value exceeds ₹50,000 or if ownership is contested.';
                     card.innerHTML = `
                         <div>
                             <h3>${notice.title}</h3>
@@ -402,10 +466,11 @@
                             <div class="notice-tags">
                                 ${(notice.tags || []).map(tag => `<span class="notice-tag">${tag}</span>`).join('')}
                             </div>
-                            <div class="notice-meta">Format: PDF template</div>
+                            <div class="notice-meta-line">Last reviewed: ${notice.reviewed_on} — Reviewed by ${notice.reviewed_by} — Risk: ${riskLabel}</div>
+                            <p class="notice-consult">${consultLine}</p>
                             <div class="notice-review">
-                                <span class="review-pill">Reviewed on ${notice.reviewed_on} · ${notice.reviewed_by}</span>
-                                <span class="risk-pill ${riskClass}">${riskClass} risk</span>
+                                <span class="review-pill">Sample preview</span>
+                                <span class="risk-pill ${riskClass}">${riskLabel} risk</span>
                             </div>
                         </div>
                         <div class="notice-actions">
@@ -422,6 +487,9 @@
                     previewBtn.addEventListener('click', () => openSampleModal(notice));
                     grid.appendChild(card);
                 });
+                if (pendingPrefill && pendingPrefill.slug) {
+                    highlightPrefillCard(pendingPrefill.slug);
+                }
             } catch (error) {
                 console.error(error);
                 const message = error instanceof TypeError ? corsHelpMessage() : 'Unable to load notices right now. Please refresh in a moment.';

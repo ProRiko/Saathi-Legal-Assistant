@@ -1,0 +1,408 @@
+{
+  "tools": [
+    {
+      "slug": "salary-not-paid",
+      "category": "legal_notice",
+      "title": "Salary Not Paid Notice",
+      "description": "Demand pending salary with Labour Department-ready language (≈5 min).",
+      "icon": "💼",
+      "order": 1,
+      "reviewed_on": "2025-11-10",
+      "reviewed_by": "Labour Law Desk",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if arrears exceed ₹50,000 or termination is disputed.",
+      "sample_preview": "Opening paragraph referencing Shops & Establishments compliance.",
+      "sample_highlights": [
+        "States exact months unpaid and statutory references.",
+        "Demands payment within 7 days before escalating to Labour Commissioner.",
+        "Mentions right to claim interest and penalties."
+      ],
+      "sample_example_input": "Employee Nisha has not received April & May 2025 salary totaling ₹1,20,000 despite reminders.",
+      "sample_example_output": "\"This is to demand immediate release of my salary for April and May 2025 amounting to ₹1,20,000 within seven (7) days, failing which I shall approach the Labour Commissioner.\"",
+      "sample_pdf_link": "/notices/salary-not-paid",
+      "estimated_time": "≈5 min",
+      "use_url": "/legal-notices.html",
+      "prefill": {
+        "param": "template",
+        "value": "salary-not-paid"
+      }
+    },
+    {
+      "slug": "rent-default",
+      "category": "legal_notice",
+      "title": "Rent Default / Eviction Notice",
+      "description": "Remind tenants about arrears and handover timelines.",
+      "icon": "🏠",
+      "order": 2,
+      "reviewed_on": "2025-10-28",
+      "reviewed_by": "Property Law Specialist",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if the property is mortgaged or eviction may require police aid.",
+      "sample_preview": "Notice referencing Section 106 Transfer of Property Act.",
+      "sample_highlights": [
+        "Specifies rent due, maintenance, and notice period.",
+        "Calls for peaceful possession if dues unpaid.",
+        "Warns that municipal dues will be recovered from deposit."
+      ],
+      "sample_example_input": "Tenant owes ₹45,000 for July-August rent in Bengaluru apartment.",
+      "sample_example_output": "\"You are called upon to clear ₹45,000 within fifteen (15) days or hand over vacant possession of Flat 203, Green Meadows, failing which eviction proceedings will commence.\"",
+      "sample_pdf_link": "/notices/rent-default",
+      "estimated_time": "≈6 min",
+      "use_url": "/legal-notices.html",
+      "prefill": {
+        "param": "template",
+        "value": "rent-default"
+      }
+    },
+    {
+      "slug": "consumer-complaint",
+      "category": "legal_notice",
+      "title": "Consumer Complaint Notice",
+      "description": "Escalate defective product or poor service disputes.",
+      "icon": "🧾",
+      "order": 3,
+      "reviewed_on": "2025-09-18",
+      "reviewed_by": "Consumer Rights Advocate",
+      "risk_level": "low",
+      "when_to_consult": "Consult a lawyer if the defect caused injury or losses above ₹2 lakh.",
+      "sample_preview": "Consumer Protection Act compliant notice format.",
+      "sample_highlights": [
+        "Captures invoice, complaint numbers, and desired remedy.",
+        "Allows replacement, repair, or refund choice.",
+        "Sets 15 day cure period before District Commission filing."
+      ],
+      "sample_example_input": "Washing machine bought for ₹28,500 stopped working within 10 days.",
+      "sample_example_output": "\"Kindly replace the unit or refund ₹28,500 with ₹3,000 compensation within fifteen (15) days failing which complaint shall be filed before the Consumer Commission.\"",
+      "sample_pdf_link": "/notices/consumer-complaint",
+      "estimated_time": "≈5 min",
+      "use_url": "/legal-notices.html",
+      "prefill": {
+        "param": "template",
+        "value": "consumer-complaint"
+      }
+    },
+    {
+      "slug": "cheque-bounce",
+      "category": "legal_notice",
+      "title": "Cheque Bounce Notice",
+      "description": "Issue NI Act compliant notice within 30 days of dishonour.",
+      "icon": "💳",
+      "order": 4,
+      "reviewed_on": "2025-11-01",
+      "reviewed_by": "Banking Law Counsel",
+      "risk_level": "high",
+      "when_to_consult": "Consult a lawyer if multiple cheques bounced or limitation deadline is near.",
+      "sample_preview": "Section 138 NI Act format with demand clause.",
+      "sample_highlights": [
+        "Mentions cheque number, date, bank, and return memo reason.",
+        "Demands payment within statutory 15 days.",
+        "Warns of prosecution and civil recovery."
+      ],
+      "sample_example_input": "Cheque No. 123456 dated 10 Oct 2025 for ₹2,40,000 returned for insufficient funds.",
+      "sample_example_output": "\"You are hereby called upon to make payment of ₹2,40,000 within fifteen (15) days of receipt of this notice, failing which complaint under Section 138 shall be filed without further reference.\"",
+      "sample_pdf_link": "/notices/cheque-bounce",
+      "estimated_time": "≈7 min",
+      "use_url": "/legal-notices.html",
+      "prefill": {
+        "param": "template",
+        "value": "cheque-bounce"
+      }
+    },
+    {
+      "slug": "rent-agreement",
+      "category": "agreement",
+      "title": "Residential Rent Agreement",
+      "description": "11-month lease with deposit, utilities, and exit clauses.",
+      "icon": "📄",
+      "order": 5,
+      "reviewed_on": "2025-10-18",
+      "reviewed_by": "Real Estate Counsel",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if the property is jointly owned or involves corporate tenants.",
+      "sample_preview": "Lease summary with rent, deposit, and maintenance table.",
+      "sample_highlights": [
+        "Captures rent schedule and deposit adjustments.",
+        "Includes maintenance responsibilities and notice clause.",
+        "Adds special clause section for pets or parking."
+      ],
+      "sample_example_input": "Flat 5B rented for ₹32,000/month with ₹1.5 lakh deposit.",
+      "sample_example_output": "\"Monthly rent of ₹32,000 is payable before the 5th of every month; ₹1,50,000 security deposit shall be refunded within 15 days after adjusting damages.\"",
+      "sample_pdf_link": "/agreements/rent-agreement",
+      "estimated_time": "≈10 min",
+      "use_url": "/agreement-templates.html",
+      "prefill": {
+        "param": "template",
+        "value": "rent-agreement"
+      }
+    },
+    {
+      "slug": "freelance-contract",
+      "category": "agreement",
+      "title": "Freelance Services Agreement",
+      "description": "Document scope, milestones, and IP transfer for gigs.",
+      "icon": "🎨",
+      "order": 6,
+      "reviewed_on": "2025-09-05",
+      "reviewed_by": "Contracts Lead",
+      "risk_level": "low",
+      "when_to_consult": "Consult a lawyer if IP ownership or licensing is complex.",
+      "sample_preview": "Deliverables + payment milestone table.",
+      "sample_highlights": [
+        "Breaks down milestones with fees and due dates.",
+        "Clarifies IP transfer on full payment.",
+        "Contains confidentiality & termination clause."
+      ],
+      "sample_example_input": "Brand guidelines project ₹75,000 due 15 Nov.",
+      "sample_example_output": "\"Milestone 2 (Brand Book delivery) is payable at ₹35,000 within 7 days of submission; intellectual property transfers upon receipt.\"",
+      "sample_pdf_link": "/agreements/freelance-contract",
+      "estimated_time": "≈8 min",
+      "use_url": "/agreement-templates.html",
+      "prefill": {
+        "param": "template",
+        "value": "freelance-contract"
+      }
+    },
+    {
+      "slug": "employment-offer",
+      "category": "agreement",
+      "title": "Employment Offer Letter",
+      "description": "Issue formal offers with CTC breakup and joining terms.",
+      "icon": "📝",
+      "order": 7,
+      "reviewed_on": "2025-10-28",
+      "reviewed_by": "HR Compliance Manager",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if ESOPs, garden leave, or relocation clauses are involved.",
+      "sample_preview": "Offer letter page with compensation summary.",
+      "sample_highlights": [
+        "CTC breakup table with allowances.",
+        "Probation and background verification text.",
+        "Includes acceptance block for signatures."
+      ],
+      "sample_example_input": "Senior Product Manager offer ₹36 LPA starting 2 Dec.",
+      "sample_example_output": "\"Your annual CTC is ₹36,00,000 comprising fixed salary of ₹28,00,000 and performance bonus up to ₹8,00,000. Probation is 6 months from your DOJ 02 Dec 2025.\"",
+      "sample_pdf_link": "/agreements/employment-offer",
+      "estimated_time": "≈9 min",
+      "use_url": "/agreement-templates.html",
+      "prefill": {
+        "param": "template",
+        "value": "employment-offer"
+      }
+    },
+    {
+      "slug": "nda",
+      "category": "agreement",
+      "title": "Mutual NDA",
+      "description": "Share sensitive information securely with partners.",
+      "icon": "🤝",
+      "order": 8,
+      "reviewed_on": "2025-07-12",
+      "reviewed_by": "Corporate Counsel",
+      "risk_level": "low",
+      "when_to_consult": "Consult a lawyer if foreign parties or export controls are involved.",
+      "sample_preview": "Key obligations and term summary.",
+      "sample_highlights": [
+        "Defines confidential information.",
+        "Sets 3 year survival period.",
+        "Includes jurisdiction + injunctive relief clauses."
+      ],
+      "sample_example_input": "Cybersecurity pilot between TechLabs and VendorCo.",
+      "sample_example_output": "\"Each party shall protect confidential information with at least the same degree of care it uses to protect its own confidential information and not less than reasonable care.\"",
+      "sample_pdf_link": "/agreements/nda",
+      "estimated_time": "≈6 min",
+      "use_url": "/agreement-templates.html",
+      "prefill": {
+        "param": "template",
+        "value": "nda"
+      }
+    },
+    {
+      "slug": "sale-of-goods",
+      "category": "agreement",
+      "title": "Sale of Goods Agreement",
+      "description": "Record B2B supply deals with warranties and delivery terms.",
+      "icon": "🚚",
+      "order": 9,
+      "reviewed_on": "2025-09-30",
+      "reviewed_by": "Commercial Contracts Specialist",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if cross-border shipments or LC payments are involved.",
+      "sample_preview": "Table covering quantity, price, and delivery window.",
+      "sample_highlights": [
+        "Captures SKU quantities and GST.",
+        "Specifies warranty and indemnity text.",
+        "Includes liquidated damages clause for late delivery."
+      ],
+      "sample_example_input": "200 smart meters @ ₹8,000 each, 30-day delivery.",
+      "sample_example_output": "\"Buyer shall pay ₹16,00,000 within 10 days of dispatch; Seller warrants goods for 12 months against manufacturing defects.\"",
+      "sample_pdf_link": "/agreements/sale-of-goods",
+      "estimated_time": "≈9 min",
+      "use_url": "/agreement-templates.html",
+      "prefill": {
+        "param": "template",
+        "value": "sale-of-goods"
+      }
+    },
+    {
+      "slug": "notice-period",
+      "category": "calculator",
+      "title": "Notice Period Advisor",
+      "description": "Estimate statutory notice period using sector + tenure.",
+      "icon": "📆",
+      "order": 10,
+      "reviewed_on": "2025-10-10",
+      "reviewed_by": "Labour Counsel",
+      "risk_level": "low",
+      "when_to_consult": "Consult a lawyer if employment is governed by certified standing orders.",
+      "sample_preview": "Scenario: 3.5 years in IT services recommends 40 days.",
+      "sample_highlights": [
+        "Shows statutory min/cap with explanation.",
+        "Flags when company policy exceeds Shops & Establishments guidance.",
+        "Provides rationale text for HR emails."
+      ],
+      "sample_example_input": "Company: IT services, Tenure: 3.5 years.",
+      "sample_example_output": "\"Recommended notice is 40 days (statutory base 30 + 5 days/year) capped at 90 days.\"",
+      "sample_pdf_link": "/legal-calculators.html",
+      "estimated_time": "≈2 min",
+      "use_url": "/legal-calculators.html",
+      "prefill": {
+        "param": "prefill",
+        "value": "notice-period",
+        "fields": {
+            "companyType": "it_services",
+            "yearsOfService": "3.5"
+        },
+        "autoSubmit": true
+      }
+    },
+    {
+      "slug": "work-hours",
+      "category": "calculator",
+      "title": "Working Hours & Overtime",
+      "description": "Check Factories Act compliance and overtime pay.",
+      "icon": "⏱️",
+      "order": 11,
+      "reviewed_on": "2025-09-22",
+      "reviewed_by": "Factories Act Specialist",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if weekly hours regularly exceed 60 or shifts cross midnight.",
+      "sample_preview": "Scenario: 52 hour week at ₹350/hr triggers overtime.",
+      "sample_highlights": [
+        "Shows compliant vs warning states.",
+        "Calculates overtime hours and estimated pay.",
+        "Mentions double rate assumption with citation."
+      ],
+      "sample_example_input": "Weekly hours: 52, Hourly rate: 350.",
+      "sample_example_output": "\"Overtime triggered for 4 hours. Estimated overtime pay: ₹2,800 at 2x.\"",
+      "sample_pdf_link": "/legal-calculators.html",
+      "estimated_time": "≈2 min",
+      "use_url": "/legal-calculators.html",
+      "prefill": {
+        "param": "prefill",
+        "value": "work-hours",
+        "fields": {
+            "weeklyHours": "52",
+            "hourlyRate": "350"
+        },
+        "autoSubmit": true
+      }
+    },
+    {
+      "slug": "maternity",
+      "category": "calculator",
+      "title": "Maternity Benefit Estimator",
+      "description": "Check eligibility + benefit under the Maternity Benefit Act.",
+      "icon": "🤰",
+      "order": 12,
+      "reviewed_on": "2025-08-30",
+      "reviewed_by": "Women & Child Law Analyst",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if employer has <10 employees or roles are contractual.",
+      "sample_preview": "Scenario: 240 days at ₹1,500/day qualifies for 26 weeks.",
+      "sample_highlights": [
+        "Displays eligibility badge.",
+        "Shows payable weeks/days and estimated benefit.",
+        "Mentions supporting documents needed."
+      ],
+      "sample_example_input": "Days worked: 240, Avg wage: 1500, Children: 1.",
+      "sample_example_output": "\"Eligible for 26 weeks (~₹273,000) maternity benefit.\"",
+      "sample_pdf_link": "/legal-calculators.html",
+      "estimated_time": "≈3 min",
+      "use_url": "/legal-calculators.html",
+      "prefill": {
+        "param": "prefill",
+        "value": "maternity",
+        "fields": {
+            "daysWorked": "240",
+            "avgDailyWage": "1500",
+            "childrenCount": "1"
+        },
+        "autoSubmit": true
+      }
+    },
+    {
+      "slug": "consumer-compensation",
+      "category": "calculator",
+      "title": "Consumer Compensation Calculator",
+      "description": "Combine refund, delay damages, and expenses for notices.",
+      "icon": "⚖️",
+      "order": 13,
+      "reviewed_on": "2025-11-04",
+      "reviewed_by": "Consumer Court Practitioner",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if damages exceed ₹5 lakh or involve medical negligence.",
+      "sample_preview": "Scenario: ₹25k appliance + ₹2.5k penalty + ₹5k expenses.",
+      "sample_highlights": [
+        "Breaks down refund vs damages.",
+        "Shows recommended demand letter value.",
+        "Explains assumptions per Consumer Protection Act."
+      ],
+      "sample_example_input": "Purchase: 25000, Delay: 15 days, Out-of-pocket: 5000.",
+      "sample_example_output": "\"Recommended demand amount: ₹32,500 (refund + costs + delay damages).\"",
+      "sample_pdf_link": "/legal-calculators.html",
+      "estimated_time": "≈3 min",
+      "use_url": "/legal-calculators.html",
+      "prefill": {
+        "param": "prefill",
+        "value": "consumer-compensation",
+        "fields": {
+            "purchaseAmount": "25000",
+            "issueType": "defective_product",
+            "delayDays": "15",
+            "outOfPocket": "5000"
+        },
+        "autoSubmit": true
+      }
+    },
+    {
+      "slug": "ai-reviewer",
+      "category": "ai_tool",
+      "title": "AI Document Reviewer",
+      "description": "Upload drafts and get instant plain-language risk flags.",
+      "icon": "🤖",
+      "order": 14,
+      "reviewed_on": "2025-11-15",
+      "reviewed_by": "AI Policy Team",
+      "risk_level": "low",
+      "when_to_consult": "Consult a lawyer if the document will be filed in court or signed by CXOs.",
+      "sample_preview": "Demonstrates how Saathi summarises clauses and risks.",
+      "sample_highlights": [
+        "Uploads sample vendor agreement and highlights redlines.",
+        "Shows summary bullets + next steps.",
+        "Explains data retention and manual review options."
+      ],
+      "sample_example_input": "5 page vendor agreement with indemnity and payment clause.",
+      "sample_example_output": "\"AI Review Flags: (1) Payment milestone mismatch, (2) Overbroad indemnity, (3) Missing jurisdiction clause. Suggested fixes provided.\"",
+      "sample_pdf_link": "/chat.html",
+      "estimated_time": "≈2 min",
+      "use_url": "/chat.html?mode=review",
+      "prefill": {
+        "param": "mode",
+        "value": "review",
+        "fields": {
+            "reviewScenario": "vendor_agreement"
+        }
+      }
+    }
+  ]
+}

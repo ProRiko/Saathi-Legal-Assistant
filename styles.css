@@ -27,6 +27,72 @@ body {
     padding: 20px;
 }
 
+.site-nav {
+    width: 100%;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: rgba(10, 15, 25, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 90;
+}
+
+.site-nav__brand a {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #f7dba7;
+}
+
+.site-nav__links {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.site-nav__links a {
+    text-decoration: none;
+    color: #f4f1e8;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    transition: border 0.2s ease, background 0.2s ease;
+}
+
+.site-nav__links a:hover,
+.site-nav__links a:focus-visible {
+    border-color: rgba(247, 219, 167, 0.6);
+    outline: none;
+}
+
+.site-nav__links a.is-active {
+    background: linear-gradient(120deg, #f9a826, #f76b1c);
+    color: #1a1309;
+    border-color: transparent;
+}
+
+.prefill-focus {
+    box-shadow: 0 0 0 3px rgba(247, 219, 167, 0.6);
+    border-color: rgba(247, 219, 167, 0.9) !important;
+}
+
+.prefill-callout {
+    margin: 10px 0 20px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 1px dashed rgba(247, 219, 167, 0.6);
+    background: rgba(247, 219, 167, 0.1);
+    color: #f7dba7;
+    font-weight: 600;
+}
+
 /* Header Styles */
 .header {
     text-align: center;

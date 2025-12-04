@@ -132,6 +132,16 @@
             color: #bdb7ad;
             margin-top: 6px;
         }
+            .notice-meta-line {
+                font-size: 0.9rem;
+                color: #dcd3c3;
+                margin-top: 8px;
+            }
+            .notice-consult {
+                font-size: 0.85rem;
+                color: #f7dba7;
+                margin-top: 4px;
+            }
         .card-tags {
             display: flex;
             flex-wrap: wrap;
@@ -261,6 +271,19 @@
     </style>
 </head>
 <body>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="site-nav__brand">
+            <a href="/">Saathi Legal Assistant</a>
+        </div>
+        <div class="site-nav__links">
+            <a href="/">Home</a>
+            <a href="/tools.html">Tools</a>
+            <a href="/legal-notices.html">Notices</a>
+            <a href="/agreement-templates.html" class="is-active">Agreements</a>
+            <a href="/legal-calculators.html">Calculators</a>
+            <a href="/chat.html">Chat</a>
+        </div>
+    </nav>
     <div class="shell">
         <header>
             <p style="letter-spacing: 3px; text-transform: uppercase; color: #f5b971;">Agreement Templates</p>
@@ -290,6 +313,8 @@
             </div>
         </div>
 
+        <div id="agreementPrefill" class="prefill-callout" hidden></div>
+
         <div id="agreements" class="grid"></div>
         <div id="agreementState" class="status"></div>
     </div>
@@ -311,6 +336,41 @@
         const modalSample = document.getElementById('agreementSample');
         const modalMeta = document.getElementById('agreementMeta');
         const modalRisk = document.getElementById('agreementRisk');
+        const PREFILL_KEY = 'saathi_prefill_tool';
+        const prefillBanner = document.getElementById('agreementPrefill');
+        const pendingPrefill = consumePrefill('agreement');
+
+        function consumePrefill(expectedCategory) {
+            const raw = window.sessionStorage.getItem(PREFILL_KEY);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (!expectedCategory || parsed.category === expectedCategory) {
+                        window.sessionStorage.removeItem(PREFILL_KEY);
+                        return parsed;
+                    }
+                } catch (error) {
+                    console.warn('Unable to read prefill metadata', error);
+                    window.sessionStorage.removeItem(PREFILL_KEY);
+                }
+            }
+            const params = new URLSearchParams(window.location.search);
+            const slug = params.get('template') || params.get('prefill');
+            return slug ? { slug } : null;
+        }
+
+        function highlightAgreementCard(slug) {
+            if (!slug) return;
+            const card = document.querySelector(`[data-template-slug="${slug}"]`);
+            if (!card) return;
+            card.classList.add('prefill-focus');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (prefillBanner) {
+                prefillBanner.hidden = false;
+                const readable = card.querySelector('h3')?.textContent || 'This template';
+                prefillBanner.textContent = `Ready to use: ${readable} is highlighted below.`;
+            }
+        }
 
         function corsHelpMessage() {
             return `Unable to reach Saathi APIs from ${window.location.origin}. Add this origin to ALLOWED_ORIGINS if you self-host.`;
@@ -367,7 +427,10 @@
                 data.agreements.forEach(template => {
                     const card = document.createElement('div');
                     card.className = 'card';
+                    card.dataset.templateSlug = template.slug;
                     const riskClass = normalizedRisk(template.risk_level);
+                    const riskLabel = riskClass.charAt(0).toUpperCase() + riskClass.slice(1);
+                    const consultLine = template.when_to_consult || 'Consult a lawyer if the dispute value exceeds ₹50,000 or if ownership is contested.';
                     card.innerHTML = `
                         <div>
                             <h3>${template.title}</h3>
@@ -375,14 +438,15 @@
                             <div class="card-tags">
                                 ${(template.tags || []).map(tag => `<span class="card-tag">${tag}</span>`).join('')}
                             </div>
-                            <div class="notice-meta">Format: PDF</div>
+                            <div class="notice-meta-line">Last reviewed: ${template.reviewed_on} — Reviewed by ${template.reviewed_by} — Risk: ${riskLabel}</div>
+                            <p class="notice-consult">${consultLine}</p>
                             <div class="card-review">
-                                <span class="review-pill">Reviewed on ${template.reviewed_on} · ${template.reviewed_by}</span>
-                                <span class="risk-pill ${riskClass}">${riskClass} risk</span>
+                                <span class="review-pill">Sample preview</span>
+                                <span class="risk-pill ${riskClass}">${riskLabel} risk</span>
                             </div>
                         </div>
                         <div class="card-actions">
-                            <button class="preview" type="button">👁 Preview Sample</button>
+                            <button class="preview" type="button">👁 View Sample</button>
                             <a class="download" href="/agreements/${template.slug}" target="_blank" rel="noopener">
                                 ⬇️ Download
                             </a>
@@ -395,6 +459,9 @@
                     previewBtn.addEventListener('click', () => openAgreementModal(template));
                     grid.appendChild(card);
                 });
+                if (pendingPrefill && pendingPrefill.slug) {
+                    highlightAgreementCard(pendingPrefill.slug);
+                }
             } catch (error) {
                 console.error(error);
                 const message = error instanceof TypeError ? corsHelpMessage() : 'Could not load agreement templates right now. Please refresh later.';

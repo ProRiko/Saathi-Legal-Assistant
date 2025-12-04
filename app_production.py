@@ -59,6 +59,7 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONSENT_LOG_PATH = os.path.join(BASE_DIR, 'consent_logs.jsonl')
 CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
+TOOL_MANIFEST_PATH = os.path.join(BASE_DIR, 'tool_metadata.json')
 CONSENT_NOSCRIPT_BLOCK = (
     '<noscript>'
     '<div class="no-js-consent-banner" role="alert">'
@@ -68,6 +69,46 @@ CONSENT_NOSCRIPT_BLOCK = (
     '</noscript>'
 )
 CONSENT_LOG_LOCK = Lock()
+def load_tool_manifest(path: str = TOOL_MANIFEST_PATH) -> Dict[str, Any]:
+    """Load structured metadata for tools, templates, and calculators."""
+    try:
+        with open(path, 'r', encoding='utf-8') as manifest_file:
+            data = json.load(manifest_file)
+            if isinstance(data, dict) and isinstance(data.get('tools'), list):
+                return data
+    except FileNotFoundError:
+        logger.warning("Tool metadata manifest not found at %s", path)
+    except json.JSONDecodeError as exc:
+        logger.error("Unable to parse tool metadata manifest: %s", exc)
+    return {"tools": []}
+
+
+TOOL_MANIFEST = load_tool_manifest()
+TOOL_INDEX = {entry.get('slug'): entry for entry in TOOL_MANIFEST.get('tools', [])}
+
+
+def build_category_metadata(category_key: str) -> Dict[str, Dict[str, str]]:
+    """Derive review metadata for a given category from the manifest."""
+    meta: Dict[str, Dict[str, str]] = {}
+    for entry in TOOL_MANIFEST.get('tools', []):
+        if entry.get('category') != category_key:
+            continue
+        slug = entry.get('slug')
+        if not slug:
+            continue
+        meta[slug] = {
+            "reviewed_on": entry.get('reviewed_on') or "Not reviewed yet",
+            "reviewed_by": entry.get('reviewed_by') or "Not reviewed yet",
+            "risk_level": (entry.get('risk_level') or "Unverified").lower(),
+            "sample_preview": entry.get('sample_preview') or "Sample preview is coming soon.",
+            "when_to_consult": entry.get('when_to_consult') or "Consult a lawyer if the dispute value exceeds ₹50,000 or if ownership is contested.",
+        }
+    return meta
+
+
+def get_tool_entry(slug: str) -> Dict[str, Any]:
+    return TOOL_INDEX.get(slug, {})
+
 
 
 def parse_allowed_origins() -> list[str]:
@@ -349,6 +390,12 @@ def serve_privacy_policy():
 def serve_consent_required():
     """Explain why consent is mandatory when a user declines."""
     return render_html_with_consent('consent_required.html', 'Consent information not found')
+
+
+@app.route('/tools.html')
+def serve_tools_dashboard():
+    """Serve the central tools discovery page."""
+    return render_html_with_consent('tools.html', 'Tools page not found')
 
 @app.route('/calculator.html') 
 def serve_calculator():
@@ -841,35 +888,11 @@ REVIEW_METADATA_DEFAULT = {
     "reviewed_on": "Not reviewed yet",
     "reviewed_by": "Not reviewed yet",
     "risk_level": "Unverified",
-    "sample_preview": "Sample preview is coming soon."
+    "sample_preview": "Sample preview is coming soon.",
+    "when_to_consult": "Consult a lawyer if the dispute value exceeds ₹50,000 or if ownership is contested."
 }
 
-LEGAL_NOTICE_METADATA = {
-    "salary-not-paid": {
-        "reviewed_on": "2025-10-05",
-        "reviewed_by": "Senior Legal Analyst",
-        "risk_level": "medium",
-        "sample_preview": "Dear HR Team, This is to demand the release of my pending salary for April and May 2025 within seven days, failing which I shall approach the Labour Commissioner."
-    },
-    "rent-default": {
-        "reviewed_on": "2025-09-20",
-        "reviewed_by": "Property Law Specialist",
-        "risk_level": "medium",
-        "sample_preview": "Tenant is hereby directed to clear ₹45,000 arrears within 15 days or hand over peaceful possession of Flat 203, Green Meadows, pursuant to Section 106 TPA."
-    },
-    "consumer-complaint": {
-        "reviewed_on": "2025-08-30",
-        "reviewed_by": "Consumer Rights Advocate",
-        "risk_level": "low",
-        "sample_preview": "I purchased a washing machine on 12 Aug 2025 for ₹28,500. The motor failed within 10 days; kindly replace the unit or refund the price with compensation within 15 days."
-    },
-    "cheque-bounce": {
-        "reviewed_on": "2025-11-01",
-        "reviewed_by": "Banking Law Counsel",
-        "risk_level": "high",
-        "sample_preview": "Cheque No. 123456 dated 10 Oct 2025 for ₹2,40,000 was returned for insufficient funds. Payment is demanded within fifteen days to avoid NI Act prosecution."
-    }
-}
+LEGAL_NOTICE_METADATA = build_category_metadata('legal_notice')
 
 
 def generate_notice_pdf(notice_key: str):
@@ -1035,38 +1058,8 @@ Buyer  __________________  Date: _______
     }
 }
 
-AGREEMENT_TEMPLATE_METADATA = {
-    "rent-agreement": {
-        "reviewed_on": "2025-10-18",
-        "reviewed_by": "Real Estate Counsel",
-        "risk_level": "medium",
-        "sample_preview": "11-month lease between Mr. Rao (landlord) and Ms. Kapoor (tenant) for Flat 5B, ₹32,000 monthly rent with ₹1,50,000 refundable deposit and 30-day termination clause."
-    },
-    "freelance-contract": {
-        "reviewed_on": "2025-09-05",
-        "reviewed_by": "Contracts Lead",
-        "risk_level": "low",
-        "sample_preview": "Freelancer agrees to deliver brand guidelines by 15 Nov for ₹75,000 with IP transfer upon payment and a 7-day termination window."
-    },
-    "employment-offer": {
-        "reviewed_on": "2025-10-28",
-        "reviewed_by": "HR Compliance Manager",
-        "risk_level": "medium",
-        "sample_preview": "Offer to Ms. Shah for Senior Product Manager with ₹36 LPA CTC, 6-month probation, and joining on 2 Dec subject to background verification."
-    },
-    "nda": {
-        "reviewed_on": "2025-07-12",
-        "reviewed_by": "Corporate Counsel",
-        "risk_level": "low",
-        "sample_preview": "Mutual NDA between TechLabs and VendorCo to explore a cybersecurity pilot, confidentiality surviving three years with Bangalore jurisdiction."
-    },
-    "sale-of-goods": {
-        "reviewed_on": "2025-09-30",
-        "reviewed_by": "Commercial Contracts Specialist",
-        "risk_level": "medium",
-        "sample_preview": "Seller agrees to ship 200 smart meters at ₹8,000 each with delivery in 30 days, warranty of 12 months, and Ahmedabad jurisdiction."
-    }
-}
+AGREEMENT_TEMPLATE_METADATA = build_category_metadata('agreement')
+CALCULATOR_METADATA = build_category_metadata('calculator')
 
 
 def get_template_metadata(source: Dict[str, Dict[str, str]], slug: str) -> Dict[str, str]:
@@ -1361,6 +1354,7 @@ def list_agreements():
             "reviewed_by": meta["reviewed_by"],
             "risk_level": meta["risk_level"],
             "sample_preview": meta["sample_preview"],
+            "when_to_consult": meta.get("when_to_consult", REVIEW_METADATA_DEFAULT["when_to_consult"]),
         })
     return jsonify({
         "status": "success",
@@ -1401,6 +1395,7 @@ def list_legal_notices():
             "reviewed_by": meta["reviewed_by"],
             "risk_level": meta["risk_level"],
             "sample_preview": meta["sample_preview"],
+            "when_to_consult": meta.get("when_to_consult", REVIEW_METADATA_DEFAULT["when_to_consult"]),
         })
     return jsonify({
         "status": "success",
@@ -1425,6 +1420,17 @@ def download_legal_notice(notice_key: str):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@app.route('/api/tools', methods=['GET'])
+def api_tools_catalog():
+    """Expose all tools with metadata for the discovery dashboard."""
+    tools = sorted(TOOL_MANIFEST.get('tools', []), key=lambda entry: entry.get('order', 999))
+    return jsonify({
+        "status": "success",
+        "count": len(tools),
+        "tools": tools
+    })
 
 def call_gemini_api(messages, user_language='english'):
     """Call Google Gemini API with language support"""

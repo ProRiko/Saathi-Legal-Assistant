@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saathi Tools Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top, #151d2b, #090d16 55%, #05070d);
+            color: #f4f1e8;
+        }
+        .tools-shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px 120px;
+        }
+        .tools-hero {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .tools-hero h1 {
+            font-size: 2.6rem;
+            margin-bottom: 10px;
+            color: #f7dba7;
+        }
+        .tools-hero p {
+            color: #d7d0c5;
+            max-width: 720px;
+            margin: 0 auto;
+            font-size: 1.05rem;
+        }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .tool-card {
+            background: rgba(15, 21, 33, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+        }
+        .tool-card header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .tool-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: rgba(247, 219, 167, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+        .tool-card h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #f7dba7;
+        }
+        .tool-description {
+            margin: 0;
+            color: #dcd3c3;
+        }
+        .tool-meta {
+            font-size: 0.9rem;
+            color: #c9c1b2;
+        }
+        .tool-when {
+            font-size: 0.85rem;
+            color: #f7dba7;
+            margin-top: -6px;
+        }
+        .tool-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .tool-actions button {
+            flex: 1;
+            min-width: 140px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 12px 16px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: #f4f1e8;
+        }
+        .tool-actions button.view-sample {
+            border-color: rgba(247, 219, 167, 0.5);
+            color: #f7dba7;
+        }
+        .tool-actions button.use-tool {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #1a1309;
+            border-color: transparent;
+        }
+        .tools-status {
+            margin-top: 20px;
+            text-align: center;
+            color: #bdb6aa;
+        }
+        .sample-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 12, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .sample-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .sample-modal__card {
+            background: rgba(13, 19, 31, 0.98);
+            border-radius: 26px;
+            padding: 30px;
+            max-width: 640px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+        }
+        .sample-modal__close {
+            border: none;
+            background: transparent;
+            color: #f4f1e8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            position: absolute;
+            top: 18px;
+            right: 18px;
+        }
+        .sample-banner {
+            background: rgba(247, 219, 167, 0.2);
+            border: 1px solid rgba(247, 219, 167, 0.5);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            color: #f7dba7;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sample-section {
+            margin-top: 18px;
+        }
+        .sample-section h4 {
+            margin: 0 0 6px;
+            color: #f7dba7;
+        }
+        .sample-section p {
+            margin: 0;
+            color: #dcd3c3;
+            line-height: 1.5;
+        }
+        .sample-points {
+            padding-left: 18px;
+            color: #dcd3c3;
+        }
+        .sample-links {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .sample-links button,
+        .sample-links a {
+            flex: 1;
+            min-width: 160px;
+            border-radius: 999px;
+            padding: 12px 18px;
+            font-weight: 600;
+            border: none;
+            text-align: center;
+            text-decoration: none;
+        }
+        .sample-links button {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #1a1309;
+        }
+        .sample-links a {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #f4f1e8;
+        }
+        @media (max-width: 640px) {
+            .tool-actions button {
+                width: 100%;
+            }
+            .sample-modal__card {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="site-nav__brand">
+            <a href="/">Saathi Legal Assistant</a>
+        </div>
+        <div class="site-nav__links">
+            <a href="/">Home</a>
+            <a href="/tools.html" class="is-active">Tools</a>
+            <a href="/legal-notices.html">Notices</a>
+            <a href="/agreement-templates.html">Agreements</a>
+            <a href="/legal-calculators.html">Calculators</a>
+            <a href="/chat.html">Chat</a>
+        </div>
+    </nav>
+
+    <main class="tools-shell">
+        <header class="tools-hero">
+            <p class="tagline" style="letter-spacing:4px; text-transform:uppercase; color:rgba(247,219,167,0.8);">Saathi Tools</p>
+            <h1>Choose a tool to get started</h1>
+            <p>View samples before you generate notices, agreements, or calculator outputs. Every card shows review metadata and opens a sample preview with one click.</p>
+        </header>
+
+        <section class="tools-grid" id="toolsGrid" aria-live="polite"></section>
+        <div class="tools-status" id="toolsStatus">Loading tools...</div>
+    </main>
+
+    <div class="sample-modal" id="sampleModal" aria-hidden="true">
+        <div class="sample-modal__card" role="dialog" aria-modal="true" aria-labelledby="sampleModalTitle">
+            <button class="sample-modal__close" type="button" aria-label="Close preview" id="sampleModalClose">×</button>
+            <p class="sample-banner">Sample preview — example output only</p>
+            <h2 id="sampleModalTitle"></h2>
+            <p id="sampleModalMeta" class="tool-meta" style="margin-top:6px;"></p>
+            <p id="sampleModalWhen" class="tool-when"></p>
+            <div class="sample-section">
+                <h4>What this sample shows</h4>
+                <ul class="sample-points" id="sampleModalHighlights"></ul>
+            </div>
+            <div class="sample-section">
+                <h4>Example input</h4>
+                <p id="sampleModalInput"></p>
+            </div>
+            <div class="sample-section">
+                <h4>Example output</h4>
+                <p id="sampleModalOutput"></p>
+            </div>
+            <div class="sample-links">
+                <button type="button" id="sampleModalUse">Use this template</button>
+                <a href="#" id="sampleModalPdf" target="_blank" rel="noopener">Download template PDF</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('toolsGrid');
+        const toolsStatus = document.getElementById('toolsStatus');
+        const PREFILL_KEY = 'saathi_prefill_tool';
+        const modal = document.getElementById('sampleModal');
+        const modalTitle = document.getElementById('sampleModalTitle');
+        const modalHighlights = document.getElementById('sampleModalHighlights');
+        const modalInput = document.getElementById('sampleModalInput');
+        const modalOutput = document.getElementById('sampleModalOutput');
+        const modalMeta = document.getElementById('sampleModalMeta');
+        const modalWhen = document.getElementById('sampleModalWhen');
+        const modalUseButton = document.getElementById('sampleModalUse');
+        const modalPdfLink = document.getElementById('sampleModalPdf');
+        const modalClose = document.getElementById('sampleModalClose');
+        let modalFocusTrap = [];
+        let lastFocusedElement = null;
+        let activeTool = null;
+
+        function formatRisk(risk) {
+            const normalized = String(risk || 'unverified').toLowerCase();
+            return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+        }
+
+        function friendlyCategory(category) {
+            switch (category) {
+                case 'legal_notice':
+                    return 'Legal Notice';
+                case 'agreement':
+                    return 'Agreement Template';
+                case 'calculator':
+                    return 'Calculator';
+                case 'ai_tool':
+                    return 'AI Reviewer';
+                default:
+                    return 'Tool';
+            }
+        }
+
+        function buildToolCard(tool) {
+            const card = document.createElement('article');
+            card.className = 'tool-card';
+            const riskLabel = formatRisk(tool.risk_level);
+            card.innerHTML = `
+                <header>
+                    <div class="tool-icon" role="img" aria-label="${tool.icon || ''} icon">${tool.icon || '🧩'}</div>
+                    <div>
+                        <p class="tool-meta" style="margin:0; text-transform:uppercase; font-size:0.75rem; letter-spacing:2px; color:rgba(247,219,167,0.8);">${friendlyCategory(tool.category)}</p>
+                        <h3>${tool.title}</h3>
+                    </div>
+                </header>
+                <p class="tool-description">${tool.description}</p>
+                <p class="tool-meta">Reviewed: ${tool.reviewed_on || 'Not reviewed yet'} • Risk: ${riskLabel} • ETA ${tool.estimated_time || ''}</p>
+                <p class="tool-when">${tool.when_to_consult || 'Consult a lawyer if the dispute value exceeds ₹50,000 or if ownership is contested.'}</p>
+                <div class="tool-actions">
+                    <button type="button" class="view-sample" aria-label="View sample for ${tool.title}">View Sample</button>
+                    <button type="button" class="use-tool" aria-label="Use ${tool.title}">Use this tool</button>
+                </div>
+            `;
+            const sampleBtn = card.querySelector('.view-sample');
+            sampleBtn.addEventListener('click', () => openSample(tool));
+            const useBtn = card.querySelector('.use-tool');
+            useBtn.addEventListener('click', () => navigateToTool(tool));
+            return card;
+        }
+
+        function storePrefill(tool) {
+            if (!tool.prefill) {
+                window.sessionStorage.removeItem(PREFILL_KEY);
+                return;
+            }
+            const payload = {
+                slug: tool.slug,
+                value: tool.prefill.value || tool.slug,
+                category: tool.category,
+                fields: tool.prefill.fields || null,
+                autoSubmit: Boolean(tool.prefill.autoSubmit)
+            };
+            if (tool.prefill.param) {
+                payload.param = tool.prefill.param;
+            }
+            try {
+                window.sessionStorage.setItem(PREFILL_KEY, JSON.stringify(payload));
+            } catch (error) {
+                console.warn('Unable to store prefill payload', error);
+            }
+        }
+
+        function buildTargetUrl(tool) {
+            if (!tool.prefill || !tool.prefill.param || !tool.prefill.value) {
+                return tool.use_url;
+            }
+            try {
+                const constructed = new URL(tool.use_url, window.location.origin);
+                constructed.searchParams.set(tool.prefill.param, tool.prefill.value);
+                return `${constructed.pathname}${constructed.search}${constructed.hash}`;
+            } catch (error) {
+                return tool.use_url;
+            }
+        }
+
+        function navigateToTool(tool) {
+            storePrefill(tool);
+            const target = buildTargetUrl(tool);
+            window.location.href = target;
+        }
+
+        function trapModalFocus() {
+            const focusable = modal.querySelectorAll('button, a');
+            modalFocusTrap = Array.from(focusable);
+            if (modalFocusTrap.length) {
+                modalFocusTrap[0].focus();
+            }
+        }
+
+        function handleModalKeydown(event) {
+            if (!modal.classList.contains('active') || event.key !== 'Tab') {
+                return;
+            }
+            if (!modalFocusTrap.length) {
+                event.preventDefault();
+                return;
+            }
+            const first = modalFocusTrap[0];
+            const last = modalFocusTrap[modalFocusTrap.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+
+        function openSample(tool) {
+            activeTool = tool;
+            lastFocusedElement = document.activeElement;
+            modalTitle.textContent = tool.title;
+            modalMeta.textContent = `Reviewed ${tool.reviewed_on || 'Not reviewed yet'} • Risk: ${formatRisk(tool.risk_level)}`;
+            modalWhen.textContent = tool.when_to_consult || 'Consult a lawyer if the dispute value exceeds ₹50,000 or if ownership is contested.';
+            modalHighlights.innerHTML = '';
+            (tool.sample_highlights || []).forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                modalHighlights.appendChild(li);
+            });
+            if (!tool.sample_highlights || !tool.sample_highlights.length) {
+                const li = document.createElement('li');
+                li.textContent = tool.sample_preview || 'Sample preview coming soon.';
+                modalHighlights.appendChild(li);
+            }
+            modalInput.textContent = tool.sample_example_input || 'Example input coming soon.';
+            modalOutput.textContent = tool.sample_example_output || tool.sample_preview || 'Example output coming soon.';
+            modalUseButton.onclick = () => navigateToTool(tool);
+            if (tool.sample_pdf_link) {
+                modalPdfLink.href = tool.sample_pdf_link;
+                modalPdfLink.style.display = 'inline-flex';
+            } else {
+                modalPdfLink.style.display = 'none';
+            }
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            trapModalFocus();
+        }
+
+        function closeSample() {
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+            if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                lastFocusedElement.focus();
+            }
+        }
+
+        modalClose.addEventListener('click', closeSample);
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeSample();
+            }
+        });
+        modal.addEventListener('keydown', handleModalKeydown);
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.classList.contains('active')) {
+                closeSample();
+            }
+        });
+
+        async function loadTools() {
+            try {
+                const response = await fetch('/api/tools');
+                if (!response.ok) throw new Error('Unable to load tools');
+                const data = await response.json();
+                const tools = (data.tools || []).sort((a, b) => (a.order || 999) - (b.order || 999));
+                grid.innerHTML = '';
+                tools.forEach(tool => {
+                    const card = buildToolCard(tool);
+                    grid.appendChild(card);
+                });
+                toolsStatus.textContent = tools.length ? '' : 'Tools will appear here shortly.';
+            } catch (error) {
+                console.error(error);
+                toolsStatus.textContent = 'Unable to load tools at the moment. Please refresh in a bit.';
+            }
+        }
+
+        loadTools();
+    </script>
+</body>
+</html>
