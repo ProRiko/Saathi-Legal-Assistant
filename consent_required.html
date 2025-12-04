@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consent Required — Saathi Legal Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .consent-required-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+        }
+        .consent-required-card {
+            width: min(640px, 100%);
+            background: rgba(16, 24, 40, 0.92);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 60px rgba(3, 7, 18, 0.6);
+            padding: 32px;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system;
+        }
+        .consent-required-card h1 {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        .consent-required-card p,
+        .consent-required-card li {
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        .consent-required-card ul {
+            padding-left: 1.4rem;
+            margin-bottom: 1.2rem;
+        }
+        .consent-required-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .consent-required-actions button,
+        .consent-required-actions a {
+            flex: 1;
+            min-width: 160px;
+            border-radius: 999px;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .consent-required-actions button {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #0f172a;
+            border: none;
+        }
+        .consent-required-actions a {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .consent-help-text {
+            margin-top: 14px;
+            font-size: 0.95rem;
+            color: #cbd5f5;
+        }
+        @media (max-width: 540px) {
+            .consent-required-card {
+                padding: 24px;
+            }
+            .consent-required-actions {
+                flex-direction: column;
+            }
+            .consent-required-actions button,
+            .consent-required-actions a {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body data-skip-consent-modal="true">
+    <main class="consent-required-shell">
+        <section class="consent-required-card" role="alert" aria-live="polite">
+            <p style="letter-spacing: 0.25em; text-transform: uppercase; color: #f7dba7; margin-bottom: 8px;">Saathi Legal Assistant</p>
+            <h1>Consent Is Needed to Continue</h1>
+            <p>To keep our AI tools transparent and safe, we have to store a small amount of information whenever you use Saathi:</p>
+            <ul>
+                <li>We store chat inputs and generated documents to provide and improve the service.</li>
+                <li>We do <strong>not</strong> sell or share your information with third parties.</li>
+                <li>You can request deletion at any time by emailing <a href="mailto:privacy@saathilegal.in" style="color:#f7dba7;">privacy@saathilegal.in</a>.</li>
+            </ul>
+            <p>If you decline consent, interactive features such as chat, document drafting, and calculators remain disabled.</p>
+            <div class="consent-required-actions">
+                <button type="button" id="consentRetryButton">I Understand — Review Again</button>
+                <a href="/privacy.html" target="_blank" rel="noopener">Read Privacy Policy</a>
+            </div>
+            <p class="consent-help-text">Need help or prefer not to store any data? Reach us at <a href="mailto:privacy@saathilegal.in" style="color:#f7dba7;">privacy@saathilegal.in</a> and we will guide you.</p>
+        </section>
+    </main>
+    <script>
+        (function () {
+            const button = document.getElementById('consentRetryButton');
+            if (!button) {
+                return;
+            }
+            button.addEventListener('click', () => {
+                try {
+                    window.localStorage.removeItem('saathi_consent');
+                } catch (error) {
+                    console.warn('Unable to reset consent flag', error);
+                }
+                window.location.href = '/';
+            });
+        })();
+    </script>
+</body>
+</html>

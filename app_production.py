@@ -23,6 +23,7 @@ import tempfile
 import time
 import hashlib
 from functools import wraps
+from threading import Lock
 
 # Production Security and Rate Limiting
 try:
@@ -58,6 +59,15 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONSENT_LOG_PATH = os.path.join(BASE_DIR, 'consent_logs.jsonl')
 CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
+CONSENT_NOSCRIPT_BLOCK = (
+    '<noscript>'
+    '<div class="no-js-consent-banner" role="alert">'
+    'Saathi Legal Assistant needs JavaScript enabled to capture your consent. '
+    'Please enable JavaScript and reload to use the tools.'
+    '</div>'
+    '</noscript>'
+)
+CONSENT_LOG_LOCK = Lock()
 
 
 def parse_allowed_origins() -> list[str]:
@@ -229,12 +239,23 @@ def serve_consent_script():
 
 
 def inject_consent_modal(html: str) -> str:
-    """Ensure every rendered HTML page loads the consent modal script."""
-    if 'consent-modal.js' in html:
-        return html
-    if '</body>' in html:
-        return html.replace('</body>', f"{CONSENT_SCRIPT_TAG}\n</body>")
-    return f"{html}{CONSENT_SCRIPT_TAG}"
+    """Ensure every rendered HTML page loads the consent modal script and fallback banner."""
+    needs_script = 'consent-modal.js' not in html
+    needs_noscript = 'no-js-consent-banner' not in html
+
+    if needs_script:
+        if '</body>' in html:
+            html = html.replace('</body>', f"{CONSENT_SCRIPT_TAG}\n</body>")
+        else:
+            html = f"{html}{CONSENT_SCRIPT_TAG}"
+
+    if needs_noscript:
+        if '</body>' in html:
+            html = html.replace('</body>', f"{CONSENT_NOSCRIPT_BLOCK}\n</body>")
+        else:
+            html = f"{html}{CONSENT_NOSCRIPT_BLOCK}"
+
+    return html
 
 
 def render_html_with_consent(filename: str, missing_message: str = "Page not found"):
@@ -322,6 +343,12 @@ def serve_language_selection():
 def serve_privacy_policy():
     """Serve the privacy policy page"""
     return render_html_with_consent('privacy.html', 'Privacy policy not found')
+
+
+@app.route('/consent-required.html')
+def serve_consent_required():
+    """Explain why consent is mandatory when a user declines."""
+    return render_html_with_consent('consent_required.html', 'Consent information not found')
 
 @app.route('/calculator.html') 
 def serve_calculator():
@@ -1079,10 +1106,18 @@ def _calculator_error(message: str, status_code: int = 400):
 
 
 def log_consent_event(event: Dict[str, Any]) -> None:
-    """Persist consent approvals for compliance tracking."""
+    """Persist consent approvals for compliance tracking (DB first, file fallback)."""
+    if db is not None:
+        try:
+            db['consent_logs'].insert_one(event)
+            return
+        except Exception as exc:
+            logger.warning("Mongo consent logging failed, using file fallback: %s", exc)
+
     try:
-        with open(CONSENT_LOG_PATH, 'a', encoding='utf-8') as log_file:
-            log_file.write(json.dumps(event) + '\n')
+        with CONSENT_LOG_LOCK:
+            with open(CONSENT_LOG_PATH, 'a', encoding='utf-8') as log_file:
+                log_file.write(json.dumps(event) + '\n')
     except Exception as exc:
         logger.error("Failed to persist consent event: %s", exc)
         raise
@@ -1270,16 +1305,33 @@ def api_consumer_compensation():
 
 @app.route('/api/consent', methods=['POST'])
 def record_consent():
-    """Capture user consent decisions before unlocking the experience."""
-    payload = request.get_json(silent=True) or {}
-    session_id = payload.get('session_id') or f"anon_{uuid.uuid4().hex}"
-    timestamp = payload.get('timestamp') or datetime.now(timezone.utc).isoformat()
-    scope = payload.get('scope') or 'core-app-access'
+    """Capture explicit consent decisions and persist them reliably."""
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return jsonify({"status": "error", "message": "Invalid JSON payload"}), 400
+
+    anon_id = str(payload.get('anon_id') or '').strip() or uuid.uuid4().hex
+    user_id_raw = payload.get('user_id')
+    user_id = None
+    if user_id_raw is not None:
+        user_id = str(user_id_raw).strip() or None
+
+    scope_payload = payload.get('scope') or {}
+    if not isinstance(scope_payload, dict):
+        return jsonify({"status": "error", "message": "scope must be an object"}), 400
+
+    normalized_scope = {}
+    for key, value in scope_payload.items():
+        normalized_scope[str(key)] = bool(value)
+
+    normalized_scope.setdefault('store_messages', False)
+    normalized_scope.setdefault('store_documents', False)
 
     event = {
-        "session_id": session_id,
-        "timestamp": timestamp,
-        "scope": scope,
+        "anon_id": anon_id,
+        "user_id": user_id,
+        "scope": normalized_scope,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "ip": request.remote_addr,
         "user_agent": request.headers.get('User-Agent', ''),
     }
@@ -1292,10 +1344,7 @@ def record_consent():
             "message": "Unable to record consent at this time"
         }), 500
 
-    return jsonify({
-        "status": "success",
-        "message": "Consent recorded"
-    })
+    return jsonify({"status": "ok"}), 201
 
 
 @app.route('/api/agreements', methods=['GET'])
