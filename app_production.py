@@ -6,6 +6,7 @@ Enhanced with Legal Document Generation - Production Ready
 import os
 import re
 import uuid
+import sqlite3
 from typing import Any, Dict
 from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string
 from flask_cors import CORS
@@ -19,10 +20,14 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
+from pypdf import PdfReader
+from docx import Document
 import io
 import tempfile
 import time
 import hashlib
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from functools import wraps
 from threading import Lock
 
@@ -58,6 +63,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'saathi.db')
 CONSENT_LOG_PATH = os.path.join(BASE_DIR, 'consent_logs.jsonl')
 CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
 TOOL_MANIFEST_PATH = os.path.join(BASE_DIR, 'tool_metadata.json')
@@ -71,6 +77,7 @@ CONSENT_NOSCRIPT_BLOCK = (
     '</noscript>'
 )
 CONSENT_LOG_LOCK = Lock()
+SQLITE_LOCK = Lock()
 def load_tool_manifest(path: str = TOOL_MANIFEST_PATH) -> Dict[str, Any]:
     """Load structured metadata for tools, templates, and calculators."""
     try:
@@ -103,6 +110,568 @@ TOOL_MANIFEST = load_tool_manifest()
 TOOL_INDEX = {entry.get('slug'): entry for entry in TOOL_MANIFEST.get('tools', [])}
 TEMPLATE_MANIFEST = load_template_manifest()
 TEMPLATE_INDEX = {entry.get('slug'): entry for entry in TEMPLATE_MANIFEST.get('templates', []) if entry.get('slug')}
+init_sqlite()
+
+
+def get_db_connection() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_sqlite() -> None:
+    schema = """
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+        token TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        last_seen TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS saved_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        item_type TEXT NOT NULL,
+        title TEXT,
+        summary TEXT,
+        payload TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS ai_reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        anon_id TEXT,
+        original_filename TEXT,
+        summary TEXT,
+        key_clauses TEXT,
+        risks TEXT,
+        suggestions TEXT,
+        lawyer_note TEXT,
+        annotated_html TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS review_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        anon_id TEXT,
+        document_id TEXT,
+        doc_title TEXT,
+        status TEXT NOT NULL,
+        contact_name TEXT,
+        contact_email TEXT,
+        notes TEXT,
+        admin_notes TEXT,
+        reviewed_file TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        anon_id TEXT,
+        action TEXT NOT NULL,
+        reference_id TEXT,
+        metadata TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+    """
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.executescript(schema)
+        conn.commit()
+        conn.close()
+
+
+def record_audit_event(action: str, user_id: int | None = None, anon_id: str | None = None,
+                       reference_id: str | None = None, metadata: Dict[str, Any] | None = None) -> None:
+    payload = json.dumps(metadata or {}, ensure_ascii=False)
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.execute(
+            """INSERT INTO audit_logs (user_id, anon_id, action, reference_id, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (user_id, anon_id, action, reference_id, payload, datetime.utcnow().isoformat())
+        )
+        conn.commit()
+        conn.close()
+
+
+def get_authenticated_user() -> Dict[str, Any] | None:
+    token = request.headers.get('X-Session-Token') or request.args.get('session_token')
+    if not token:
+        return None
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        row = conn.execute(
+            """SELECT sessions.token, sessions.user_id, users.email
+            FROM sessions
+            JOIN users ON users.id = sessions.user_id
+            WHERE sessions.token = ?""",
+            (token,)
+        ).fetchone()
+        if not row:
+            conn.close()
+            return None
+        conn.execute(
+            "UPDATE sessions SET last_seen = ? WHERE token = ?",
+            (datetime.utcnow().isoformat(), token)
+        )
+        conn.commit()
+        conn.close()
+    return {"token": row["token"], "user_id": row["user_id"], "email": row["email"]}
+
+
+def get_request_anon_id() -> str:
+    header_value = request.headers.get('X-Anon-Id') or request.cookies.get('saathi_anon_id')
+    if header_value:
+        return header_value
+    generated = uuid.uuid4().hex
+    return generated
+
+
+def save_user_item(user_id: int, item_type: str, title: str, summary: str, payload: Dict[str, Any]) -> None:
+    serialized = json.dumps(payload, ensure_ascii=False)
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.execute(
+            """INSERT INTO saved_items (user_id, item_type, title, summary, payload, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (user_id, item_type, title, summary, serialized, datetime.utcnow().isoformat())
+        )
+        conn.commit()
+        conn.close()
+    
+MAX_REVIEW_FILE_SIZE = int(os.getenv('MAX_REVIEW_FILE_SIZE', str(2 * 1024 * 1024)))
+ALLOWED_REVIEW_EXTENSIONS = {'.pdf', '.docx', '.txt'}
+AI_REVIEW_SAMPLE = {
+    "summary": "Five-clause vendor agreement covers payment, IP ownership, indemnity, confidentiality, and jurisdiction but timelines are vague.",
+    "key_clauses": [
+        "Payment milestones spread across 3 deliverables but penalties absent",
+        "Indemnity shifts all third-party liability to vendor without cap",
+        "Jurisdiction clause missing which weakens enforcement"
+    ],
+    "risks": [
+        "Payment schedule lacks late fee or default trigger",
+        "Indemnity is one-sided and uncapped",
+        "Termination clause missing notice period",
+        "No governing law or dispute resolution method"
+    ],
+    "suggestions": [
+        "Add specific delivery acceptance criteria and holdback",
+        "Insert mutual indemnity with liability cap",
+        "Define termination notice + cure window",
+        "State governing law (e.g., Maharashtra) and arbitration venue"
+    ],
+    "lawyer_recommendation": "Consult a contracts lawyer if deal value exceeds ₹5 lakh or vendor handles sensitive data.",
+    "annotated_html": "<p><mark>Payment milestones</mark> exist but late fee absent...</p>"
+}
+
+
+def clamp_review_text(text: str, max_chars: int = 6000) -> str:
+    cleaned = text.strip()
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return cleaned[:max_chars] + "\n… (truncated for review)"
+
+
+def extract_text_from_upload(file_storage) -> tuple[str | None, str | None]:
+    if not file_storage or not getattr(file_storage, 'filename', None):
+        return None, "No file provided"
+    filename = secure_filename(file_storage.filename)
+    _, ext = os.path.splitext(filename.lower())
+    if ext not in ALLOWED_REVIEW_EXTENSIONS:
+        return None, "Unsupported file type. Upload PDF, DOCX, or TXT."
+    file_bytes = file_storage.read()
+    if not file_bytes:
+        return None, "Uploaded file is empty"
+    if len(file_bytes) > MAX_REVIEW_FILE_SIZE:
+        return None, "File too large. Limit is 2 MB for Day-4 reviewer."
+    try:
+        if ext == '.pdf':
+            reader = PdfReader(io.BytesIO(file_bytes))
+            pages = [page.extract_text() or '' for page in reader.pages]
+            text = '\n'.join(pages)
+        elif ext == '.docx':
+            document = Document(io.BytesIO(file_bytes))
+            text = '\n'.join(paragraph.text for paragraph in document.paragraphs)
+        else:
+            try:
+                text = file_bytes.decode('utf-8')
+            except UnicodeDecodeError:
+                text = file_bytes.decode('latin-1')
+    except Exception as exc:
+        logger.error('Failed to read uploaded file: %s', exc)
+        return None, "Could not read uploaded file. Use UTF-8 text, PDF, or DOCX."
+    if not text.strip():
+        return None, "Document appears to be blank"
+    return clamp_review_text(text), None
+
+
+def fallback_review(document_text: str) -> Dict[str, Any]:
+    sentences = [line.strip() for line in document_text.split('\n') if line.strip()]
+    summary = ' '.join(sentences[:3]) or 'Document review available after parsing content.'
+    return {
+        "summary": summary[:400],
+        "key_clauses": sentences[:5],
+        "risks": ["Unable to run AI review. Please verify clauses manually."],
+        "suggestions": ["Retry after reducing file size or check your API configuration."],
+        "lawyer_recommendation": "Consult a licensed advocate for binding review.",
+    }
+
+
+def generate_ai_document_review(document_text: str) -> Dict[str, Any]:
+    if not document_text:
+        return fallback_review(document_text)
+    if not is_api_configured():
+        return fallback_review(document_text)
+    prompt = (
+        "You are an AI document reviewer for Indian legal teams. Read the document text and respond ONLY "
+        "with valid JSON using this schema: {\"summary\": string (3-5 sentences), \"key_clauses\": list, "
+        "\"risks\": list, \"suggestions\": list, \"lawyer_recommendation\": string}. "
+        "Highlight missing protections, vague clauses, or harmful language. Avoid legal advice. Document text:\n"
+        f"{document_text}\nJSON:"
+    )
+    try:
+        response = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"temperature": 0.4, "maxOutputTokens": 512}
+            },
+            timeout=40
+        )
+        response.raise_for_status()
+        body = response.json()
+        candidate = body.get('candidates', [{}])[0]
+        text_part = candidate.get('content', {}).get('parts', [{}])[0].get('text', '').strip()
+        parsed = json.loads(text_part)
+    except (requests.RequestException, json.JSONDecodeError, IndexError) as exc:
+        logger.warning('AI reviewer fallback due to %s', exc)
+        return fallback_review(document_text)
+
+    normalized = {
+        "summary": parsed.get('summary') or fallback_review(document_text)['summary'],
+        "key_clauses": parsed.get('key_clauses') or [],
+        "risks": parsed.get('risks') or [],
+        "suggestions": parsed.get('suggestions') or [],
+        "lawyer_recommendation": parsed.get('lawyer_recommendation') or "Consult an advocate for complex filings.",
+    }
+    return normalized
+
+
+def annotate_review_html(document_text: str, risks: list[str]) -> str:
+    safe_text = (document_text or '').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+    markup = safe_text
+    for risk in risks or []:
+        key = risk.split(' ')[0:3]
+        keyword = ' '.join(key).strip().lower()
+        if not keyword:
+            continue
+        pattern = re.compile(re.escape(keyword), re.IGNORECASE)
+        markup = pattern.sub(lambda match: f"<mark>{match.group(0)}</mark>", markup, count=1)
+    paragraphs = ''.join(f"<p>{line.strip()}</p>" for line in markup.split('\n') if line.strip())
+    return paragraphs or '<p>No text available for annotation.</p>'
+
+
+def store_ai_review(user_id: int | None, anon_id: str | None, filename: str, review: Dict[str, Any], annotated_html: str) -> int | None:
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        cursor = conn.execute(
+            """INSERT INTO ai_reviews (user_id, anon_id, original_filename, summary, key_clauses, risks, suggestions, lawyer_note, annotated_html, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                user_id,
+                anon_id,
+                filename,
+                review.get('summary'),
+                json.dumps(review.get('key_clauses') or [], ensure_ascii=False),
+                json.dumps(review.get('risks') or [], ensure_ascii=False),
+                json.dumps(review.get('suggestions') or [], ensure_ascii=False),
+                review.get('lawyer_recommendation'),
+                annotated_html,
+                datetime.utcnow().isoformat()
+            )
+        )
+        review_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+    return review_id
+
+
+def normalize_email(email: str) -> str:
+    return str(email or '').strip().lower()
+
+
+def create_session(user_id: int) -> str:
+    token = uuid.uuid4().hex
+    timestamp = datetime.utcnow().isoformat()
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.execute(
+            """INSERT OR REPLACE INTO sessions (token, user_id, created_at, last_seen)
+            VALUES (?, ?, ?, ?)""",
+            (token, user_id, timestamp, timestamp)
+        )
+        conn.commit()
+        conn.close()
+    return token
+
+
+def destroy_session(token: str) -> None:
+    if not token:
+        return
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM sessions WHERE token = ?', (token,))
+        conn.commit()
+        conn.close()
+
+
+def create_user_account(email: str, password: str) -> tuple[bool, str | None]:
+    safe_email = normalize_email(email)
+    if not safe_email or not password:
+        return False, "Email and password are required"
+    password_hash = generate_password_hash(password)
+    try:
+        with SQLITE_LOCK:
+            conn = get_db_connection()
+            conn.execute(
+                """INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)""",
+                (safe_email, password_hash, datetime.utcnow().isoformat())
+            )
+            conn.commit()
+            conn.close()
+    except sqlite3.IntegrityError:
+        return False, "Account already exists for this email"
+    return True, None
+
+
+def fetch_user(email: str) -> sqlite3.Row | None:
+    safe_email = normalize_email(email)
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        row = conn.execute('SELECT * FROM users WHERE email = ?', (safe_email,)).fetchone()
+        conn.close()
+    return row
+
+
+def list_saved_items(user_id: int) -> list[Dict[str, Any]]:
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        rows = conn.execute(
+            "SELECT id, item_type, title, summary, payload, created_at FROM saved_items WHERE user_id = ? ORDER BY id DESC LIMIT 100",
+            (user_id,)
+        ).fetchall()
+        conn.close()
+    items: list[Dict[str, Any]] = []
+    for row in rows:
+        payload = {}
+        if row['payload']:
+            try:
+                payload = json.loads(row['payload'])
+            except json.JSONDecodeError:
+                payload = {}
+        items.append({
+            "id": row['id'],
+            "type": row['item_type'],
+            "title": row['title'],
+            "summary": row['summary'],
+            "payload": payload,
+            "created_at": row['created_at']
+        })
+    return items
+
+
+def list_ai_reviews_for_user(user_id: int) -> list[Dict[str, Any]]:
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        rows = conn.execute(
+            "SELECT id, original_filename, summary, key_clauses, risks, suggestions, lawyer_note, created_at FROM ai_reviews WHERE user_id = ? ORDER BY id DESC LIMIT 50",
+            (user_id,)
+        ).fetchall()
+        conn.close()
+    reviews: list[Dict[str, Any]] = []
+    for row in rows:
+        reviews.append({
+            "id": row['id'],
+            "filename": row['original_filename'],
+            "summary": row['summary'],
+            "key_clauses": json.loads(row['key_clauses'] or '[]'),
+            "risks": json.loads(row['risks'] or '[]'),
+            "suggestions": json.loads(row['suggestions'] or '[]'),
+            "lawyer_note": row['lawyer_note'],
+            "created_at": row['created_at']
+        })
+    return reviews
+
+
+def list_review_requests_for_user(user_id: int) -> list[Dict[str, Any]]:
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        rows = conn.execute(
+            "SELECT id, status, doc_title, created_at, updated_at, admin_notes FROM review_requests WHERE user_id = ? ORDER BY id DESC",
+            (user_id,)
+        ).fetchall()
+        conn.close()
+    return [
+        {
+            "id": row['id'],
+            "status": row['status'],
+            "doc_title": row['doc_title'],
+            "created_at": row['created_at'],
+            "updated_at": row['updated_at'],
+            "admin_notes": row['admin_notes']
+        }
+        for row in rows
+    ]
+
+
+def purge_user_data(user_id: int) -> None:
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM saved_items WHERE user_id = ?', (user_id,))
+        conn.execute('DELETE FROM ai_reviews WHERE user_id = ?', (user_id,))
+        conn.execute('DELETE FROM review_requests WHERE user_id = ?', (user_id,))
+        conn.commit()
+        conn.close()
+
+
+def save_template_history(user: Dict[str, Any] | None, slug: str, title: str, fields: Dict[str, str]) -> None:
+    if not user:
+        return
+    summary = f"{slug} drafted with {len(fields)} fields"
+    save_user_item(
+        user_id=user['user_id'],
+        item_type='document',
+        title=title,
+        summary=summary,
+        payload={"slug": slug, "fields": fields}
+    )
+
+
+def save_calculator_history(user: Dict[str, Any] | None, calc_slug: str, input_payload: Dict[str, Any], result_payload: Dict[str, Any]) -> None:
+    if not user:
+        return
+    title = f"{calc_slug.replace('-', ' ').title()} calculator"
+    summary = result_payload.get('message') or result_payload.get('note') or 'Calculator result saved.'
+    save_user_item(
+        user_id=user['user_id'],
+        item_type='calculator',
+        title=title,
+        summary=summary[:160],
+        payload={"input": input_payload, "result": result_payload}
+    )
+
+
+ENABLE_GUARDRAILS = os.getenv('ENABLE_CITATION_GUARDRAILS', 'true').lower() == 'true'
+KNOWN_ACTS = {
+    'payment of wages act 1936',
+    'shops and establishments act',
+    'transfer of property act 1882',
+    'consumer protection act 2019',
+    'negotiable instruments act 1881',
+    'indian penal code 1860',
+    'criminal procedure code 1973',
+    'maternity benefit act 1961',
+    'industrial disputes act 1947',
+    'hindu marriage act 1955',
+    'special marriage act 1954',
+    'information technology act 2000',
+    'companies act 2013',
+    'indian contract act 1872',
+    'code of civil procedure 1908'
+}
+CITATION_RULES = [
+    {"keywords": ('salary', 'wage', 'notice period'), "citation": "Payment of Wages Act, 1936"},
+    {"keywords": ('tenant', 'rent', 'eviction'), "citation": "Transfer of Property Act, 1882"},
+    {"keywords": ('consumer', 'refund', 'defective'), "citation": "Consumer Protection Act, 2019"},
+    {"keywords": ('cheque', 'ni act'), "citation": "Negotiable Instruments Act, 1881"},
+    {"keywords": ('criminal', 'fir', 'bail'), "citation": "Code of Criminal Procedure, 1973"}
+]
+UNCERTAINTY_MARKERS = ['not sure', 'uncertain', 'cannot confirm', 'might be', 'possibly', 'unsure']
+SECTION_PATTERN = re.compile(r"Section\s+\d+[A-Z]?\s+of\s+the\s+[A-Za-z\s]+Act", re.IGNORECASE)
+
+
+def infer_citation(user_input: str, reply: str) -> str | None:
+    combined = f"{user_input} {reply}".lower()
+    for rule in CITATION_RULES:
+        if any(keyword in combined for keyword in rule['keywords']):
+            return rule['citation']
+    return None
+
+
+def detect_high_risk(intent: str | None, user_input: str) -> bool:
+    high_risk_intents = {'criminal_law', 'property_law', 'family_law'}
+    if intent in high_risk_intents:
+        return True
+    keywords = ['termination', 'divorce', 'eviction', 'bail', 'arrest', 'cheque bounce']
+    lowered = user_input.lower()
+    return any(token in lowered for token in keywords)
+
+
+def detect_unknown_acts(reply: str) -> list[str]:
+    matches = re.findall(r"([A-Z][A-Za-z\s]+ Act(?:,\s*\d{4})?)", reply)
+    unknown = []
+    for match in matches:
+        normalized = match.lower().replace(',', '')
+        if normalized not in KNOWN_ACTS:
+            unknown.append(match)
+    return unknown
+
+
+def contains_uncertainty(reply: str) -> bool:
+    lowered = reply.lower()
+    return any(marker in lowered for marker in UNCERTAINTY_MARKERS)
+
+
+def apply_citation_guardrails(user_input: str, reply: str, intent: str | None) -> tuple[str, Dict[str, Any]]:
+    if not ENABLE_GUARDRAILS or not reply:
+        return reply, {}
+    updated = reply.strip()
+    metadata = {
+        "added_citation": False,
+        "disclaimer_added": False,
+        "high_risk_caution": False,
+        "softened_for_uncertainty": False,
+        "law_check": False
+    }
+    citation_present = bool(SECTION_PATTERN.search(updated)) or 'section ' in updated.lower()
+    inferred = infer_citation(user_input, updated)
+    if inferred and inferred.lower() not in updated.lower():
+        updated += f"\n\nSource: {inferred}."
+        metadata['added_citation'] = True
+        citation_present = True
+    if not citation_present and not metadata['added_citation']:
+        updated += "\n\nNo primary citation identified. Please verify with official statutes."
+        metadata['disclaimer_added'] = True
+    if detect_high_risk(intent, user_input):
+        if 'consult a licensed advocate' not in updated.lower():
+            updated += "\n\nFor complex matters like this, consult a licensed advocate."
+            metadata['high_risk_caution'] = True
+    if contains_uncertainty(updated):
+        updated = "⚠️ This is preliminary guidance and may lack complete context. " + updated
+        metadata['softened_for_uncertainty'] = True
+    unknown_acts = detect_unknown_acts(updated)
+    if unknown_acts:
+        updated += "\n\nVerify law names mentioned: " + ', '.join(sorted(set(unknown_acts))) + '.'
+        metadata['law_check'] = True
+    return updated, metadata
 
 
 def build_category_metadata(category_key: str) -> Dict[str, Dict[str, str]]:
@@ -1346,6 +1915,8 @@ def api_notice_period():
     company_raw = payload.get('companyType', 'it_services')
     company_type = str(company_raw or 'it_services').lower()
     years = _safe_float(payload.get('yearsOfService'), None)
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
 
     if years is None or years < 0:
         return _calculator_error("Please provide yearsOfService as a non-negative number.")
@@ -1355,12 +1926,15 @@ def api_notice_period():
         company_type = 'it_services'
 
     result = calculate_notice_period(company_type, years)
+    input_payload = {
+        "companyType": company_type,
+        "yearsOfService": years
+    }
+    save_calculator_history(user, 'notice-period', input_payload, result)
+    record_audit_event('calculator_run', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"calculator": "notice-period"})
     return jsonify({
         "status": "success",
-        "input": {
-            "companyType": company_type,
-            "yearsOfService": years
-        },
+        "input": input_payload,
         "result": result
     })
 
@@ -1370,6 +1944,8 @@ def api_work_hours():
     payload: Dict[str, Any] = request.get_json(silent=True) or {}
     total_hours = _safe_float(payload.get('totalWeeklyHours'), None)
     hourly_rate = _safe_float(payload.get('hourlyRate'), None)
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
 
     if total_hours is None or total_hours < 0:
         return _calculator_error("Provide totalWeeklyHours as a non-negative number.")
@@ -1377,12 +1953,15 @@ def api_work_hours():
         return _calculator_error("Provide hourlyRate as a non-negative number.")
 
     result = calculate_work_hours(total_hours, hourly_rate)
+    input_payload = {
+        "totalWeeklyHours": total_hours,
+        "hourlyRate": hourly_rate
+    }
+    save_calculator_history(user, 'work-hours', input_payload, result)
+    record_audit_event('calculator_run', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"calculator": "work-hours"})
     return jsonify({
         "status": "success",
-        "input": {
-            "totalWeeklyHours": total_hours,
-            "hourlyRate": hourly_rate
-        },
+        "input": input_payload,
         "result": result
     })
 
@@ -1393,6 +1972,8 @@ def api_maternity_benefit():
     days_worked = _safe_int(payload.get('daysWorked'), None)
     avg_daily_wage = _safe_float(payload.get('averageDailyWage'), None)
     children_count = _safe_int(payload.get('childrenCount'), 1) or 1
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
 
     if days_worked is None or days_worked < 0:
         return _calculator_error("daysWorked must be 0 or more")
@@ -1402,13 +1983,16 @@ def api_maternity_benefit():
         children_count = 1
 
     result = calculate_maternity_benefit(days_worked, avg_daily_wage, children_count)
+    input_payload = {
+        "daysWorked": days_worked,
+        "averageDailyWage": avg_daily_wage,
+        "childrenCount": children_count
+    }
+    save_calculator_history(user, 'maternity-benefit', input_payload, result)
+    record_audit_event('calculator_run', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"calculator": "maternity-benefit"})
     return jsonify({
         "status": "success",
-        "input": {
-            "daysWorked": days_worked,
-            "averageDailyWage": avg_daily_wage,
-            "childrenCount": children_count
-        },
+        "input": input_payload,
         "result": result
     })
 
@@ -1421,6 +2005,8 @@ def api_consumer_compensation():
     issue_type = str(issue_raw or 'defective_product').lower()
     delay_days = _safe_int(payload.get('delayDays'), 0) or 0
     out_of_pocket = _safe_float(payload.get('outOfPocket'), 0.0) or 0.0
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
 
     if purchase_amount is None or purchase_amount <= 0:
         return _calculator_error("purchaseAmount must be greater than 0")
@@ -1434,14 +2020,17 @@ def api_consumer_compensation():
         issue_type = 'defective_product'
 
     result = calculate_consumer_compensation(purchase_amount, issue_type, delay_days, out_of_pocket)
+    input_payload = {
+        "purchaseAmount": purchase_amount,
+        "issueType": issue_type,
+        "delayDays": delay_days,
+        "outOfPocket": out_of_pocket
+    }
+    save_calculator_history(user, 'consumer-compensation', input_payload, result)
+    record_audit_event('calculator_run', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"calculator": "consumer-compensation"})
     return jsonify({
         "status": "success",
-        "input": {
-            "purchaseAmount": purchase_amount,
-            "issueType": issue_type,
-            "delayDays": delay_days,
-            "outOfPocket": out_of_pocket
-        },
+        "input": input_payload,
         "result": result
     })
 
@@ -1599,6 +2188,8 @@ def api_template_detail(slug: str):
 def api_render_template():
     payload: Dict[str, Any] = request.get_json(silent=True) or {}
     slug = str(payload.get('slug') or '').strip()
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
     entry = get_template_entry(slug)
     if not slug or not entry:
         return jsonify({"status": "error", "message": "Template not found"}), 404
@@ -1610,6 +2201,8 @@ def api_render_template():
     if not rendered_text:
         return jsonify({"status": "error", "message": "Unable to render template"}), 500
     title = entry.get('pdf_title') or _get_template_document(slug)[1] or entry.get('display_name') or slug
+    save_template_history(user, slug, title, cleaned)
+    record_audit_event('template_rendered', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"slug": slug})
     return jsonify({
         "status": "success",
         "title": title,
@@ -1622,6 +2215,8 @@ def api_render_template():
 def api_template_pdf():
     payload: Dict[str, Any] = request.get_json(silent=True) or {}
     slug = str(payload.get('slug') or '').strip()
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
     entry = get_template_entry(slug)
     if not slug or not entry:
         return jsonify({"status": "error", "message": "Template not found"}), 404
@@ -1637,6 +2232,8 @@ def api_template_pdf():
     pdf_data = create_pdf_document(title, final_text, f"{slug}.pdf")
     if not pdf_data:
         return jsonify({"status": "error", "message": "Failed to generate PDF"}), 500
+    save_template_history(user, slug, title, cleaned)
+    record_audit_event('template_pdf_generated', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"slug": slug})
     filename = f"{slug}_{datetime.now().strftime('%Y%m%d')}.pdf"
     response = make_response(pdf_data)
     response.headers['Content-Type'] = 'application/pdf'
@@ -1686,6 +2283,172 @@ def api_tools_catalog():
         "count": len(tools),
         "tools": tools
     })
+
+
+@app.route('/api/reviewer/sample', methods=['GET'])
+def api_reviewer_sample():
+    return jsonify({"status": "success", "sample": AI_REVIEW_SAMPLE})
+
+
+@app.route('/api/reviewer/analyze', methods=['POST'])
+def api_reviewer_analyze():
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
+    payload = request.get_json(silent=True) or {}
+    uploaded_file = request.files.get('file') if request.files else None
+    document_text = ''
+    filename = 'pasted-text.txt'
+
+    if uploaded_file and uploaded_file.filename:
+        document_text, error = extract_text_from_upload(uploaded_file)
+        filename = secure_filename(uploaded_file.filename)
+        if error:
+            return jsonify({"status": "error", "message": error}), 400
+    else:
+        document_text = (payload.get('text') or request.form.get('text') or '').strip()
+        if not document_text:
+            return jsonify({"status": "error", "message": "Provide text or upload a document."}), 400
+        document_text = clamp_review_text(document_text)
+
+    review = generate_ai_document_review(document_text)
+    annotated_html = annotate_review_html(document_text, review.get('risks'))
+    review['annotated_html'] = annotated_html
+    review_id = store_ai_review(user['user_id'] if user else None, anon_id, filename, review, annotated_html)
+    review['review_id'] = review_id
+
+    if user:
+        save_user_item(
+            user_id=user['user_id'],
+            item_type='ai_review',
+            title=f"AI Review • {filename}",
+            summary=review.get('summary', '')[:140],
+            payload={"review_id": review_id, "filename": filename}
+        )
+
+    record_audit_event(
+        action='ai_review_run',
+        user_id=user['user_id'] if user else None,
+        anon_id=anon_id,
+        reference_id=str(review_id) if review_id else None,
+        metadata={"filename": filename}
+    )
+
+    return jsonify({"status": "success", "review": review})
+
+
+@app.route('/api/reviewer/annotated/<int:review_id>', methods=['GET'])
+def api_reviewer_download(review_id: int):
+    user = get_authenticated_user()
+    if not user:
+        return jsonify({"status": "error", "message": "Login required"}), 401
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        row = conn.execute(
+            "SELECT annotated_html, original_filename FROM ai_reviews WHERE id = ? AND user_id = ?",
+            (review_id, user['user_id'])
+        ).fetchone()
+        conn.close()
+    if not row:
+        return jsonify({"status": "error", "message": "Review not found"}), 404
+    html_body = row['annotated_html'] or '<p>No annotation stored.</p>'
+    response = make_response(html_body)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    filename = f"annotated_{review_id}.html"
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@app.route('/api/auth/signup', methods=['POST'])
+def api_signup():
+    data = request.get_json(silent=True) or {}
+    email = data.get('email')
+    password = data.get('password')
+    if not email or not password:
+        return jsonify({"status": "error", "message": "Email and password are required"}), 400
+    if len(password) < 8:
+        return jsonify({"status": "error", "message": "Password must be at least 8 characters"}), 400
+    ok, error_message = create_user_account(email, password)
+    if not ok:
+        return jsonify({"status": "error", "message": error_message}), 400
+    user_row = fetch_user(email)
+    if not user_row:
+        return jsonify({"status": "error", "message": "Unable to create account"}), 500
+    token = create_session(user_row['id'])
+    record_audit_event('user_created_account', user_id=user_row['id'], metadata={"email_hash": hashlib.sha256(normalize_email(email).encode()).hexdigest()})
+    return jsonify({
+        "status": "success",
+        "token": token,
+        "user": {"email": user_row['email']}
+    })
+
+
+@app.route('/api/auth/login', methods=['POST'])
+def api_login():
+    data = request.get_json(silent=True) or {}
+    email = data.get('email')
+    password = data.get('password') or ''
+    user_row = fetch_user(email or '')
+    if not user_row or not check_password_hash(user_row['password_hash'], password):
+        return jsonify({"status": "error", "message": "Invalid credentials"}), 401
+    token = create_session(user_row['id'])
+    record_audit_event('user_logged_in', user_id=user_row['id'])
+    return jsonify({
+        "status": "success",
+        "token": token,
+        "user": {"email": user_row['email']}
+    })
+
+
+@app.route('/api/auth/logout', methods=['POST'])
+def api_logout():
+    token = request.headers.get('X-Session-Token') or (request.get_json(silent=True) or {}).get('token')
+    if not token:
+        return jsonify({"status": "error", "message": "Token required"}), 400
+    destroy_session(token)
+    return jsonify({"status": "success"})
+
+
+@app.route('/api/dashboard', methods=['GET'])
+def api_dashboard():
+    user = get_authenticated_user()
+    if not user:
+        return jsonify({"status": "error", "message": "Login required"}), 401
+    saved_items = list_saved_items(user['user_id'])
+    ai_reviews = list_ai_reviews_for_user(user['user_id'])
+    review_requests = list_review_requests_for_user(user['user_id'])
+    return jsonify({
+        "status": "success",
+        "profile": {"email": user['email']},
+        "saved_items": saved_items,
+        "ai_reviews": ai_reviews,
+        "review_requests": review_requests
+    })
+
+
+@app.route('/api/saved-items/<int:item_id>', methods=['DELETE'])
+def delete_saved_item(item_id: int):
+    user = get_authenticated_user()
+    if not user:
+        return jsonify({"status": "error", "message": "Login required"}), 401
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        result = conn.execute('DELETE FROM saved_items WHERE id = ? AND user_id = ?', (item_id, user['user_id']))
+        conn.commit()
+        conn.close()
+    deleted = result.rowcount > 0
+    if deleted:
+        record_audit_event('user_deleted_saved_item', user_id=user['user_id'], reference_id=str(item_id))
+    return jsonify({"status": "success", "deleted": deleted})
+
+
+@app.route('/api/dashboard', methods=['DELETE'])
+def purge_dashboard():
+    user = get_authenticated_user()
+    if not user:
+        return jsonify({"status": "error", "message": "Login required"}), 401
+    purge_user_data(user['user_id'])
+    record_audit_event('user_deleted_all_data', user_id=user['user_id'])
+    return jsonify({"status": "success"})
 
 def call_gemini_api(messages, user_language='english'):
     """Call Google Gemini API with language support"""
@@ -2347,6 +3110,9 @@ def chat():
             "status": "error"
         }), 500
     
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
+
     # Rate limiting check
     client_id = get_client_identifier(request)
     is_limited, request_count = is_rate_limited(client_id)
@@ -2387,6 +3153,9 @@ def chat():
                 "status": "error"
             }), 400
         
+        # Detect intent early for guardrails + reply metadata
+        intent = detect_intent(user_input)
+
         # Add user message to conversation
         conversation_history.append({"role": "user", "content": user_input})
         
@@ -2399,6 +3168,10 @@ def chat():
         # Call Gemini API with language support
         reply = call_gemini_api(conversation_history, user_language)
         
+        guardrail_meta: Dict[str, Any] = {}
+        if reply and ENABLE_GUARDRAILS:
+            reply, guardrail_meta = apply_citation_guardrails(user_input, reply, intent)
+
         if reply:
             # Add assistant response to conversation
             conversation_history.append({"role": "assistant", "content": reply})
@@ -2417,12 +3190,19 @@ def chat():
                     'user_message_length': len(user_input)
                 })
             
-            # Detect intent
-            intent = detect_intent(user_input)
-            
             # Calculate remaining requests for this client
             remaining_requests = max(0, RATE_LIMIT_REQUESTS - request_count)
             
+            if user:
+                # Persist chat history for logged-in user
+                save_user_item(
+                    user_id=user['user_id'],
+                    item_type='chat',
+                    title=f"Chat response #{message_count}",
+                    summary=reply[:160],
+                    payload={"question": user_input, "reply": reply}
+                )
+            record_audit_event('chat_exchange', user_id=user['user_id'] if user else None, anon_id=anon_id)
             return jsonify({
                 "reply": reply,
                 "language": user_language,
@@ -2438,7 +3218,8 @@ def chat():
                     "limit": RATE_LIMIT_REQUESTS,
                     "remaining": remaining_requests,
                     "reset_in": RATE_LIMIT_WINDOW
-                }
+                },
+                "guardrails": guardrail_meta
             })
         else:
             return jsonify({
