@@ -1,0 +1,1087 @@
+{
+  "templates": [
+    {
+      "slug": "salary-not-paid",
+      "category": "legal_notice",
+      "document_type": "notice",
+      "display_name": "Salary Not Paid Notice",
+      "pdf_title": "LEGAL NOTICE FOR NON-PAYMENT OF SALARY",
+      "last_reviewed_date": "2025-11-10",
+      "reviewed_by": "Labour Law Desk",
+      "risk_level": "medium",
+      "sample_path": "samples/notices/salary-not-paid.html",
+      "when_to_consult_lawyer": [
+        "Salary arrears exceed ₹50,000 or cover more than two pay cycles",
+        "Employer issued a termination or show-cause notice",
+        "There is a threat of retaliation for raising the dispute"
+      ],
+      "prefill_fields": {
+        "noticeDate": "2025-11-15",
+        "employeeName": "Nisha Rao",
+        "employeeAddress": "Flat 12B, Indiranagar, Bengaluru",
+        "employeePhone": "9876543210",
+        "employeeEmail": "nisha.rao@example.com",
+        "designation": "Product Manager",
+        "employmentStart": "2021-04-01",
+        "employmentEnd": "2025-10-31",
+        "pendingMonths": "April 2025, May 2025",
+        "pendingAmount": "120000",
+        "employerName": "Ajay Sharma",
+        "companyName": "Northstar Labs Pvt Ltd",
+        "companyAddress": "2nd Floor, Manyata Tech Park, Bengaluru"
+      },
+      "fields": [
+        {
+          "id": "noticeDate",
+          "label": "Notice date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Current Date]",
+          "example": "Auto-set to today if blank",
+          "validation": { "required": true }
+        },
+        {
+          "id": "employeeName",
+          "label": "Your full name",
+          "type": "text",
+          "group": "Your details",
+          "token": "[Employee Name]",
+          "placeholder": "e.g. Nisha Rao",
+          "example": "Example: Nisha Rao",
+          "validation": {
+            "required": true,
+            "minLength": 3,
+            "maxLength": 80,
+            "pattern": "^[A-Za-z\\s\\.&,-]+$"
+          }
+        },
+        {
+          "id": "employeeAddress",
+          "label": "Your address",
+          "type": "textarea",
+          "group": "Your details",
+          "token": "[Employee Address]",
+          "placeholder": "Street, city, PIN",
+          "example": "Example: Flat 12B, Indiranagar, Bengaluru",
+          "validation": { "required": true, "minLength": 8 }
+        },
+        {
+          "id": "employeePhone",
+          "label": "Phone number",
+          "type": "tel",
+          "group": "Your details",
+          "token": "[Employee Phone]",
+          "placeholder": "10-digit mobile",
+          "example": "Example: 9876543210",
+          "validation": {
+            "required": true,
+            "pattern": "^[6-9][0-9]{9}$"
+          }
+        },
+        {
+          "id": "employeeEmail",
+          "label": "Email",
+          "type": "email",
+          "group": "Your details",
+          "token": "[Employee Email]",
+          "placeholder": "name@example.com",
+          "example": "Use a monitored inbox",
+          "validation": { "required": true }
+        },
+        {
+          "id": "designation",
+          "label": "Designation",
+          "type": "text",
+          "group": "Employment details",
+          "token": "[Designation]",
+          "placeholder": "e.g. Product Manager",
+          "validation": { "required": true, "minLength": 2 }
+        },
+        {
+          "id": "employmentStart",
+          "label": "Employment start date",
+          "type": "date",
+          "group": "Employment details",
+          "token": "[Start Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "employmentEnd",
+          "label": "Last working day / current date",
+          "type": "date",
+          "group": "Employment details",
+          "token": "[Last Working Day]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "pendingMonths",
+          "label": "Months pending",
+          "type": "text",
+          "group": "Dispute details",
+          "token": "[Pending Months]",
+          "placeholder": "e.g. April 2025, May 2025",
+          "validation": { "required": true }
+        },
+        {
+          "id": "pendingAmount",
+          "label": "Total amount due (₹)",
+          "type": "number",
+          "group": "Dispute details",
+          "token": "[Amount]",
+          "placeholder": "120000",
+          "validation": { "required": true, "min": 1000 }
+        },
+        {
+          "id": "employerName",
+          "label": "Employer contact name",
+          "type": "text",
+          "group": "Employer details",
+          "token": "[Employer Name]",
+          "validation": { "required": true, "minLength": 3 }
+        },
+        {
+          "id": "companyName",
+          "label": "Company name",
+          "type": "text",
+          "group": "Employer details",
+          "token": "[Company Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "companyAddress",
+          "label": "Company address",
+          "type": "textarea",
+          "group": "Employer details",
+          "token": "[Company Address]",
+          "validation": { "required": true, "minLength": 8 }
+        }
+      ]
+    },
+    {
+      "slug": "rent-default",
+      "category": "legal_notice",
+      "document_type": "notice",
+      "display_name": "Rent Default / Eviction Notice",
+      "pdf_title": "NOTICE TO TENANT FOR RENT DEFAULT",
+      "last_reviewed_date": "2025-10-28",
+      "reviewed_by": "Property Law Specialist",
+      "risk_level": "medium",
+      "sample_path": "samples/notices/rent-default.html",
+      "when_to_consult_lawyer": [
+        "Eviction involves police assistance or attachment of assets",
+        "Property is jointly owned or under mortgage",
+        "Tenant disputes the rent agreement or alleges harassment"
+      ],
+      "prefill_fields": {
+        "noticeDate": "2025-10-20",
+        "tenantName": "Rahul Dutta",
+        "propertyAddress": "Flat 203, Green Meadows, Whitefield, Bengaluru",
+        "agreementDate": "2024-12-01",
+        "monthlyRent": "25000",
+        "pendingPeriod": "July 2025 - August 2025",
+        "outstandingAmount": "50000",
+        "landlordName": "Meera Krishnan",
+        "landlordAddress": "Villa 17, Green Meadows, Bengaluru",
+        "landlordPhone": "9822001122"
+      },
+      "fields": [
+        {
+          "id": "noticeDate",
+          "label": "Notice date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Notice Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "tenantName",
+          "label": "Tenant name",
+          "type": "text",
+          "group": "Recipient details",
+          "token": "[Tenant Name]",
+          "validation": { "required": true, "minLength": 3 }
+        },
+        {
+          "id": "propertyAddress",
+          "label": "Property address",
+          "type": "textarea",
+          "group": "Property",
+          "token": "[Property Address]",
+          "validation": { "required": true, "minLength": 10 }
+        },
+        {
+          "id": "agreementDate",
+          "label": "Rent agreement date",
+          "type": "date",
+          "group": "Agreement",
+          "token": "[Agreement Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "monthlyRent",
+          "label": "Monthly rent (₹)",
+          "type": "number",
+          "group": "Agreement",
+          "token": "[Monthly Rent]",
+          "validation": { "required": true, "min": 1000 }
+        },
+        {
+          "id": "pendingPeriod",
+          "label": "Pending rent period",
+          "type": "text",
+          "group": "Dispute details",
+          "token": "[Pending Period]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "outstandingAmount",
+          "label": "Outstanding amount (₹)",
+          "type": "number",
+          "group": "Dispute details",
+          "token": "[Outstanding Amount]",
+          "validation": { "required": true, "min": 1000 }
+        },
+        {
+          "id": "landlordName",
+          "label": "Landlord name",
+          "type": "text",
+          "group": "Sender details",
+          "token": "[Landlord Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "landlordAddress",
+          "label": "Landlord address",
+          "type": "textarea",
+          "group": "Sender details",
+          "token": "[Landlord Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "landlordPhone",
+          "label": "Landlord phone",
+          "type": "tel",
+          "group": "Sender details",
+          "token": "[Landlord Phone]",
+          "validation": { "required": true, "pattern": "^[6-9][0-9]{9}$" }
+        }
+      ]
+    },
+    {
+      "slug": "consumer-complaint",
+      "category": "legal_notice",
+      "document_type": "notice",
+      "display_name": "Consumer Complaint Notice",
+      "pdf_title": "LEGAL NOTICE UNDER CONSUMER PROTECTION ACT, 2019",
+      "last_reviewed_date": "2025-09-18",
+      "reviewed_by": "Consumer Rights Advocate",
+      "risk_level": "low",
+      "sample_path": "samples/notices/consumer-complaint.html",
+      "when_to_consult_lawyer": [
+        "Losses exceed ₹2 lakh or involve injury",
+        "Brand has denied liability in writing",
+        "There is an urgent need for injunction or product recall"
+      ],
+      "prefill_fields": {
+        "noticeDate": "2025-09-20",
+        "companyName": "Prime Appliances Pvt Ltd",
+        "companyAddress": "23 Residency Road, Bengaluru",
+        "productDescription": "Front-load washing machine (Invoice 1456)",
+        "purchaseDate": "2025-08-05",
+        "invoiceAmount": "28500",
+        "invoiceNumber": "INV-1456",
+        "issueDescription": "Machine stopped working within 10 days despite service visit",
+        "desiredRemedy": "Full refund with ₹3,000 compensation",
+        "consumerName": "Anita Verma",
+        "consumerAddress": "24, Lake View Apartments, Bengaluru",
+        "consumerContact": "anita.verma@example.com | 9812233445"
+      },
+      "fields": [
+        {
+          "id": "noticeDate",
+          "label": "Notice date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Notice Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "companyName",
+          "label": "Company / seller name",
+          "type": "text",
+          "group": "Recipient details",
+          "token": "[Company Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "companyAddress",
+          "label": "Company address",
+          "type": "textarea",
+          "group": "Recipient details",
+          "token": "[Company Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "productDescription",
+          "label": "Product / service",
+          "type": "text",
+          "group": "Dispute details",
+          "token": "[Product Service Description]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "purchaseDate",
+          "label": "Purchase date",
+          "type": "date",
+          "group": "Dispute details",
+          "token": "[Purchase Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "invoiceAmount",
+          "label": "Invoice amount (₹)",
+          "type": "number",
+          "group": "Dispute details",
+          "token": "[Invoice Amount]",
+          "validation": { "required": true, "min": 500 }
+        },
+        {
+          "id": "invoiceNumber",
+          "label": "Invoice / complaint number",
+          "type": "text",
+          "group": "Dispute details",
+          "token": "[Invoice Number]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "issueDescription",
+          "label": "Issue description",
+          "type": "textarea",
+          "group": "Dispute details",
+          "token": "[Issue Description]",
+          "validation": { "required": true, "minLength": 20 }
+        },
+        {
+          "id": "desiredRemedy",
+          "label": "Desired remedy",
+          "type": "text",
+          "group": "Dispute details",
+          "token": "[Desired Remedy]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "consumerName",
+          "label": "Consumer name",
+          "type": "text",
+          "group": "Sender details",
+          "token": "[Consumer Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "consumerAddress",
+          "label": "Consumer address",
+          "type": "textarea",
+          "group": "Sender details",
+          "token": "[Consumer Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "consumerContact",
+          "label": "Contact details",
+          "type": "text",
+          "group": "Sender details",
+          "token": "[Consumer Contact]",
+          "example": "Email / phone",
+          "validation": { "required": true }
+        }
+      ]
+    },
+    {
+      "slug": "cheque-bounce",
+      "category": "legal_notice",
+      "document_type": "notice",
+      "display_name": "Cheque Bounce Notice",
+      "pdf_title": "NOTICE UNDER SECTION 138 OF THE NEGOTIABLE INSTRUMENTS ACT, 1881",
+      "last_reviewed_date": "2025-11-01",
+      "reviewed_by": "Banking Law Counsel",
+      "risk_level": "high",
+      "sample_path": "samples/notices/cheque-bounce.html",
+      "when_to_consult_lawyer": [
+        "Limitation deadline (30 days) is near",
+        "Multiple cheques or large value instruments involved",
+        "You anticipate criminal defence pleas or settlements"
+      ],
+      "prefill_fields": {
+        "noticeDate": "2025-11-05",
+        "drawerName": "Spectrum Traders",
+        "drawerAddress": "21 Industrial Area, Pune",
+        "chequeNumber": "123456",
+        "chequeDate": "2025-10-10",
+        "chequeAmount": "240000",
+        "bankName": "HDFC Bank, MG Road",
+        "returnDate": "2025-10-18",
+        "returnReason": "Insufficient funds",
+        "payeeName": "Kavya Exports",
+        "payeeAddress": "Plot 4, MIDC, Pune",
+        "payeePhone": "9811112233"
+      },
+      "fields": [
+        {
+          "id": "noticeDate",
+          "label": "Notice date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Notice Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "drawerName",
+          "label": "Drawer name",
+          "type": "text",
+          "group": "Recipient details",
+          "token": "[Drawer Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "drawerAddress",
+          "label": "Drawer address",
+          "type": "textarea",
+          "group": "Recipient details",
+          "token": "[Drawer Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "chequeNumber",
+          "label": "Cheque number",
+          "type": "text",
+          "group": "Cheque details",
+          "token": "[Cheque Number]",
+          "validation": { "required": true, "pattern": "^[0-9A-Za-z-]{3,}$" }
+        },
+        {
+          "id": "chequeDate",
+          "label": "Cheque date",
+          "type": "date",
+          "group": "Cheque details",
+          "token": "[Cheque Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "chequeAmount",
+          "label": "Cheque amount (₹)",
+          "type": "number",
+          "group": "Cheque details",
+          "token": "[Cheque Amount]",
+          "validation": { "required": true, "min": 1000 }
+        },
+        {
+          "id": "bankName",
+          "label": "Bank & branch",
+          "type": "text",
+          "group": "Cheque details",
+          "token": "[Bank Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "returnDate",
+          "label": "Return memo date",
+          "type": "date",
+          "group": "Cheque details",
+          "token": "[Return Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "returnReason",
+          "label": "Return reason",
+          "type": "text",
+          "group": "Cheque details",
+          "token": "[Return Reason]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "payeeName",
+          "label": "Payee name",
+          "type": "text",
+          "group": "Sender details",
+          "token": "[Payee Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "payeeAddress",
+          "label": "Payee address",
+          "type": "textarea",
+          "group": "Sender details",
+          "token": "[Payee Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "payeePhone",
+          "label": "Payee phone",
+          "type": "tel",
+          "group": "Sender details",
+          "token": "[Payee Phone]",
+          "validation": { "required": true, "pattern": "^[6-9][0-9]{9}$" }
+        }
+      ]
+    },
+    {
+      "slug": "rent-agreement",
+      "category": "agreement",
+      "document_type": "agreement",
+      "display_name": "Residential Rent Agreement",
+      "pdf_title": "RESIDENTIAL RENT AGREEMENT",
+      "last_reviewed_date": "2025-10-18",
+      "reviewed_by": "Real Estate Counsel",
+      "risk_level": "medium",
+      "sample_path": "samples/agreements/rent-agreement.html",
+      "when_to_consult_lawyer": [
+        "Property is jointly owned or mortgaged",
+        "Tenant is a company or foreign national",
+        "You need to register / stamp the agreement across states"
+      ],
+      "prefill_fields": {
+        "agreementDate": "2025-10-05",
+        "landlordName": "Arvind Menon",
+        "landlordAddress": "Villa 8, Palm Grove Chennai",
+        "tenantName": "Shruti Patel",
+        "tenantAddress": "Apt 4C, Palm Grove Chennai",
+        "propertyAddress": "Villa 8, Palm Grove, Chennai",
+        "termStart": "2025-10-15",
+        "termEnd": "2026-09-14",
+        "monthlyRent": "32000",
+        "securityDeposit": "150000"
+      },
+      "fields": [
+        {
+          "id": "agreementDate",
+          "label": "Agreement date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Agreement Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "landlordName",
+          "label": "Landlord name",
+          "type": "text",
+          "group": "Landlord",
+          "token": "[Landlord Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "landlordAddress",
+          "label": "Landlord address",
+          "type": "textarea",
+          "group": "Landlord",
+          "token": "[Landlord Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "tenantName",
+          "label": "Tenant name",
+          "type": "text",
+          "group": "Tenant",
+          "token": "[Tenant Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "tenantAddress",
+          "label": "Tenant address",
+          "type": "textarea",
+          "group": "Tenant",
+          "token": "[Tenant Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "propertyAddress",
+          "label": "Property address",
+          "type": "textarea",
+          "group": "Property",
+          "token": "[Property Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "termStart",
+          "label": "Term start date",
+          "type": "date",
+          "group": "Term",
+          "token": "[Start Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "termEnd",
+          "label": "Term end date",
+          "type": "date",
+          "group": "Term",
+          "token": "[End Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "monthlyRent",
+          "label": "Monthly rent (₹)",
+          "type": "number",
+          "group": "Commercials",
+          "token": "[Monthly Rent]",
+          "validation": { "required": true, "min": 1000 }
+        },
+        {
+          "id": "securityDeposit",
+          "label": "Security deposit (₹)",
+          "type": "number",
+          "group": "Commercials",
+          "token": "[Security Deposit]",
+          "validation": { "required": true, "min": 5000 }
+        }
+      ]
+    },
+    {
+      "slug": "freelance-contract",
+      "category": "agreement",
+      "document_type": "agreement",
+      "display_name": "Freelance Services Agreement",
+      "pdf_title": "FREELANCE SERVICES AGREEMENT",
+      "last_reviewed_date": "2025-09-05",
+      "reviewed_by": "Contracts Lead",
+      "risk_level": "low",
+      "sample_path": "samples/agreements/freelance-contract.html",
+      "when_to_consult_lawyer": [
+        "Engagement includes IP transfer or licensing",
+        "Client insists on indemnities or liability caps",
+        "Cross-border payment or GST registration is required"
+      ],
+      "prefill_fields": {
+        "agreementDate": "2025-09-15",
+        "clientName": "Creative Labs Pvt Ltd",
+        "clientAddress": "12 Residency Road, Bengaluru",
+        "freelancerName": "Varun Mehta",
+        "freelancerAddress": "B-102, Powai, Mumbai",
+        "deliverables": "Brand book and UI kit",
+        "startDate": "2025-09-20",
+        "endDate": "2025-11-20",
+        "projectFee": "75000",
+        "paymentTerms": "50% advance, 50% within 7 days of delivery"
+      },
+      "fields": [
+        {
+          "id": "agreementDate",
+          "label": "Agreement date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Agreement Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "clientName",
+          "label": "Client name",
+          "type": "text",
+          "group": "Client",
+          "token": "[Client Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "clientAddress",
+          "label": "Client address",
+          "type": "textarea",
+          "group": "Client",
+          "token": "[Client Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "freelancerName",
+          "label": "Freelancer name",
+          "type": "text",
+          "group": "Freelancer",
+          "token": "[Freelancer Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "freelancerAddress",
+          "label": "Freelancer address",
+          "type": "textarea",
+          "group": "Freelancer",
+          "token": "[Freelancer Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "deliverables",
+          "label": "Project scope / deliverables",
+          "type": "textarea",
+          "group": "Scope",
+          "token": "[Deliverables Description]",
+          "validation": { "required": true, "minLength": 15 }
+        },
+        {
+          "id": "startDate",
+          "label": "Start date",
+          "type": "date",
+          "group": "Timeline",
+          "token": "[Start Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "endDate",
+          "label": "Completion date",
+          "type": "date",
+          "group": "Timeline",
+          "token": "[End Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "projectFee",
+          "label": "Project fee (₹)",
+          "type": "number",
+          "group": "Commercials",
+          "token": "[Project Fee]",
+          "validation": { "required": true, "min": 1000 }
+        },
+        {
+          "id": "paymentTerms",
+          "label": "Payment terms",
+          "type": "text",
+          "group": "Commercials",
+          "token": "[Payment Terms]",
+          "validation": { "required": true }
+        }
+      ]
+    },
+    {
+      "slug": "employment-offer",
+      "category": "agreement",
+      "document_type": "agreement",
+      "display_name": "Employment Offer Letter",
+      "pdf_title": "EMPLOYMENT OFFER LETTER",
+      "last_reviewed_date": "2025-10-28",
+      "reviewed_by": "HR Compliance Manager",
+      "risk_level": "medium",
+      "sample_path": "samples/agreements/employment-offer.html",
+      "when_to_consult_lawyer": [
+        "Offer includes ESOPs, retention bonuses, or relocation",
+        "Candidate is on deputation or overseas payroll",
+        "Garden leave, clawback, or dual employment clauses apply"
+      ],
+      "prefill_fields": {
+        "letterDate": "2025-11-01",
+        "candidateName": "Rohan Gupta",
+        "candidateAddress": "A-21, Defence Colony, New Delhi",
+        "roleName": "Senior Product Manager",
+        "positionTitle": "Senior Product Manager",
+        "candidatePreferredName": "Rohan",
+        "companyName": "Saathi Labs Pvt Ltd",
+        "joiningDate": "2025-12-02",
+        "annualCtc": "3600000",
+        "probationMonths": "6",
+        "workingHours": "Monday-Friday, 9am-6pm",
+        "leaveSummary": "26 annual leave days, 12 sick days",
+        "benefitsSummary": "PF, medical insurance, performance bonus",
+        "signatoryName": "Priya Menon"
+      },
+      "fields": [
+        {
+          "id": "letterDate",
+          "label": "Letter date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Letter Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "candidateName",
+          "label": "Candidate name",
+          "type": "text",
+          "group": "Candidate",
+          "token": "[Candidate Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "candidateAddress",
+          "label": "Candidate address",
+          "type": "textarea",
+          "group": "Candidate",
+          "token": "[Candidate Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "roleName",
+          "label": "Role reference (subject line)",
+          "type": "text",
+          "group": "Role",
+          "token": "[Role Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "candidatePreferredName",
+          "label": "Preferred salutation",
+          "type": "text",
+          "group": "Candidate",
+          "token": "[Candidate Preferred Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "positionTitle",
+          "label": "Position title",
+          "type": "text",
+          "group": "Role",
+          "token": "[Position Title]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "companyName",
+          "label": "Company",
+          "type": "text",
+          "group": "Company",
+          "token": "[Company Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "joiningDate",
+          "label": "Joining date",
+          "type": "date",
+          "group": "Role",
+          "token": "[Joining Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "annualCtc",
+          "label": "Annual CTC (₹)",
+          "type": "number",
+          "group": "Compensation",
+          "token": "[Annual CTC]",
+          "validation": { "required": true, "min": 100000 }
+        },
+        {
+          "id": "probationMonths",
+          "label": "Probation (months)",
+          "type": "number",
+          "group": "Compensation",
+          "token": "[Probation Months]",
+          "validation": { "required": true, "min": 0 }
+        },
+        {
+          "id": "workingHours",
+          "label": "Working hours",
+          "type": "text",
+          "group": "Work policy",
+          "token": "[Working Hours Summary]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "leaveSummary",
+          "label": "Leave policy summary",
+          "type": "text",
+          "group": "Work policy",
+          "token": "[Leave Summary]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "benefitsSummary",
+          "label": "Benefits summary",
+          "type": "text",
+          "group": "Compensation",
+          "token": "[Benefits Summary]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "signatoryName",
+          "label": "Authorized signatory",
+          "type": "text",
+          "group": "Company",
+          "token": "[Authorized Signatory]",
+          "validation": { "required": true }
+        }
+      ]
+    },
+    {
+      "slug": "nda",
+      "category": "agreement",
+      "document_type": "agreement",
+      "display_name": "Mutual NDA",
+      "pdf_title": "MUTUAL NON-DISCLOSURE AGREEMENT",
+      "last_reviewed_date": "2025-07-12",
+      "reviewed_by": "Corporate Counsel",
+      "risk_level": "low",
+      "sample_path": "samples/agreements/nda.html",
+      "when_to_consult_lawyer": [
+        "Cross-border data transfer or export control applies",
+        "One party is a government / defence contractor",
+        "You need to add indemnity, penalties, or arbitration clauses"
+      ],
+      "prefill_fields": {
+        "agreementDate": "2025-07-20",
+        "partyAName": "TechLabs Pvt Ltd",
+        "partyBName": "VendorCo Solutions",
+        "purpose": "due diligence for cybersecurity pilot",
+        "jurisdiction": "Bengaluru"
+      },
+      "fields": [
+        {
+          "id": "agreementDate",
+          "label": "Agreement date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Agreement Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "partyAName",
+          "label": "Party A",
+          "type": "text",
+          "group": "Parties",
+          "token": "[Company A Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "partyBName",
+          "label": "Party B",
+          "type": "text",
+          "group": "Parties",
+          "token": "[Company B Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "purpose",
+          "label": "Purpose of disclosure",
+          "type": "text",
+          "group": "Deal context",
+          "token": "[Purpose Statement]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "jurisdiction",
+          "label": "Jurisdiction",
+          "type": "text",
+          "group": "Deal context",
+          "token": "[Jurisdiction City]",
+          "validation": { "required": true }
+        }
+      ]
+    },
+    {
+      "slug": "sale-of-goods",
+      "category": "agreement",
+      "document_type": "agreement",
+      "display_name": "Sale of Goods Agreement",
+      "pdf_title": "SALE OF GOODS AGREEMENT",
+      "last_reviewed_date": "2025-09-30",
+      "reviewed_by": "Commercial Contracts Specialist",
+      "risk_level": "medium",
+      "sample_path": "samples/agreements/sale-of-goods.html",
+      "when_to_consult_lawyer": [
+        "Cross-border shipment or letter of credit involved",
+        "High value supply requiring GST/E-way bill clauses",
+        "Need for limitation of liability or penalty schedules"
+      ],
+      "prefill_fields": {
+        "agreementDate": "2025-09-01",
+        "sellerName": "Energrid Pvt Ltd",
+        "sellerAddress": "Plot 7, Industrial Estate, Ahmedabad",
+        "buyerName": "BrightCity Utilities",
+        "buyerAddress": "Corporate Ave, Mumbai",
+        "goodsDescription": "200 smart meters @ ₹8,000 each",
+        "totalAmount": "1600000",
+        "paymentTerms": "40% advance, balance on delivery",
+        "deliveryDate": "2025-10-05",
+        "deliveryLocation": "Navi Mumbai warehouse",
+        "warrantyPeriod": "12 months",
+        "jurisdiction": "Mumbai"
+      },
+      "fields": [
+        {
+          "id": "agreementDate",
+          "label": "Agreement date",
+          "type": "date",
+          "group": "Document basics",
+          "token": "[Agreement Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "sellerName",
+          "label": "Seller name",
+          "type": "text",
+          "group": "Seller",
+          "token": "[Seller Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "sellerAddress",
+          "label": "Seller address",
+          "type": "textarea",
+          "group": "Seller",
+          "token": "[Seller Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "buyerName",
+          "label": "Buyer name",
+          "type": "text",
+          "group": "Buyer",
+          "token": "[Buyer Name]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "buyerAddress",
+          "label": "Buyer address",
+          "type": "textarea",
+          "group": "Buyer",
+          "token": "[Buyer Address]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "goodsDescription",
+          "label": "Goods description",
+          "type": "textarea",
+          "group": "Deal terms",
+          "token": "[Goods Description]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "totalAmount",
+          "label": "Total consideration (₹)",
+          "type": "number",
+          "group": "Deal terms",
+          "token": "[Total Amount]",
+          "validation": { "required": true, "min": 10000 }
+        },
+        {
+          "id": "paymentTerms",
+          "label": "Payment terms",
+          "type": "text",
+          "group": "Deal terms",
+          "token": "[Payment Terms]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "deliveryDate",
+          "label": "Delivery date",
+          "type": "date",
+          "group": "Fulfilment",
+          "token": "[Delivery Date]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "deliveryLocation",
+          "label": "Delivery location",
+          "type": "text",
+          "group": "Fulfilment",
+          "token": "[Delivery Location]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "warrantyPeriod",
+          "label": "Warranty period",
+          "type": "text",
+          "group": "Fulfilment",
+          "token": "[Warranty Period]",
+          "validation": { "required": true }
+        },
+        {
+          "id": "jurisdiction",
+          "label": "Jurisdiction",
+          "type": "text",
+          "group": "Deal terms",
+          "token": "[Jurisdiction City]",
+          "validation": { "required": true }
+        }
+      ]
+    }
+  ]
+}

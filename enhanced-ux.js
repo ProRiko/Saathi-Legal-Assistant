@@ -9,49 +9,17 @@ class SaathiUXHelper {
 
     // Connection monitoring
     setupConnectionMonitor() {
-        const statusIndicator = this.createConnectionStatus();
-        
         window.addEventListener('online', () => {
             this.isOnline = true;
-            this.updateConnectionStatus(true);
             this.showNotification('✅ Connection restored', 'success');
         });
 
         window.addEventListener('offline', () => {
             this.isOnline = false;
-            this.updateConnectionStatus(false);
             this.showNotification('⚠️ Connection lost - some features may not work', 'warning');
         });
 
-        // Initial status
-        this.updateConnectionStatus(this.isOnline);
-    }
-
-    createConnectionStatus() {
-        const status = document.createElement('div');
-        status.id = 'connectionStatus';
-        status.className = 'connection-status';
-        status.style.cssText = `
-            position: fixed; top: 10px; left: 10px;
-            padding: 5px 10px; border-radius: 15px;
-            font-size: 0.8em; font-weight: bold; z-index: 1000;
-            transition: all 0.3s ease;
-        `;
-        document.body.appendChild(status);
-        return status;
-    }
-
-    updateConnectionStatus(online) {
-        const status = document.getElementById('connectionStatus');
-        if (status) {
-            if (online) {
-                status.textContent = '🟢 Online';
-                status.className = 'connection-status online';
-            } else {
-                status.textContent = '🔴 Offline';
-                status.className = 'connection-status offline';
-            }
-        }
+        // No inline indicator needed; rely on notifications only
     }
 
     // Global error handler

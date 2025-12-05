@@ -4,6 +4,7 @@ Railway.app deployment ready with Google Gemini API
 Enhanced with Legal Document Generation - Production Ready
 """
 import os
+import re
 import uuid
 from typing import Any, Dict
 from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string
@@ -60,6 +61,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONSENT_LOG_PATH = os.path.join(BASE_DIR, 'consent_logs.jsonl')
 CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
 TOOL_MANIFEST_PATH = os.path.join(BASE_DIR, 'tool_metadata.json')
+TEMPLATE_MANIFEST_PATH = os.path.join(BASE_DIR, 'template_metadata.json')
 CONSENT_NOSCRIPT_BLOCK = (
     '<noscript>'
     '<div class="no-js-consent-banner" role="alert">'
@@ -83,8 +85,24 @@ def load_tool_manifest(path: str = TOOL_MANIFEST_PATH) -> Dict[str, Any]:
     return {"tools": []}
 
 
+def load_template_manifest(path: str = TEMPLATE_MANIFEST_PATH) -> Dict[str, Any]:
+    """Load manifest that drives template metadata, fields, and samples."""
+    try:
+        with open(path, 'r', encoding='utf-8') as manifest_file:
+            data = json.load(manifest_file)
+            if isinstance(data, dict) and isinstance(data.get('templates'), list):
+                return data
+    except FileNotFoundError:
+        logger.warning("Template metadata manifest not found at %s", path)
+    except json.JSONDecodeError as exc:
+        logger.error("Unable to parse template metadata manifest: %s", exc)
+    return {"templates": []}
+
+
 TOOL_MANIFEST = load_tool_manifest()
 TOOL_INDEX = {entry.get('slug'): entry for entry in TOOL_MANIFEST.get('tools', [])}
+TEMPLATE_MANIFEST = load_template_manifest()
+TEMPLATE_INDEX = {entry.get('slug'): entry for entry in TEMPLATE_MANIFEST.get('templates', []) if entry.get('slug')}
 
 
 def build_category_metadata(category_key: str) -> Dict[str, Dict[str, str]]:
@@ -106,8 +124,39 @@ def build_category_metadata(category_key: str) -> Dict[str, Dict[str, str]]:
     return meta
 
 
+def build_template_category_metadata(category_key: str) -> Dict[str, Dict[str, Any]]:
+    """Build metadata map for templates from the template manifest."""
+    meta: Dict[str, Dict[str, Any]] = {}
+    for entry in TEMPLATE_MANIFEST.get('templates', []):
+        if entry.get('category') != category_key:
+            continue
+        slug = entry.get('slug')
+        if not slug:
+            continue
+        combined = REVIEW_METADATA_DEFAULT.copy()
+        combined.update({
+            "reviewed_on": entry.get('last_reviewed_date') or REVIEW_METADATA_DEFAULT["reviewed_on"],
+            "reviewed_by": entry.get('reviewed_by') or REVIEW_METADATA_DEFAULT["reviewed_by"],
+            "risk_level": (entry.get('risk_level') or REVIEW_METADATA_DEFAULT["risk_level"]).lower(),
+            "display_name": entry.get('display_name'),
+            "pdf_title": entry.get('pdf_title'),
+            "sample_path": entry.get('sample_path'),
+            "when_to_consult_list": entry.get('when_to_consult_lawyer') or [],
+            "prefill_fields": entry.get('prefill_fields') or {},
+        })
+        if not combined.get('when_to_consult_list'):
+            combined['when_to_consult_list'] = [combined['when_to_consult']]
+        combined['when_to_consult'] = (entry.get('when_to_consult_lawyer') or [combined['when_to_consult']])[0]
+        meta[slug] = combined
+    return meta
+
+
 def get_tool_entry(slug: str) -> Dict[str, Any]:
     return TOOL_INDEX.get(slug, {})
+
+
+def get_template_entry(slug: str) -> Dict[str, Any]:
+    return TEMPLATE_INDEX.get(slug, {})
 
 
 
@@ -770,7 +819,7 @@ Subject: Demand for Release of Pending Salary
 
 Sir/Madam,
 
-1. I was employed with your organization as [Designation] from [Start Date] to [End Date/current date].
+1. I was employed with your organization as [Designation] from [Start Date] to [Last Working Day].
 2. Salary for the months of [Pending Months] amounting to ₹[Amount] remains unpaid despite repeated reminders.
 3. Non-payment of salary violates Section 5 of the Payment of Wages Act, 1936 and relevant provisions of the Shops & Establishments Act.
 
@@ -779,9 +828,9 @@ Release the entire pending salary with statutory interest within seven (7) days 
 
 Yours faithfully,
 [Employee Name]
-[Address]
-[Phone]
-[Email]
+[Employee Address]
+[Employee Phone]
+[Employee Email]
 
 *This template is for informational purposes only. Consult a licensed advocate before issuing any legal notice.*
         """,
@@ -797,13 +846,13 @@ To,
 [Tenant Name]
 [Property Address]
 
-Date: [Current Date]
+Date: [Notice Date]
 
 Subject: Demand for Payment of Outstanding Rent & Possession
 
 Sir/Madam,
 
-1. You occupy the above premises as a tenant under Rent Agreement dated [Agreement Date] at a monthly rent of ₹[Rent Amount].
+1. You occupy the above premises as a tenant under Rent Agreement dated [Agreement Date] at a monthly rent of ₹[Monthly Rent].
 2. Rent for the period [Pending Period] amounting to ₹[Outstanding Amount] is unpaid.
 3. Under Section 106 of the Transfer of Property Act, 1882, you are hereby called upon to pay the entire arrears within fifteen (15) days OR vacate and hand over peaceful possession of the premises.
 
@@ -811,8 +860,8 @@ In case of failure, eviction proceedings and recovery of damages will be initiat
 
 Sincerely,
 [Landlord Name]
-[Address]
-[Phone]
+[Landlord Address]
+[Landlord Phone]
 
 *This template is for informational purposes only. Consult a licensed advocate before issuing any legal notice.*
         """,
@@ -825,16 +874,16 @@ Sincerely,
 LEGAL NOTICE UNDER CONSUMER PROTECTION ACT, 2019
 
 To,
-[Company/Seller Name]
-[Address]
+[Company Name]
+[Company Address]
 
-Date: [Current Date]
+Date: [Notice Date]
 
 Subject: Deficiency in Service / Defective Goods
 
 Dear Sir/Madam,
 
-1. I purchased/availed [Product/Service] on [Purchase Date] for ₹[Amount] evidenced by Invoice No. [Number].
+1. I purchased/availed [Product Service Description] on [Purchase Date] for ₹[Invoice Amount] evidenced by Invoice No. [Invoice Number].
 2. The product/service is defective / deficient because [Issue Description].
 3. Under Sections 2(11) & 2(47) of the Consumer Protection Act, 2019, you are liable to rectify the defect, replace the product, or refund the consideration with compensation.
 
@@ -843,8 +892,8 @@ Kindly resolve the issue by [Desired Remedy] within fifteen (15) days failing wh
 
 Sincerely,
 [Consumer Name]
-[Address]
-[Contact]
+[Consumer Address]
+[Consumer Contact]
 
 *This template is for informational purposes only. Consult a licensed advocate before issuing any legal notice.*
         """,
@@ -858,24 +907,24 @@ NOTICE UNDER SECTION 138 OF THE NEGOTIABLE INSTRUMENTS ACT, 1881
 
 To,
 [Drawer Name]
-[Address]
+[Drawer Address]
 
-Date: [Current Date]
+Date: [Notice Date]
 
 Subject: Demand notice for dishonoured cheque
 
 Sir/Madam,
 
-1. You issued Cheque No. [Cheque Number] dated [Cheque Date] for ₹[Amount] drawn on [Bank].
+1. You issued Cheque No. [Cheque Number] dated [Cheque Date] for ₹[Cheque Amount] drawn on [Bank Name].
 2. The cheque was presented within its validity but returned unpaid on [Return Date] with remark "[Return Reason]".
-3. You are hereby called upon under Section 138 to make payment of ₹[Amount] within fifteen (15) days from receipt of this notice.
+3. You are hereby called upon under Section 138 to make payment of ₹[Cheque Amount] within fifteen (15) days from receipt of this notice.
 
 Failure will compel me to initiate criminal prosecution punishable with imprisonment up to two years and/or fine up to twice the cheque amount, in addition to civil recovery.
 
 Regards,
 [Payee Name]
-[Address]
-[Phone]
+[Payee Address]
+[Payee Phone]
 
 *This template is for informational purposes only. Consult a licensed advocate before issuing any legal notice.*
         """,
@@ -892,7 +941,7 @@ REVIEW_METADATA_DEFAULT = {
     "when_to_consult": "Consult a lawyer if the dispute value exceeds ₹50,000 or if ownership is contested."
 }
 
-LEGAL_NOTICE_METADATA = build_category_metadata('legal_notice')
+LEGAL_NOTICE_METADATA = build_template_category_metadata('legal_notice')
 
 
 def generate_notice_pdf(notice_key: str):
@@ -912,10 +961,10 @@ AGREEMENT_TEMPLATES = {
         "content": """
 RENT AGREEMENT
 
-This Rent Agreement is executed on [Date] between:
+This Rent Agreement is executed on [Agreement Date] between:
 
-LANDLORD: [Landlord Name], residing at [Address]
-TENANT: [Tenant Name], residing at [Address]
+LANDLORD: [Landlord Name], residing at [Landlord Address]
+TENANT: [Tenant Name], residing at [Tenant Address]
 
 1. PROPERTY: Residential premises at [Property Address].
 2. TERM: 11 months commencing from [Start Date] to [End Date].
@@ -941,14 +990,14 @@ Witness 1: __________________  Witness 2: __________________
         "content": """
 FREELANCE SERVICES AGREEMENT
 
-This Agreement is made on [Date] between:
+This Agreement is made on [Agreement Date] between:
 
-CLIENT: [Client Name], having office at [Address]
-FREELANCER: [Freelancer Name], residing at [Address]
+CLIENT: [Client Name], having office at [Client Address]
+FREELANCER: [Freelancer Name], residing at [Freelancer Address]
 
-1. PROJECT SCOPE: [Describe Deliverables].
+1. PROJECT SCOPE: [Deliverables Description].
 2. TIMELINE: Work begins on [Start Date] and completes by [End Date].
-3. FEES: Fixed fee of ₹[Amount] payable [Milestones/30 days].
+3. FEES: Fixed fee of ₹[Project Fee] payable [Payment Terms].
 4. INTELLECTUAL PROPERTY: Upon full payment, all work product and IP transfer to Client; Freelancer may showcase work in portfolio unless NDA signed.
 5. CONFIDENTIALITY: Parties agree not to disclose confidential information received during engagement.
 6. TERMINATION: Either party may terminate with 7-day notice; Client pays for work completed till termination.
@@ -968,23 +1017,23 @@ Freelancer _____________  Date: _______
         "content": """
 EMPLOYMENT OFFER LETTER
 
-Date: [Date]
+Date: [Letter Date]
 
 To,
 [Candidate Name]
-[Address]
+[Candidate Address]
 
-Subject: Offer of Employment – [Role]
+Subject: Offer of Employment – [Role Name]
 
-Dear [Name],
+Dear [Candidate Preferred Name],
 
-We are pleased to offer you the position of [Designation] with [Company] effective [Joining Date]. Key terms:
+We are pleased to offer you the position of [Position Title] with [Company Name] effective [Joining Date]. Key terms:
 
-• CTC: ₹[Amount] per annum (breakup annexed)
-• Probation: [Months] months
-• Working Hours: [Days/Hours]
-• Leave: [Details]
-• Benefits: [PF/Insurance/etc.]
+• CTC: ₹[Annual CTC] per annum (breakup annexed)
+• Probation: [Probation Months] months
+• Working Hours: [Working Hours Summary]
+• Leave: [Leave Summary]
+• Benefits: [Benefits Summary]
 
 Please report with originals of KYC, education, experience certificates. This offer is subject to background verification and acceptance of company policies.
 
@@ -1009,17 +1058,17 @@ Signature: __________________ Date: ______
         "content": """
 MUTUAL NON-DISCLOSURE AGREEMENT
 
-This NDA is made on [Date] between:
+This NDA is made on [Agreement Date] between:
 
-Party A: [Company A]
-Party B: [Company B]
+Party A: [Company A Name]
+Party B: [Company B Name]
 
 1. CONFIDENTIAL INFORMATION: Includes all non-public business, technical, or financial information disclosed orally or in writing.
-2. PURPOSE: Parties intend to explore [Purpose].
+2. PURPOSE: Parties intend to explore [Purpose Statement].
 3. OBLIGATIONS: Recipients shall protect information with reasonable care, use solely for Purpose, and not disclose to third parties.
 4. EXCLUSIONS: Information already known, publicly available, or independently developed is excluded.
 5. TERM: Confidentiality obligations survive for three (3) years from date of disclosure.
-6. GOVERNING LAW: Indian law; courts at [Jurisdiction].
+6. GOVERNING LAW: Indian law; courts at [Jurisdiction City].
 
 IN WITNESS WHEREOF, parties execute this NDA on the date first written.
 
@@ -1037,17 +1086,17 @@ Title: _____________________  Title: _____________________
         "content": """
 SALE OF GOODS AGREEMENT
 
-This Agreement is dated [Date] between:
+This Agreement is dated [Agreement Date] between:
 
-SELLER: [Seller Name], having office at [Address]
-BUYER: [Buyer Name], having office at [Address]
+SELLER: [Seller Name], having office at [Seller Address]
+BUYER: [Buyer Name], having office at [Buyer Address]
 
-1. GOODS: Seller agrees to sell and Buyer agrees to purchase [Description of Goods].
-2. PRICE: Total consideration ₹[Amount], payable [Advance/On Delivery].
-3. DELIVERY: Goods shall be delivered on/before [Delivery Date] at [Location]. Risk passes upon delivery; title transfers upon full payment.
+1. GOODS: Seller agrees to sell and Buyer agrees to purchase [Goods Description].
+2. PRICE: Total consideration ₹[Total Amount], payable [Payment Terms].
+3. DELIVERY: Goods shall be delivered on/before [Delivery Date] at [Delivery Location]. Risk passes upon delivery; title transfers upon full payment.
 4. WARRANTY: Goods shall conform to specifications and be free from defects for [Warranty Period].
 5. INDEMNITY: Buyer indemnifies Seller against misuse; Seller indemnifies Buyer against IP infringement.
-6. GOVERNING LAW: Indian Contract Act, 1872; disputes at [Jurisdiction].
+6. GOVERNING LAW: Indian Contract Act, 1872; disputes at [Jurisdiction City].
 
 Signed:
 Seller __________________  Date: _______
@@ -1058,7 +1107,7 @@ Buyer  __________________  Date: _______
     }
 }
 
-AGREEMENT_TEMPLATE_METADATA = build_category_metadata('agreement')
+AGREEMENT_TEMPLATE_METADATA = build_template_category_metadata('agreement')
 CALCULATOR_METADATA = build_category_metadata('calculator')
 
 
@@ -1074,6 +1123,107 @@ def generate_agreement_pdf(agreement_key: str):
     if not template:
         return None
     return create_pdf_document(template["title"], template["content"], f"{agreement_key}.pdf")
+
+
+def _format_date(value: str) -> str:
+    try:
+        parsed = datetime.fromisoformat(value)
+        return parsed.strftime('%d %B %Y')
+    except ValueError:
+        try:
+            parsed = datetime.strptime(value, '%d-%m-%Y')
+            return parsed.strftime('%d %B %Y')
+        except ValueError:
+            return value
+
+
+def _format_number(value: float) -> str:
+    if value.is_integer():
+        return f"{int(value):,}"
+    return f"{value:,.2f}"
+
+
+def _normalize_field_value(field_def: Dict[str, Any], raw_value: Any) -> tuple[str | None, str | None]:
+    validation = field_def.get('validation', {}) or {}
+    field_type = (field_def.get('type') or 'text').lower()
+    value = '' if raw_value is None else str(raw_value).strip()
+
+    if not value:
+        if validation.get('required'):
+            return None, f"{field_def.get('label', 'This field')} is required"
+        return '', None
+
+    if validation.get('minLength') and len(value) < validation['minLength']:
+        return None, f"{field_def.get('label', 'This field')} must be at least {validation['minLength']} characters"
+    if validation.get('maxLength') and len(value) > validation['maxLength']:
+        return None, f"{field_def.get('label', 'This field')} must be under {validation['maxLength']} characters"
+
+    pattern = validation.get('pattern')
+    if pattern:
+        try:
+            if not re.match(pattern, value):
+                return None, validation.get('message') or f"{field_def.get('label', 'This field')} format looks invalid"
+        except re.error:
+            logger.warning('Invalid regex pattern configured for %s', field_def.get('id'))
+
+    if field_type == 'date':
+        return _format_date(value), None
+
+    if field_type == 'number':
+        sanitized = value.replace(',', '')
+        try:
+            number_value = float(sanitized)
+        except ValueError:
+            return None, f"Enter a numeric value for {field_def.get('label', 'this field')}"
+        if validation.get('min') is not None and number_value < validation['min']:
+            return None, f"{field_def.get('label', 'This field')} must be at least {validation['min']}"
+        if validation.get('max') is not None and number_value > validation['max']:
+            return None, f"{field_def.get('label', 'This field')} must be below {validation['max']}"
+        return _format_number(number_value), None
+
+    return value, None
+
+
+def validate_template_fields(slug: str, raw_fields: Dict[str, Any]) -> tuple[Dict[str, str], list[str]]:
+    entry = get_template_entry(slug)
+    if not entry:
+        return {}, ["Template not found"]
+    cleaned: Dict[str, str] = {}
+    errors: list[str] = []
+    for field_def in entry.get('fields', []):
+        field_id = field_def.get('id')
+        if not field_id:
+            continue
+        value, error = _normalize_field_value(field_def, raw_fields.get(field_id))
+        if error:
+            errors.append(error)
+            continue
+        cleaned[field_id] = value or ''
+    return cleaned, errors
+
+
+def _get_template_document(slug: str) -> tuple[str | None, str | None]:
+    if slug in LEGAL_NOTICE_TEMPLATES:
+        data = LEGAL_NOTICE_TEMPLATES[slug]
+        return data["content"], data["title"]
+    if slug in AGREEMENT_TEMPLATES:
+        data = AGREEMENT_TEMPLATES[slug]
+        return data["content"], data["title"]
+    return None, None
+
+
+def render_template_body(slug: str, cleaned_fields: Dict[str, str]) -> str:
+    content, _ = _get_template_document(slug)
+    if not content:
+        return ''
+    entry = get_template_entry(slug)
+    rendered = content
+    for field_def in entry.get('fields', []):
+        token = field_def.get('token')
+        if not token:
+            continue
+        rendered = rendered.replace(token, cleaned_fields.get(field_def['id'], ''))
+    return rendered.strip()
 
 
 def _safe_float(value: Any, default: float | None = None) -> float | None:
@@ -1355,6 +1505,9 @@ def list_agreements():
             "risk_level": meta["risk_level"],
             "sample_preview": meta["sample_preview"],
             "when_to_consult": meta.get("when_to_consult", REVIEW_METADATA_DEFAULT["when_to_consult"]),
+            "when_to_consult_list": meta.get("when_to_consult_list", []),
+            "sample_path": meta.get("sample_path"),
+            "prefill_fields": meta.get("prefill_fields", {}),
         })
     return jsonify({
         "status": "success",
@@ -1396,12 +1549,99 @@ def list_legal_notices():
             "risk_level": meta["risk_level"],
             "sample_preview": meta["sample_preview"],
             "when_to_consult": meta.get("when_to_consult", REVIEW_METADATA_DEFAULT["when_to_consult"]),
+            "when_to_consult_list": meta.get("when_to_consult_list", []),
+            "sample_path": meta.get("sample_path"),
+            "prefill_fields": meta.get("prefill_fields", {}),
         })
     return jsonify({
         "status": "success",
         "count": len(notices),
         "notices": notices
     })
+
+
+def _metadata_source_for_slug(slug: str) -> Dict[str, Dict[str, Any]]:
+    if slug in LEGAL_NOTICE_METADATA:
+        return LEGAL_NOTICE_METADATA
+    if slug in AGREEMENT_TEMPLATE_METADATA:
+        return AGREEMENT_TEMPLATE_METADATA
+    return {}
+
+
+@app.route('/api/templates/<slug>', methods=['GET'])
+def api_template_detail(slug: str):
+    entry = get_template_entry(slug)
+    if not entry:
+        return jsonify({"status": "error", "message": "Template not found"}), 404
+    meta_source = _metadata_source_for_slug(slug)
+    meta = get_template_metadata(meta_source, slug) if meta_source else REVIEW_METADATA_DEFAULT.copy()
+    return jsonify({
+        "status": "success",
+        "template": {
+            "slug": slug,
+            "category": entry.get('category'),
+            "document_type": entry.get('document_type'),
+            "display_name": entry.get('display_name'),
+            "pdf_title": entry.get('pdf_title'),
+            "risk_level": meta.get('risk_level'),
+            "reviewed_on": meta.get('reviewed_on'),
+            "reviewed_by": meta.get('reviewed_by'),
+            "when_to_consult": meta.get('when_to_consult'),
+            "when_to_consult_list": meta.get('when_to_consult_list', []),
+            "fields": entry.get('fields', []),
+            "prefill_fields": entry.get('prefill_fields', {}),
+            "sample_path": entry.get('sample_path')
+        }
+    })
+
+
+@app.route('/api/templates/render', methods=['POST'])
+def api_render_template():
+    payload: Dict[str, Any] = request.get_json(silent=True) or {}
+    slug = str(payload.get('slug') or '').strip()
+    entry = get_template_entry(slug)
+    if not slug or not entry:
+        return jsonify({"status": "error", "message": "Template not found"}), 404
+    raw_fields = payload.get('fields') or {}
+    cleaned, errors = validate_template_fields(slug, raw_fields)
+    if errors:
+        return jsonify({"status": "error", "errors": errors}), 400
+    rendered_text = render_template_body(slug, cleaned)
+    if not rendered_text:
+        return jsonify({"status": "error", "message": "Unable to render template"}), 500
+    title = entry.get('pdf_title') or _get_template_document(slug)[1] or entry.get('display_name') or slug
+    return jsonify({
+        "status": "success",
+        "title": title,
+        "rendered_text": rendered_text,
+        "fields": cleaned
+    })
+
+
+@app.route('/api/templates/pdf', methods=['POST'])
+def api_template_pdf():
+    payload: Dict[str, Any] = request.get_json(silent=True) or {}
+    slug = str(payload.get('slug') or '').strip()
+    entry = get_template_entry(slug)
+    if not slug or not entry:
+        return jsonify({"status": "error", "message": "Template not found"}), 404
+    cleaned, errors = validate_template_fields(slug, payload.get('fields') or {})
+    if errors:
+        return jsonify({"status": "error", "errors": errors}), 400
+    edited_text = str(payload.get('edited_text') or '').strip()
+    rendered_text = str(payload.get('rendered_text') or '').strip()
+    final_text = edited_text or rendered_text or render_template_body(slug, cleaned)
+    if not final_text:
+        return jsonify({"status": "error", "message": "Nothing to convert into PDF"}), 400
+    title = payload.get('title') or entry.get('pdf_title') or _get_template_document(slug)[1] or entry.get('display_name') or slug
+    pdf_data = create_pdf_document(title, final_text, f"{slug}.pdf")
+    if not pdf_data:
+        return jsonify({"status": "error", "message": "Failed to generate PDF"}), 500
+    filename = f"{slug}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 
 @app.route('/notices/<notice_key>', methods=['GET'])
@@ -1425,7 +1665,22 @@ def download_legal_notice(notice_key: str):
 @app.route('/api/tools', methods=['GET'])
 def api_tools_catalog():
     """Expose all tools with metadata for the discovery dashboard."""
-    tools = sorted(TOOL_MANIFEST.get('tools', []), key=lambda entry: entry.get('order', 999))
+    ordered_tools = sorted(TOOL_MANIFEST.get('tools', []), key=lambda entry: entry.get('order', 999))
+    tools: list[Dict[str, Any]] = []
+    for entry in ordered_tools:
+        enriched = dict(entry)
+        slug = enriched.get('slug')
+        category = enriched.get('category')
+        if category in {'legal_notice', 'agreement'} and slug in TEMPLATE_INDEX:
+            template_meta = TEMPLATE_INDEX[slug]
+            bullets = template_meta.get('when_to_consult_lawyer') or []
+            enriched['reviewed_on'] = template_meta.get('last_reviewed_date', enriched.get('reviewed_on'))
+            enriched['reviewed_by'] = template_meta.get('reviewed_by', enriched.get('reviewed_by'))
+            enriched['risk_level'] = template_meta.get('risk_level', enriched.get('risk_level'))
+            enriched['when_to_consult'] = bullets[0] if bullets else enriched.get('when_to_consult')
+            enriched['when_to_consult_list'] = bullets
+            enriched['sample_path'] = template_meta.get('sample_path')
+        tools.append(enriched)
     return jsonify({
         "status": "success",
         "count": len(tools),
