@@ -110,7 +110,6 @@ TOOL_MANIFEST = load_tool_manifest()
 TOOL_INDEX = {entry.get('slug'): entry for entry in TOOL_MANIFEST.get('tools', [])}
 TEMPLATE_MANIFEST = load_template_manifest()
 TEMPLATE_INDEX = {entry.get('slug'): entry for entry in TEMPLATE_MANIFEST.get('templates', []) if entry.get('slug')}
-init_sqlite()
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -196,6 +195,8 @@ def init_sqlite() -> None:
         conn.commit()
         conn.close()
 
+
+    init_sqlite()
 
 def record_audit_event(action: str, user_id: int | None = None, anon_id: str | None = None,
                        reference_id: str | None = None, metadata: Dict[str, Any] | None = None) -> None:
