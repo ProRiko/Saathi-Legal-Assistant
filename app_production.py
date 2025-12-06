@@ -1090,8 +1090,11 @@ else:
     logger.warning("📦 pymongo not installed. Install with: pip install pymongo")
 
 # Configuration from environment variables
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'your-gemini-api-key-here')
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-flash')
+GEMINI_API_KEY = (os.environ.get('GEMINI_API_KEY') or '').strip()
+if not GEMINI_API_KEY:
+    logger.warning("⚠️ GEMINI_API_KEY is not set; chat endpoint will stay disabled until provided in the environment.")
+
+GEMINI_MODEL = (os.environ.get('GEMINI_MODEL') or 'gemini-2.5-flash').strip() or 'gemini-2.5-flash'
 MAX_TOKENS = int(os.environ.get('MAX_TOKENS', '500'))
 TEMPERATURE = float(os.environ.get('TEMPERATURE', '0.7'))
 
@@ -1124,7 +1127,7 @@ conversation_history = []
 
 def is_api_configured():
     """Check if Gemini API key is configured"""
-    return GEMINI_API_KEY != 'your-gemini-api-key-here' and GEMINI_API_KEY.strip() != ''
+    return bool(GEMINI_API_KEY)
 
 def detect_intent(user_input):
     """Simple intent detection for legal queries"""
