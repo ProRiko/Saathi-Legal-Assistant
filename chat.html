@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="chat-styles.css">
     <link rel="stylesheet" href="enhanced-ux.css">
     <link rel="stylesheet" href="device-compatibility.css">
+    <script src="anon-id.js"></script>
     <title>Saathi Legal Assistant - Chat</title>
     <style>
         .info-banner {
@@ -119,6 +120,39 @@
         let messageCount = 0;
         let conversationHistory = [];
         let currentLanguage = localStorage.getItem('preferredLanguage') || 'english';
+
+        function legacyAnonId() {
+            try {
+                if (window.saathiAnon && typeof window.saathiAnon.getId === 'function') {
+                    return window.saathiAnon.getId();
+                }
+                if (window.localStorage) {
+                    return window.localStorage.getItem('saathi_anon_id');
+                }
+            } catch (error) {
+                console.warn('anon_id unavailable', error);
+            }
+            return null;
+        }
+
+        function getAnonHeaders(base = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.headers === 'function') {
+                return window.saathiAnon.headers(base);
+            }
+            const anonId = legacyAnonId();
+            return anonId ? { ...base, 'X-Anon-Id': anonId } : { ...base };
+        }
+
+        function attachAnon(payload = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.attachToPayload === 'function') {
+                return window.saathiAnon.attachToPayload(payload);
+            }
+            const anonId = legacyAnonId();
+            if (!anonId || typeof payload !== 'object' || payload === null) {
+                return payload;
+            }
+            return { ...payload, anon_id: anonId };
+        }
 
         // Initialize
         function init() {
@@ -350,18 +384,18 @@
                 // Update loading message
                 updateLoadingMessage('Processing with Google Gemini AI...');
                 
-                const response = await fetch('/chat', {
+                const response = await fetch('/api/chat', {
                     method: 'POST',
-                    headers: {
+                    headers: getAnonHeaders({
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
+                    }),
+                    body: JSON.stringify(attachAnon({
                         message: message,
                         user_name: userName,
                         language: currentLanguage,
                         session_id: sessionId,
                         message_count: ++messageCount
-                    })
+                    }))
                 });
                 
                 clearTimeout(responseTimeout);
@@ -431,16 +465,16 @@
             try {
                 await fetch('/api/log-conversation', {
                     method: 'POST',
-                    headers: {
+                    headers: getAnonHeaders({
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
+                    }),
+                    body: JSON.stringify(attachAnon({
                         user_name: userName,
                         session_id: sessionId,
                         message: message,
                         sender: sender,
                         timestamp: new Date().toISOString()
-                    })
+                    }))
                 });
             } catch (error) {
                 console.log('Logging failed, but continuing...', error);

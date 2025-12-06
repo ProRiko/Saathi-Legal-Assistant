@@ -53,6 +53,9 @@
     }
 
     function ensureAnonId() {
+        if (globalThis.saathiAnon && typeof globalThis.saathiAnon.ensure === 'function') {
+            return globalThis.saathiAnon.ensure();
+        }
         const existing = safeGet(ANON_ID_KEY);
         if (existing) {
             return existing;

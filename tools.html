@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saathi Tools Dashboard</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="anon-id.js"></script>
     <style>
         body {
             margin: 0;
@@ -298,6 +299,18 @@
             }
         }
 
+        function anonHeaders(base = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.headers === 'function') {
+                return window.saathiAnon.headers(base);
+            }
+            try {
+                const anonId = window.localStorage ? window.localStorage.getItem('saathi_anon_id') : null;
+                return anonId ? { ...base, 'X-Anon-Id': anonId } : { ...base };
+            } catch (error) {
+                return { ...base };
+            }
+        }
+
         function buildToolCard(tool) {
             const card = document.createElement('article');
             card.className = 'tool-card';
@@ -447,7 +460,9 @@
 
         async function loadTools() {
             try {
-                const response = await fetch('/api/tools');
+                const response = await fetch('/api/tools', {
+                    headers: anonHeaders()
+                });
                 if (!response.ok) throw new Error('Unable to load tools');
                 const data = await response.json();
                 const tools = (data.tools || []).sort((a, b) => (a.order || 999) - (b.order || 999));

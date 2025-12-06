@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="enhanced-ux.css">
     <link rel="stylesheet" href="device-compatibility.css">
+    <script src="anon-id.js"></script>
     <title>Saathi Legal Assistant - Your AI Legal Companion</title>
     <style>
         .hero-cta-banner {
@@ -467,18 +468,27 @@
             document.getElementById('loading').style.display = 'block';
             document.getElementById('startBtn').style.display = 'none';
             
+            const basePayload = {
+                user_name: userName || 'Guest',
+                user_phone: userPhone || '',
+                timestamp: new Date().toISOString(),
+                session_id: generateSessionId()
+            };
+            const payloadWithAnon = window.saathiAnon && typeof window.saathiAnon.attachToPayload === 'function'
+                ? window.saathiAnon.attachToPayload(basePayload)
+                : {
+                    ...basePayload,
+                    anon_id: (window.localStorage && window.localStorage.getItem('saathi_anon_id')) || null
+                };
+            const headersWithAnon = window.saathiAnon && typeof window.saathiAnon.headers === 'function'
+                ? window.saathiAnon.headers({ 'Content-Type': 'application/json' })
+                : { 'Content-Type': 'application/json' };
+
             // Send user details to server for session tracking
             fetch('/api/start-session', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    user_name: userName || 'Guest',
-                    user_phone: userPhone || '',
-                    timestamp: new Date().toISOString(),
-                    session_id: generateSessionId()
-                })
+                headers: headersWithAnon,
+                body: JSON.stringify(payloadWithAnon)
             }).then(response => {
                 // Redirect to chat regardless of server response
                 setTimeout(() => {

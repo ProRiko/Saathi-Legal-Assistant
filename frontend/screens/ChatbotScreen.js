@@ -2,6 +2,16 @@ import React, { useState } from 'react';
 import { View, TextInput, Button, Text, ScrollView, StyleSheet } from 'react-native';
 import axios from 'axios';
 
+let cachedAnonId = null;
+const ensureAnonId = () => {
+  if (cachedAnonId) {
+    return cachedAnonId;
+  }
+  const random = Math.random().toString(36).slice(2, 10);
+  cachedAnonId = `anon_${Date.now()}_${random}`;
+  return cachedAnonId;
+};
+
 export default function ChatbotScreen() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
@@ -17,9 +27,15 @@ export default function ChatbotScreen() {
     setInput('');
 
     try {
-      const res = await axios.post('http://localhost:5000/chat', {
-        query: input,
-        lang: 'en',
+      const anonId = ensureAnonId();
+      const res = await axios.post('http://localhost:5000/api/chat', {
+        message: input,
+        language: 'english',
+        anon_id: anonId,
+        session_id: 'rn-client',
+        message_count: newMessages.length,
+      }, {
+        headers: { 'X-Anon-Id': anonId }
       });
 
       const reply = res.data.reply;

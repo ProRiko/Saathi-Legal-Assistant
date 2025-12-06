@@ -8,7 +8,7 @@ import re
 import uuid
 import sqlite3
 from typing import Any, Dict
-from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string
+from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string, g
 from flask_cors import CORS
 import requests
 import logging
@@ -188,6 +188,16 @@ def init_sqlite() -> None:
         created_at TEXT NOT NULL,
         FOREIGN KEY(user_id) REFERENCES users(id)
     );
+
+    CREATE TABLE IF NOT EXISTS consent_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        anon_id TEXT,
+        user_id TEXT,
+        scope TEXT NOT NULL,
+        ip TEXT,
+        user_agent TEXT,
+        created_at TEXT NOT NULL
+    );
     """
     with SQLITE_LOCK:
         conn = get_db_connection()
@@ -238,11 +248,36 @@ def get_authenticated_user() -> Dict[str, Any] | None:
 
 
 def get_request_anon_id() -> str:
-    header_value = request.headers.get('X-Anon-Id') or request.cookies.get('saathi_anon_id')
-    if header_value:
-        return header_value
-    generated = uuid.uuid4().hex
-    return generated
+    cached = getattr(g, '_saathi_anon_id', None)
+    if cached:
+        return cached
+
+    def _clean(value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
+
+    anon_id = _clean(request.headers.get('X-Anon-Id'))
+
+    if not anon_id and request.is_json:
+        payload = request.get_json(silent=True) or {}
+        anon_id = _clean(payload.get('anon_id'))
+
+    if not anon_id and request.form:
+        anon_id = _clean(request.form.get('anon_id'))
+
+    if not anon_id:
+        anon_id = _clean(request.args.get('anon_id'))
+
+    if not anon_id:
+        anon_id = _clean(request.cookies.get('saathi_anon_id'))
+
+    if not anon_id:
+        anon_id = uuid.uuid4().hex
+
+    g._saathi_anon_id = anon_id
+    return anon_id
 
 
 def save_user_item(user_id: int, item_type: str, title: str, summary: str, payload: Dict[str, Any]) -> None:
@@ -1126,6 +1161,17 @@ def get_client_identifier(request):
     
     return request.remote_addr or 'unknown'
 
+
+def build_rate_limit_key(scope: str, user: Dict[str, Any] | None, anon_id: str | None, client_ip: str | None) -> str:
+    if user and user.get('user_id') is not None:
+        base = f"user:{user['user_id']}"
+    elif anon_id:
+        base = f"anon:{anon_id}"
+    else:
+        base = f"ip:{client_ip or 'unknown'}"
+    ip_component = client_ip or 'unknown'
+    return f"{scope}:{base}:ip:{ip_component}"
+
 def is_rate_limited(client_id):
     """Check if client has exceeded rate limit"""
     now = datetime.now()
@@ -1820,12 +1866,36 @@ def _calculator_error(message: str, status_code: int = 400):
 
 def log_consent_event(event: Dict[str, Any]) -> None:
     """Persist consent approvals for compliance tracking (DB first, file fallback)."""
+    stored_in_sqlite = False
+    try:
+        with SQLITE_LOCK:
+            conn = get_db_connection()
+            conn.execute(
+                """INSERT INTO consent_events (anon_id, user_id, scope, ip, user_agent, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    event.get('anon_id'),
+                    str(event.get('user_id')) if event.get('user_id') else None,
+                    json.dumps(event.get('scope') or {}, ensure_ascii=False),
+                    event.get('ip'),
+                    event.get('user_agent'),
+                    event.get('timestamp') or datetime.utcnow().isoformat()
+                )
+            )
+            conn.commit()
+            conn.close()
+        stored_in_sqlite = True
+    except Exception as exc:
+        logger.error("SQLite consent logging failed: %s", exc)
+
     if db is not None:
         try:
             db['consent_logs'].insert_one(event)
-            return
         except Exception as exc:
-            logger.warning("Mongo consent logging failed, using file fallback: %s", exc)
+            logger.warning("Mongo consent logging failed, continuing without NoSQL copy: %s", exc)
+
+    if stored_in_sqlite:
+        return
 
     try:
         with CONSENT_LOG_LOCK:
@@ -2043,11 +2113,15 @@ def record_consent():
     if payload is None:
         return jsonify({"status": "error", "message": "Invalid JSON payload"}), 400
 
-    anon_id = str(payload.get('anon_id') or '').strip() or uuid.uuid4().hex
-    user_id_raw = payload.get('user_id')
-    user_id = None
-    if user_id_raw is not None:
-        user_id = str(user_id_raw).strip() or None
+    anon_id = get_request_anon_id()
+    user = get_authenticated_user()
+    user_id = str(user['user_id']) if user else None
+
+    user_id_override = payload.get('user_id')
+    if user_id_override is not None:
+        user_id_override = str(user_id_override).strip()
+        if user_id_override:
+            user_id = user_id_override
 
     scope_payload = payload.get('scope') or {}
     if not isinstance(scope_payload, dict):
@@ -2077,7 +2151,7 @@ def record_consent():
             "message": "Unable to record consent at this time"
         }), 500
 
-    return jsonify({"status": "ok"}), 201
+    return jsonify({"status": "ok", "anon_id": anon_id}), 201
 
 
 @app.route('/api/agreements', methods=['GET'])
@@ -2576,6 +2650,8 @@ def generate_letter():
         if not data:
             return jsonify({"error": "No JSON data provided", "status": "error"}), 400
         
+        user = get_authenticated_user()
+        anon_id = get_request_anon_id()
         letter_type = data.get('letter_type', '').strip()
         user_data = data.get('user_data', {})
         output_format = data.get('format', 'text')  # 'text' or 'pdf'
@@ -2606,11 +2682,17 @@ def generate_letter():
                 "status": "error"
             }), 400
         
+        audit_metadata = {
+            "letter_type": letter_type,
+            "format": output_format
+        }
+
         if output_format == 'pdf':
             # Generate PDF
             pdf_data = create_pdf_document(result['title'], result['content'], f"{letter_type}.pdf")
             
             if pdf_data:
+                record_audit_event('legal_letter_generated', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata=audit_metadata)
                 # Create response with PDF
                 response = make_response(pdf_data)
                 response.headers['Content-Type'] = 'application/pdf'
@@ -2622,6 +2704,7 @@ def generate_letter():
                     "status": "error"
                 }), 500
         else:
+            record_audit_event('legal_letter_generated', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata=audit_metadata)
             # Return text format
             return jsonify({
                 "title": result['title'],
@@ -2682,6 +2765,8 @@ def generate_form(form_type):
         if not data:
             return jsonify({"error": "No JSON data provided", "status": "error"}), 400
         
+        user = get_authenticated_user()
+        anon_id = get_request_anon_id()
         user_data = data.get('form_data', {})
         output_format = data.get('format', 'pdf')  # Default to PDF for forms
         
@@ -2761,11 +2846,17 @@ Generated by Saathi Legal Assistant - For reference only.
                 "status": "error"
             }), 400
         
+        audit_metadata = {
+            "form_type": form_type,
+            "format": output_format
+        }
+
         if output_format == 'pdf':
             # Generate PDF
             pdf_data = create_pdf_document(template['title'], content, f"{form_type}.pdf")
             
             if pdf_data:
+                record_audit_event('legal_form_generated', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata=audit_metadata)
                 response = make_response(pdf_data)
                 response.headers['Content-Type'] = 'application/pdf'
                 response.headers['Content-Disposition'] = f'attachment; filename="{form_type}_{datetime.now().strftime("%Y%m%d")}.pdf"'
@@ -2776,6 +2867,7 @@ Generated by Saathi Legal Assistant - For reference only.
                     "status": "error"
                 }), 500
         else:
+            record_audit_event('legal_form_generated', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata=audit_metadata)
             return jsonify({
                 "title": template['title'],
                 "content": content,
@@ -2927,6 +3019,8 @@ def generate_document_api():
         if not data:
             return jsonify({"error": "No data provided"}), 400
         
+        user = get_authenticated_user()
+        anon_id = get_request_anon_id()
         template_id = data.get('template_id')
         user_data = data.get('data', {})
         
@@ -2946,9 +3040,16 @@ def generate_document_api():
                 'template_id': template_id,
                 'user_data': user_data,
                 'timestamp': datetime.now().isoformat(),
-                'ip_address': get_client_identifier(request)
+                'ip_address': get_client_identifier(request),
+                'anon_id': anon_id
             }
             log_to_mongodb('document_generations', log_data)
+            record_audit_event(
+                'document_generated',
+                user_id=user['user_id'] if user else None,
+                anon_id=anon_id,
+                metadata={'template_id': template_id, 'data_keys': list(user_data.keys())}
+            )
             
             return jsonify({
                 "success": True,
@@ -2987,6 +3088,8 @@ def start_session():
         if not data:
             return jsonify({"error": "No data provided", "status": "error"}), 400
         
+        user = get_authenticated_user()
+        anon_id = get_request_anon_id()
         user_name = data.get('user_name', 'Anonymous')
         user_phone = data.get('user_phone', '')
         session_id = data.get('session_id')
@@ -2999,19 +3102,28 @@ def start_session():
             'start_time': timestamp,
             'status': 'active',
             'user_agent': request.headers.get('User-Agent', ''),
-            'ip_address': get_client_identifier(request)
+            'ip_address': get_client_identifier(request),
+            'anon_id': anon_id
         }
         
         # Log session start to MongoDB
         session_id_db = log_to_mongodb('sessions', session_data)
         
         logger.info(f"Session started for user: {user_name} ({user_phone}), ID: {session_id}")
+
+        record_audit_event(
+            'session_started',
+            user_id=user['user_id'] if user else None,
+            anon_id=anon_id,
+            metadata={"session_id": session_id, "user_name": user_name}
+        )
         
         return jsonify({
             "status": "success",
             "message": f"Session started for {user_name}",
             "session_id": session_id,
-            "db_id": str(session_id_db) if session_id_db else None
+            "db_id": str(session_id_db) if session_id_db else None,
+            "anon_id": anon_id
         })
         
     except Exception as e:
@@ -3029,23 +3141,35 @@ def log_conversation():
         if not data:
             return jsonify({"error": "No data provided", "status": "error"}), 400
         
+        user = get_authenticated_user()
+        anon_id = get_request_anon_id()
+        session_id = data.get('session_id')
         conversation_data = {
             'user_name': data.get('user_name', 'Anonymous'),
-            'session_id': data.get('session_id'),
+            'session_id': session_id,
             'message': data.get('message', ''),
             'sender': data.get('sender', 'unknown'),  # 'user' or 'assistant'
             'timestamp': data.get('timestamp', datetime.now().isoformat()),
             'ip_address': get_client_identifier(request),
             'message_length': len(data.get('message', '')),
-            'response_time': data.get('response_time', 0)
+            'response_time': data.get('response_time', 0),
+            'anon_id': anon_id
         }
         
         # Log to MongoDB
         conversation_id = log_to_mongodb('conversations', conversation_data)
+
+        record_audit_event(
+            'conversation_logged',
+            user_id=user['user_id'] if user else None,
+            anon_id=anon_id,
+            metadata={"session_id": session_id, "sender": conversation_data['sender']}
+        )
         
         return jsonify({
             "status": "success",
-            "conversation_id": str(conversation_id) if conversation_id else None
+            "conversation_id": str(conversation_id) if conversation_id else None,
+            "anon_id": anon_id
         })
         
     except Exception as e:
@@ -3085,24 +3209,28 @@ def get_user_history(user_name):
 def chat():
     """Main chat endpoint using Gemini API with rate limiting"""
     global conversation_history
-    
+
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
+    client_ip = get_client_identifier(request)
+
     # Apply rate limiting if security packages not available
     if not SECURITY_AVAILABLE:
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
+        fallback_key = build_rate_limit_key('chat', user, anon_id, client_ip)
         current_time = time.time()
-        
-        if current_time > request_counts[client_ip]['reset_time']:
-            request_counts[client_ip] = {'count': 0, 'reset_time': current_time + 3600}
-        
-        if request_counts[client_ip]['count'] >= 30:  # 30 requests per hour
+
+        if current_time > request_counts[fallback_key]['reset_time']:
+            request_counts[fallback_key] = {'count': 0, 'reset_time': current_time + 3600}
+
+        if request_counts[fallback_key]['count'] >= 30:  # 30 requests per hour
             return jsonify({
                 "reply": "Rate limit exceeded. Please wait before making more requests.",
                 "error": "RATE_LIMIT_EXCEEDED",
                 "status": "error"
             }), 429
-        
-        request_counts[client_ip]['count'] += 1
-    
+
+        request_counts[fallback_key]['count'] += 1
+
     if not is_api_configured():
         return jsonify({
             "reply": "Sorry, the chatbot is not properly configured. Please contact the administrator.",
@@ -3110,17 +3238,14 @@ def chat():
             "error": "API_NOT_CONFIGURED",
             "status": "error"
         }), 500
-    
-    user = get_authenticated_user()
-    anon_id = get_request_anon_id()
 
     # Rate limiting check
-    client_id = get_client_identifier(request)
-    is_limited, request_count = is_rate_limited(client_id)
+    rate_limit_key = build_rate_limit_key('chat', user, anon_id, client_ip)
+    is_limited, request_count = is_rate_limited(rate_limit_key)
     
     if is_limited:
-        reset_time = get_rate_limit_reset_time(client_id)
-        logger.warning(f"Rate limit exceeded for client {client_id}")
+        reset_time = get_rate_limit_reset_time(rate_limit_key)
+        logger.warning(f"Rate limit exceeded for client {rate_limit_key}")
         return jsonify({
             "reply": f"🚫 Rate limit exceeded. You can make {RATE_LIMIT_REQUESTS} requests per minute. Please wait {reset_time} seconds before trying again.",
             "intent": "rate_limit",
@@ -3186,9 +3311,10 @@ def chat():
                     'assistant_response': reply,
                     'message_count': message_count,
                     'timestamp': datetime.now().isoformat(),
-                    'ip_address': client_id,
+                    'ip_address': client_ip,
                     'response_length': len(reply),
-                    'user_message_length': len(user_input)
+                    'user_message_length': len(user_input),
+                    'anon_id': anon_id
                 })
             
             # Calculate remaining requests for this client
@@ -3203,7 +3329,7 @@ def chat():
                     summary=reply[:160],
                     payload={"question": user_input, "reply": reply}
                 )
-            record_audit_event('chat_exchange', user_id=user['user_id'] if user else None, anon_id=anon_id)
+            record_audit_event('chat_exchange', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"rate_limit_key": rate_limit_key})
             return jsonify({
                 "reply": reply,
                 "language": user_language,

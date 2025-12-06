@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agreement Templates - Saathi Legal Assistant</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="anon-id.js"></script>
     <link rel="stylesheet" href="enhanced-ux.css">
     <style>
         body {
@@ -340,6 +341,18 @@
         const prefillBanner = document.getElementById('agreementPrefill');
         const pendingPrefill = consumePrefill('agreement');
 
+        function agreementAnonHeaders(base = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.headers === 'function') {
+                return window.saathiAnon.headers(base);
+            }
+            try {
+                const anonId = window.localStorage ? window.localStorage.getItem('saathi_anon_id') : null;
+                return anonId ? { ...base, 'X-Anon-Id': anonId } : { ...base };
+            } catch (error) {
+                return { ...base };
+            }
+        }
+
         function consumePrefill(expectedCategory) {
             const raw = window.sessionStorage.getItem(PREFILL_KEY);
             if (raw) {
@@ -414,7 +427,9 @@
             agreementState.textContent = 'Loading templates...';
 
             try {
-                const res = await fetch('/api/agreements');
+                const res = await fetch('/api/agreements', {
+                    headers: agreementAnonHeaders()
+                });
                 if (!res.ok) throw new Error('Unable to fetch agreements');
                 const data = await res.json();
                 agreementState.textContent = '';

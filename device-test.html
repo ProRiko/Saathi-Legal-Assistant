@@ -7,6 +7,7 @@
     <meta name="theme-color" content="#1a2332">
     <title>Saathi Legal Assistant - Device Compatibility Test</title>
     <link rel="stylesheet" href="device-compatibility.css">
+    <script src="anon-id.js"></script>
     <style>
         body {
             font-family: 'Georgia', 'Times New Roman', serif;
@@ -213,6 +214,33 @@
             recommendations: []
         };
 
+        function diagnosticAnonHeaders(base = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.headers === 'function') {
+                return window.saathiAnon.headers(base);
+            }
+            try {
+                const anonId = window.localStorage ? window.localStorage.getItem('saathi_anon_id') : null;
+                return anonId ? { ...base, 'X-Anon-Id': anonId } : { ...base };
+            } catch (error) {
+                return { ...base };
+            }
+        }
+
+        function attachDiagnosticAnon(payload = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.attachToPayload === 'function') {
+                return window.saathiAnon.attachToPayload(payload);
+            }
+            if (typeof payload !== 'object' || payload === null) {
+                return payload;
+            }
+            try {
+                const anonId = window.localStorage ? window.localStorage.getItem('saathi_anon_id') : null;
+                return anonId ? { ...payload, anon_id: anonId } : payload;
+            } catch (error) {
+                return payload;
+            }
+        }
+
         // Detect device information
         function detectDevice() {
             const userAgent = navigator.userAgent;
@@ -312,10 +340,16 @@
 
             // API test
             try {
-                const response = await fetch('/chat', {
+                const response = await fetch('/api/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: 'test', lang: 'en' })
+                    headers: diagnosticAnonHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(attachDiagnosticAnon({
+                        message: 'diagnostic ping',
+                        user_name: 'Diagnostic Tester',
+                        language: 'english',
+                        session_id: 'diagnostic',
+                        message_count: 1
+                    }))
                 });
                 
                 if (response.ok) {

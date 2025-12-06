@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legal Notice Generator - Saathi Legal Assistant</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="anon-id.js"></script>
     <link rel="stylesheet" href="enhanced-ux.css">
     <style>
         body {
@@ -357,6 +358,18 @@
 
     <script>
         const noticeState = document.getElementById('noticeState');
+
+        function noticeAnonHeaders(base = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.headers === 'function') {
+                return window.saathiAnon.headers(base);
+            }
+            try {
+                const anonId = window.localStorage ? window.localStorage.getItem('saathi_anon_id') : null;
+                return anonId ? { ...base, 'X-Anon-Id': anonId } : { ...base };
+            } catch (error) {
+                return { ...base };
+            }
+        }
         const modal = document.getElementById('sampleModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalSample = document.getElementById('modalSample');
@@ -442,7 +455,9 @@
             noticeState.textContent = 'Loading notices...';
 
             try {
-                const res = await fetch('/api/legal-notices');
+                const res = await fetch('/api/legal-notices', {
+                    headers: noticeAnonHeaders()
+                });
                 if (!res.ok) throw new Error('Failed to load templates');
                 const data = await res.json();
 

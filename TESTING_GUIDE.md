@@ -229,3 +229,18 @@ Start-Process "http://127.0.0.1:5000/"
 - Visit your Railway app URL
 - Check Railway logs for Gunicorn startup
 - Test health endpoint on production URL
+
+---
+
+## 11. 🔐 Anonymous Session & Consent Checks
+
+1. **Verify anon_id creation (browser):** Load the landing page, open DevTools → Application → Local Storage, and confirm `saathi_anon_id` exists. Clearing storage should regenerate a new value on refresh.
+2. **API echo test:**
+  ```powershell
+  $headers = @{ 'Content-Type' = 'application/json'; 'X-Anon-Id' = 'test-anon-123' }
+  Invoke-RestMethod -Uri "http://127.0.0.1:5000/api/start-session" -Method POST -Headers $headers -Body '{"user_name":"QA","session_id":"sess-1"}'
+  ```
+  Response should include the same `anon_id` value.
+3. **Consent persistence:** Submit `/api/consent` with the same header and confirm a corresponding row appears in `consent_events` (`anon_id` column) and log fallback if DB unavailable.
+4. **Rate limiting linkage:** Reuse a single `anon_id` to hit `/api/chat` more than `RATE_LIMIT_REQUESTS` times per minute and confirm the 429 response references that identifier; switch to a new `anon_id` to reset the window without changing IP.
+5. **Calculator / reviewer propagation:** Send calculator or reviewer requests with and without the `X-Anon-Id` header and make sure audit logs capture the resolved anon_id (inspect SQLite `audit_logs` table).

@@ -6,6 +6,7 @@
     <title>Legal Rights Calculators - Saathi Legal Assistant</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="enhanced-ux.css">
+    <script src="anon-id.js"></script>
     <style>
         body {
             margin: 0;
@@ -442,6 +443,33 @@
             'consumer-compensation': { formId: 'consumerForm', cardId: 'consumerCalculator', label: 'Consumer Compensation Calculator' }
         };
 
+        function calculatorAnonHeaders(base = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.headers === 'function') {
+                return window.saathiAnon.headers(base);
+            }
+            try {
+                const anonId = window.localStorage ? window.localStorage.getItem('saathi_anon_id') : null;
+                return anonId ? { ...base, 'X-Anon-Id': anonId } : { ...base };
+            } catch (error) {
+                return { ...base };
+            }
+        }
+
+        function attachCalculatorAnon(payload = {}) {
+            if (window.saathiAnon && typeof window.saathiAnon.attachToPayload === 'function') {
+                return window.saathiAnon.attachToPayload(payload);
+            }
+            if (typeof payload !== 'object' || payload === null) {
+                return payload;
+            }
+            try {
+                const anonId = window.localStorage ? window.localStorage.getItem('saathi_anon_id') : null;
+                return anonId ? { ...payload, anon_id: anonId } : payload;
+            } catch (error) {
+                return payload;
+            }
+        }
+
         function setStatus(id, message, tone = 'info') {
             const el = document.getElementById(id);
             if (!el) return;
@@ -469,8 +497,8 @@
             try {
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    headers: calculatorAnonHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(attachCalculatorAnon(payload))
                 });
                 const data = await response.json();
                 if (!response.ok || data.status !== 'success') {
@@ -555,7 +583,9 @@
 
         async function hydrateCalculatorMeta() {
             try {
-                const response = await fetch('/api/tools');
+                const response = await fetch('/api/tools', {
+                    headers: calculatorAnonHeaders()
+                });
                 if (!response.ok) throw new Error('Unable to fetch tool metadata');
                 const data = await response.json();
                 const calculators = (data.tools || []).filter(tool => tool.category === 'calculator');
