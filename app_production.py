@@ -578,6 +578,44 @@ def list_review_requests_for_user(user_id: int) -> list[Dict[str, Any]]:
     ]
 
 
+def create_review_request(user_id: int | None,
+                          anon_id: str,
+                          document_id: str,
+                          doc_title: str,
+                          contact_name: str,
+                          contact_email: str,
+                          notes: str) -> int:
+    """Persist a manual review request so legal admins can triage it later."""
+    timestamp = datetime.utcnow().isoformat()
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        cursor = conn.execute(
+            """INSERT INTO review_requests (
+                user_id, anon_id, document_id, doc_title, status,
+                contact_name, contact_email, notes, admin_notes, reviewed_file,
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                user_id,
+                anon_id,
+                document_id,
+                doc_title,
+                'pending',
+                contact_name,
+                contact_email,
+                notes,
+                '',
+                '',
+                timestamp,
+                timestamp
+            )
+        )
+        conn.commit()
+        request_id = cursor.lastrowid
+        conn.close()
+    return request_id
+
+
 def purge_user_data(user_id: int) -> None:
     with SQLITE_LOCK:
         conn = get_db_connection()
@@ -2412,6 +2450,67 @@ def api_reviewer_analyze():
     )
 
     return jsonify({"status": "success", "review": review})
+
+
+@app.route('/api/reviewer/manual', methods=['POST'])
+def api_reviewer_manual():
+    user = get_authenticated_user()
+    anon_id = get_request_anon_id()
+    payload = request.get_json(silent=True) or {}
+
+    document_id = str(payload.get('document_id') or '').strip()
+    if not document_id:
+        document_id = f"manual-{uuid.uuid4().hex[:8]}"
+
+    doc_title = (payload.get('doc_title') or 'Untitled draft').strip() or 'Untitled draft'
+    contact_name = (payload.get('contact_name') or '').strip()
+    contact_email = (payload.get('contact_email') or '').strip()
+    notes = (payload.get('notes') or '').strip()
+
+    if not contact_email:
+        return jsonify({
+            "status": "error",
+            "message": "Contact email is required so our legal desk can reach you."
+        }), 400
+
+    if '@' not in contact_email or '.' not in contact_email:
+        return jsonify({
+            "status": "error",
+            "message": "Enter a valid email address."
+        }), 400
+
+    if not notes:
+        return jsonify({
+            "status": "error",
+            "message": "Please describe what needs manual review."
+        }), 400
+
+    request_id = create_review_request(
+        user['user_id'] if user else None,
+        anon_id,
+        document_id,
+        doc_title,
+        contact_name,
+        contact_email,
+        notes
+    )
+
+    record_audit_event(
+        action='manual_review_requested',
+        user_id=user['user_id'] if user else None,
+        anon_id=anon_id,
+        reference_id=str(request_id),
+        metadata={
+            "document_id": document_id,
+            "doc_title": doc_title
+        }
+    )
+
+    return jsonify({
+        "status": "success",
+        "request_id": request_id,
+        "message": "Manual review request submitted"
+    })
 
 
 @app.route('/api/reviewer/annotated/<int:review_id>', methods=['GET'])
