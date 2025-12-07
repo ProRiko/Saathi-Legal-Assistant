@@ -94,7 +94,7 @@ Fill the `.env` with at least:
 | Variable | Description |
 |----------|-------------|
 | `GEMINI_API_KEY` | Google Gemini key used by the chat + calculators. |
-| `GEMINI_MODEL` | Defaults to `gemini-1.5-flash`. |
+| `GEMINI_MODEL` | Defaults to `gemini-2.5-flash`. |
 | `SECRET_KEY` | Flask session secret. |
 | `ALLOWED_ORIGINS` | CORS whitelist (use `*` for development). |
 | `MONGODB_URI` / `MONGO_DB_NAME` / `MONGO_COLLECTION_NAME` | Optional logging store. |
