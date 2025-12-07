@@ -206,7 +206,7 @@ def init_sqlite() -> None:
         conn.close()
 
 
-    init_sqlite()
+init_sqlite()
 
 def record_audit_event(action: str, user_id: int | None = None, anon_id: str | None = None,
                        reference_id: str | None = None, metadata: Dict[str, Any] | None = None) -> None:
