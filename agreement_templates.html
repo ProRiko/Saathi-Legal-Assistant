@@ -3,9 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ready-to-sign Indian agreement templates: rent, freelance, NDA, employment, and sale of goods drafts with AI guidance.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://saathi-legal-assistant.onrender.com/agreement-templates.html">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Agreement Templates - Saathi">
+    <meta property="og:description" content="Download compliant agreements and route custom clauses through Saathi's AI copilot.">
+    <meta property="og:url" content="https://saathi-legal-assistant.onrender.com/agreement-templates.html">
+    <meta property="og:image" content="https://saathi-legal-assistant.onrender.com/assets/og-card.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Free Indian Agreement Templates">
+    <meta name="twitter:description" content="Rent, freelance, NDA, and employment drafts ready for advocates">
+    <meta name="twitter:image" content="https://saathi-legal-assistant.onrender.com/assets/og-card.svg">
     <title>Agreement Templates - Saathi Legal Assistant</title>
     <link rel="stylesheet" href="styles.css">
     <script src="anon-id.js"></script>
+    <script src="analytics.js" defer></script>
     <link rel="stylesheet" href="enhanced-ux.css">
     <style>
         body {
@@ -213,6 +226,29 @@
             text-align: center;
             color: #dcd3c3;
         }
+        .skeleton-card {
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 24px;
+            min-height: 240px;
+        }
+        .skeleton-line {
+            height: 14px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.04) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.6s ease infinite;
+        }
+        .skeleton-line.w40 { width: 40%; }
+        .skeleton-line.w60 { width: 60%; }
+        .skeleton-line.w80 { width: 80%; }
+        .skeleton-line.w100 { width: 100%; }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
         .sample-modal {
             position: fixed;
             inset: 0;
@@ -282,6 +318,7 @@
             <a href="/legal-notices.html">Notices</a>
             <a href="/agreement-templates.html" class="is-active">Agreements</a>
             <a href="/legal-calculators.html">Calculators</a>
+            <a href="/legal-guides.html">Guides</a>
             <a href="/chat.html">Chat</a>
         </div>
     </nav>
@@ -421,9 +458,25 @@
             }
         });
 
+        function renderAgreementSkeletons(container, count = 4) {
+            container.innerHTML = '';
+            Array.from({ length: count }).forEach(() => {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'skeleton-card';
+                placeholder.innerHTML = `
+                    <div class="skeleton-line w60"></div>
+                    <div class="skeleton-line w80"></div>
+                    <div class="skeleton-line w100"></div>
+                    <div class="skeleton-line w50"></div>
+                    <div class="skeleton-line w70"></div>
+                `;
+                container.appendChild(placeholder);
+            });
+        }
+
         async function loadAgreements() {
             const grid = document.getElementById('agreements');
-            grid.innerHTML = '';
+            renderAgreementSkeletons(grid, 6);
             agreementState.textContent = 'Loading templates...';
 
             try {
@@ -433,6 +486,7 @@
                 if (!res.ok) throw new Error('Unable to fetch agreements');
                 const data = await res.json();
                 agreementState.textContent = '';
+                grid.innerHTML = '';
 
                 if (!data.agreements || !data.agreements.length) {
                     agreementState.textContent = 'Templates will be available shortly. Check again later.';
@@ -479,6 +533,7 @@
                 }
             } catch (error) {
                 console.error(error);
+                grid.innerHTML = '';
                 const message = error instanceof TypeError ? corsHelpMessage() : 'Could not load agreement templates right now. Please refresh later.';
                 agreementState.textContent = message;
             }
@@ -486,5 +541,37 @@
 
         loadAgreements();
     </script>
+    <footer class="site-footer" aria-label="Saathi trust signals">
+        <div class="site-footer__grid">
+            <section>
+                <span class="site-footer__label">Support</span>
+                <h3>Need human escalation?</h3>
+                <p>Email <a href="mailto:support@saathi.legal">support@saathi.legal</a> or WhatsApp <a href="https://wa.me/917977000111" target="_blank" rel="noopener">+91&nbsp;79770&nbsp;00111</a> (9 AM – 7 PM IST).</p>
+                <div class="site-footer__links">
+                    <a href="/privacy.html">Privacy</a>
+                    <a href="/legal-guides.html">Guides</a>
+                    <a href="/case-tracker.html">Case Tracker</a>
+                </div>
+            </section>
+            <section>
+                <span class="site-footer__label">Trust &amp; Compliance</span>
+                <ul class="site-footer__badges">
+                    <li>Consent + anon ID gate</li>
+                    <li>Manual review queue</li>
+                    <li>Hosted on ISO 27001 cloud</li>
+                    <li>No login or tracking pixels</li>
+                </ul>
+                <p class="site-footer__disclaimer">Saathi shares general legal information—not legal advice. Validate drafts with a licensed advocate.</p>
+            </section>
+            <section>
+                <span class="site-footer__label">Quick help</span>
+                <div class="site-footer__cta">
+                    <a href="/tools.html">Tools &amp; Requests</a>
+                    <a href="/legal-notices.html">Legal Notices</a>
+                    <a href="/legal-calculators.html">Rights Calculators</a>
+                </div>
+            </section>
+        </div>
+    </footer>
 </body>
 </html>

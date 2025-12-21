@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /__pycache__/
+
+Sitemap: https://saathi-legal-assistant.onrender.com/sitemap.xml

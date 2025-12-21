@@ -971,6 +971,15 @@ def serve_consent_script():
         return "Consent script not found", 404
 
 
+@app.route('/analytics.js')
+def serve_analytics_script():
+    """Serve the lightweight analytics script"""
+    try:
+        return send_file('analytics.js', mimetype='application/javascript')
+    except FileNotFoundError:
+        return "Analytics script not found", 404
+
+
 def inject_consent_modal(html: str) -> str:
     """Ensure every rendered HTML page loads the consent modal script and fallback banner."""
     needs_script = 'consent-modal.js' not in html
@@ -2193,6 +2202,38 @@ def record_consent():
         }), 500
 
     return jsonify({"status": "ok", "anon_id": anon_id}), 201
+
+
+@app.route('/api/event', methods=['POST'])
+def record_event():
+    """Generic, privacy-respecting event sink gated by consent on the client."""
+    payload = request.get_json(silent=True) or {}
+
+    # Normalize fields
+    event_name = str(payload.get('event') or '').strip() or 'event'
+    properties = payload.get('properties') if isinstance(payload.get('properties'), dict) else {}
+    url = str(payload.get('url') or request.path)
+    timestamp = str(payload.get('ts') or datetime.utcnow().isoformat())
+
+    # Associate request context
+    anon_id = get_request_anon_id()
+    user = get_authenticated_user()
+
+    # Persist in audit_logs for simple analysis
+    record_audit_event(
+        event_name,
+        user_id=user['user_id'] if user else None,
+        anon_id=anon_id,
+        reference_id=url,
+        metadata={
+            "properties": properties,
+            "ts": timestamp,
+            "ua": request.headers.get('User-Agent', ''),
+            "ip": request.remote_addr,
+        },
+    )
+
+    return jsonify({"status": "ok"}), 200
 
 
 @app.route('/api/agreements', methods=['GET'])

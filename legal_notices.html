@@ -3,9 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Download advocate-style legal notices for salary delays, rent defaults, consumer complaints, and cheque bounce disputes.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://saathi-legal-assistant.onrender.com/legal-notices.html">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Legal Notice Generator - Saathi">
+    <meta property="og:description" content="Guided drafts with legal grounds, risk rating, and PDF export for Indian disputes.">
+    <meta property="og:url" content="https://saathi-legal-assistant.onrender.com/legal-notices.html">
+    <meta property="og:image" content="https://saathi-legal-assistant.onrender.com/assets/og-card.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Generate Legal Notices Online">
+    <meta name="twitter:description" content="Create enforceable Indian legal notices with Saathi's AI guidance">
+    <meta name="twitter:image" content="https://saathi-legal-assistant.onrender.com/assets/og-card.svg">
     <title>Legal Notice Generator - Saathi Legal Assistant</title>
     <link rel="stylesheet" href="styles.css">
     <script src="anon-id.js"></script>
+    <script src="analytics.js" defer></script>
     <link rel="stylesheet" href="enhanced-ux.css">
     <style>
         body {
@@ -217,6 +230,29 @@
             color: #f4f1e8;
             margin-top: 30px;
         }
+        .skeleton-card {
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 22px;
+            min-height: 220px;
+        }
+        .skeleton-line {
+            height: 14px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.05) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.6s ease infinite;
+        }
+        .skeleton-line.w40 { width: 40%; }
+        .skeleton-line.w60 { width: 60%; }
+        .skeleton-line.w80 { width: 80%; }
+        .skeleton-line.w100 { width: 100%; }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
         .page-actions {
             margin: 30px 0;
             display: flex;
@@ -309,6 +345,7 @@
             <a href="/legal-notices.html" class="is-active">Notices</a>
             <a href="/agreement-templates.html">Agreements</a>
             <a href="/legal-calculators.html">Calculators</a>
+            <a href="/legal-guides.html">Guides</a>
             <a href="/chat.html">Chat</a>
         </div>
     </nav>
@@ -449,9 +486,25 @@
             }
         });
 
+        function renderNoticeSkeletons(container, count = 4) {
+            container.innerHTML = '';
+            Array.from({ length: count }).forEach(() => {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'skeleton-card';
+                placeholder.innerHTML = `
+                    <div class="skeleton-line w60"></div>
+                    <div class="skeleton-line w80"></div>
+                    <div class="skeleton-line w100"></div>
+                    <div class="skeleton-line w40"></div>
+                    <div class="skeleton-line w70"></div>
+                `;
+                container.appendChild(placeholder);
+            });
+        }
+
         async function loadNotices() {
             const grid = document.getElementById('noticeGrid');
-            grid.innerHTML = '';
+            renderNoticeSkeletons(grid, 6);
             noticeState.textContent = 'Loading notices...';
 
             try {
@@ -462,6 +515,7 @@
                 const data = await res.json();
 
                 noticeState.textContent = '';
+                grid.innerHTML = '';
                 if (!data.notices || !data.notices.length) {
                     noticeState.innerHTML = '<div class="notice-empty">No templates available yet. Check back soon!</div>';
                     return;
@@ -507,6 +561,7 @@
                 }
             } catch (error) {
                 console.error(error);
+                grid.innerHTML = '';
                 const message = error instanceof TypeError ? corsHelpMessage() : 'Unable to load notices right now. Please refresh in a moment.';
                 noticeState.innerHTML = `<div class="notice-error">${message}</div>`;
             }
@@ -514,5 +569,37 @@
 
         loadNotices();
     </script>
+    <footer class="site-footer" aria-label="Saathi trust signals">
+        <div class="site-footer__grid">
+            <section>
+                <span class="site-footer__label">Support</span>
+                <h3>Need human escalation?</h3>
+                <p>Email <a href="mailto:support@saathi.legal">support@saathi.legal</a> or WhatsApp <a href="https://wa.me/917977000111" target="_blank" rel="noopener">+91&nbsp;79770&nbsp;00111</a> (9 AM – 7 PM IST).</p>
+                <div class="site-footer__links">
+                    <a href="/privacy.html">Privacy</a>
+                    <a href="/legal-guides.html">Guides</a>
+                    <a href="/case-tracker.html">Case Tracker</a>
+                </div>
+            </section>
+            <section>
+                <span class="site-footer__label">Trust &amp; Compliance</span>
+                <ul class="site-footer__badges">
+                    <li>Consent + anon ID gate</li>
+                    <li>Manual review queue</li>
+                    <li>Hosted on ISO 27001 cloud</li>
+                    <li>No login or tracking pixels</li>
+                </ul>
+                <p class="site-footer__disclaimer">Saathi shares general legal information—not legal advice. Validate drafts with a licensed advocate.</p>
+            </section>
+            <section>
+                <span class="site-footer__label">Quick help</span>
+                <div class="site-footer__cta">
+                    <a href="/tools.html">Tools &amp; Requests</a>
+                    <a href="/legal-notices.html">Legal Notices</a>
+                    <a href="/legal-calculators.html">Rights Calculators</a>
+                </div>
+            </section>
+        </div>
+    </footer>
 </body>
 </html>

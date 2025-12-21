@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="maskableBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1422" />
+      <stop offset="100%" stop-color="#8b4513" />
+    </linearGradient>
+    <linearGradient id="maskableStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7dba7" />
+      <stop offset="100%" stop-color="#f9a826" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#maskableBg)" />
+  <g fill="none" stroke="url(#maskableStroke)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M120 380h272" />
+    <path d="M160 188h192" />
+    <path d="M144 236v112" />
+    <path d="M368 236v112" />
+    <circle cx="256" cy="156" r="60" />
+  </g>
+  <circle cx="256" cy="156" r="22" fill="#f7dba7" />
+</svg>

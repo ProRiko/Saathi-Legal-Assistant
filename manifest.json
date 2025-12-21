@@ -1,9 +1,11 @@
 {
     "name": "Saathi Legal Assistant",
     "short_name": "Saathi Legal",
-    "description": "Your AI-powered legal companion for consultation, document generation, and legal guidance",
+    "description": "Ask legal questions, draft notices, and run compliance calculators built for Indian law.",
+    "id": "/",
     "start_url": "/",
     "display": "standalone",
+    "display_override": ["standalone", "browser"],
     "background_color": "#1a2332",
     "theme_color": "#1a2332",
     "orientation": "portrait",
@@ -12,16 +14,43 @@
     "categories": ["productivity", "business", "education"],
     "icons": [
         {
-            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMxYTIzMzIiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZjRmMWU4Ij4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBjbGFzcz0ic2l6ZS02Ij4KICA8cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGQ9Ik0xMiAzdjE3LjI1bTAtMTcuMjVjMC0xLjUtMy0yLjI1LTMtMy43NVMxMC41IDEgMTIgMW0wIDJjMCAxLjUgMyAyLjI1IDMgMy43NVMxMy41IDEgMTIgMW0wIDBoLS4wNW0wIDBoLS4wNW0tMy4zIDMuMzhoMTYuNGMxLjM4IDAgMi41IDEuMTIgMi41IDIuNXMtMS4xMiAyLjUtMi41IDIuNUg4LjY1bTAtNS4wMXYwTTguNjUgNC4zOUg2LjQySDJoMHMwIDAgMCAwaDQuNDVjLjI4IDAgLjUzLjAzLjc3LjA4eiIvPgo8L3N2Zz4KPC9zdmc+Cjwvc3ZnPg==",
+            "src": "/assets/icons/saathi-icon.svg",
             "sizes": "192x192",
             "type": "image/svg+xml",
             "purpose": "any"
         },
         {
-            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9IiMxYTIzMzIiLz4KPHN2ZyB4PSIxMjgiIHk9IjEyOCIgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2Y0ZjFlOCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2U9ImN1cnJlbnRDb2xvciIgY2xhc3M9InNpemUtNiI+CiAgPHBhdGggc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMTIgM3YxNy4yNW0wLTE3LjI1YzAtMS41LTMtMi4yNS0zLTMuNzVTMTAuNSAxIDEyIDFtMCAyYzAgMS41IDMgMi4yNSAzIDMuNzVTMTMuNSAxIDEyIDFtMCAwaDAtLjA1bTAtMGgtLjA1bS0zLjMgMy4zOGgxNi40YzEuMzggMCAyLjUgMS4xMiAyLjUgMi41cy0xLjEyIDIuNS0yLjUgMi41SDguNjVtMC01LjAxdjBNOC42NSA0LjM5SDYuNDJIMmgwczAgMCAwIDBoNC40NWMuMjggMCAuNTMuMDMuNzcuMDh6Ii8+Cjwvc3ZnPgo8L3N2Zz4KPC9zdmc+",
+            "src": "/assets/icons/saathi-icon-maskable.svg",
             "sizes": "512x512",
             "type": "image/svg+xml",
-            "purpose": "any"
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Ask Saathi",
+            "short_name": "Chat",
+            "description": "Jump straight into the multilingual chat",
+            "url": "/chat.html?ref=shortcut",
+            "icons": [
+                {
+                    "src": "/assets/icons/saathi-icon.svg",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                }
+            ]
+        },
+        {
+            "name": "Generate Legal Notice",
+            "short_name": "Notices",
+            "description": "Open the advocate-style legal notice generator",
+            "url": "/legal-notices.html?ref=shortcut"
+        },
+        {
+            "name": "Rights Calculators",
+            "short_name": "Calculators",
+            "description": "Estimate notice periods, maternity pay, and refunds",
+            "url": "/legal-calculators.html?ref=shortcut"
         }
     ]
 }

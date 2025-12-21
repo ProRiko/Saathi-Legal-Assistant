@@ -17,6 +17,9 @@
 - 📄 **Agreement Templates** – Ready-to-sign rent agreements, NDAs, freelance contracts, offer letters, and sale-of-goods drafts.
 - 🧮 **Compliance Calculators** – Notice period, overtime & working hours, maternity benefits, and consumer compensation estimators.
 - 📋 **Case Tracker & Legal Help Directory** – Static tools for case logging plus curated legal aid resources.
+- 📚 **Guide Library & Onboarding** – Dedicated guides + landing onboarding that route users to the right tool in two clicks.
+- 🛡️ **Trust Footer & Support Escalations** – Shared footer highlights consent, manual review paths, and human escalation info on every surface.
+- 🚀 **SEO + PWA Ready** – JSON-LD metadata, sitemap/robots, new maskable icons, and app shortcuts for install prompts.
 - 🌐 **Responsive Landing Page** – Accessible on mobile/desktop with device diagnostics, language selector, and quick actions.
 
 ## 🏛️ Legal Areas Covered
@@ -61,6 +64,15 @@
 - `case_tracker.html` for manual case logging.
 - `legal_help.html` to surface legal aid centers, NGOs, and courts.
 - `language_selection.html` plus device diagnostics for accessibility.
+
+## 🔍 SEO, PWA & Trust Upgrades
+
+- **Metadata pass**: canonical URLs, Open Graph/Twitter cards, and JSON-LD (`WebApplication`, `CollectionPage`, `FAQPage`) on every public page.
+- **Discovery aids**: `sitemap.xml` and `robots.txt` now ship with fresh links to landing, tools, guides, calculators, and chat.
+- **Guide hub**: `legal-guides.html` plus three deep-dive pages route to calculators/notices with contextual CTAs.
+- **Shared trust footer**: support email/WhatsApp, compliance badges, and quick links are injected site-wide.
+- **PWA polish**: refreshed `manifest.json`, maskable + square SVG icons, and app shortcuts (Chat, Notices, Calculators).
+- **Consent-first analytics**: `analytics.js` only fires events after the consent modal sets `saathi_consent=yes`, posting to `/api/event` which logs into `audit_logs`.
 
 ## 🧱 Architecture Overview
 
@@ -168,6 +180,7 @@ Add your preferred linters/test suites as needed.
 | `/api/calculators/work-hours` | POST | Flags overtime and calculates double-rate payout. |
 | `/api/calculators/maternity-benefit` | POST | Estimates payable weeks/days and eligibility under MB Act. |
 | `/api/calculators/consumer-compensation` | POST | Suggests consumer dispute compensation package. |
+| `/api/event` | POST | Lightweight, consent-gated analytics sink (page views, calculator usage, CTA taps). |
 | `/health`, `/version` | GET | Lightweight health/version checks for monitoring. |
 
 ## 📁 Key Files
@@ -175,8 +188,12 @@ Add your preferred linters/test suites as needed.
 - `app_production.py` – Flask app, calculators, PDF dictionaries, rate limiting, and route handlers.
 - `legal_notices.html`, `agreement_templates.html`, `legal_calculators.html` – Feature-specific landing pages.
 - `landing.html` – Primary marketing and onboarding surface.
+- `legal-guides.html` + `*-guide.html` – Long-form explainer content that links to calculators and notices.
 - `render.yaml` – Render IaC blueprint.
 - `requirements.txt` – Python dependencies (ReportLab, Flask, Gunicorn, etc.).
+- `analytics.js` – Consent-aware tracker that posts to `/api/event`.
+- `sitemap.xml` & `robots.txt` – Search crawling aids now deployed alongside the app.
+- `assets/icons/saathi-icon.svg` (and `-maskable.svg`) – PWA icons referenced by `manifest.json`.
 
 ## 🔒 Privacy & Legal Notice
 

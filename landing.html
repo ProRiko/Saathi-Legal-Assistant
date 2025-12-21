@@ -3,19 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <meta name="description" content="Saathi Legal Assistant - Your AI-powered legal companion for consultation, document generation, and legal guidance">
-    <meta name="keywords" content="legal assistant, AI lawyer, legal consultation, document generation, Indian law">
+    <meta name="description" content="Saathi Legal Assistant pairs AI research with verified templates so Indians can draft notices, agreements, and compliance files in minutes.">
+    <meta name="keywords" content="legal assistant, AI lawyer, legal consultation, document generation, Indian law, legal notices, compliance calculators">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Saathi Legal Assistant">
     <meta name="theme-color" content="#1a2332">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Saathi Legal">
     <meta name="mobile-web-app-capable" content="yes">
+    <link rel="canonical" href="https://saathi-legal-assistant.onrender.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Saathi Legal Assistant">
+    <meta property="og:title" content="Saathi Legal Assistant - Fast Indian Legal Guidance">
+    <meta property="og:description" content="Chat with an AI paralegal, download lawyer-style notices, and run compliance calculators in under 5 minutes.">
+    <meta property="og:url" content="https://saathi-legal-assistant.onrender.com/">
+    <meta property="og:image" content="https://saathi-legal-assistant.onrender.com/assets/og-card.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Saathi Legal Assistant">
+    <meta name="twitter:description" content="AI-powered notices, agreements, calculators, and multilingual chat for Indian law.">
+    <meta name="twitter:image" content="https://saathi-legal-assistant.onrender.com/assets/og-card.svg">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="enhanced-ux.css">
     <link rel="stylesheet" href="device-compatibility.css">
     <script src="anon-id.js"></script>
+    <script src="analytics.js" defer></script>
     <title>Saathi Legal Assistant - Your AI Legal Companion</title>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Saathi Legal Assistant",
+        "url": "https://saathi-legal-assistant.onrender.com/",
+        "applicationCategory": "BusinessApplication",
+        "inLanguage": ["en", "hi", "bn", "ta", "te", "mr", "gu", "kn", "pa"],
+        "creator": {
+            "@type": "Organization",
+            "name": "Saathi Legal",
+            "url": "https://saathi-legal-assistant.onrender.com/",
+            "logo": "https://saathi-legal-assistant.onrender.com/assets/og-card.png"
+        },
+        "operatingSystem": "Web",
+        "description": "AI assistant for Indian legal questions, notice drafting, agreement templates, and compliance calculators.",
+        "featureList": [
+            "AI legal copilot",
+            "Legal notice generator",
+            "Agreement templates",
+            "Compliance calculators",
+            "Manual review requests"
+        ]
+    }
+    </script>
     <style>
         .hero-cta-banner {
             margin: 30px auto 10px;
@@ -98,6 +137,40 @@
             text-decoration: none;
             margin-left: 10px;
         }
+        .onboarding-steps {
+            margin: 30px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .onboarding-card {
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 18px;
+            color: #f4f1e8;
+        }
+        .onboarding-card h4 {
+            margin: 0 0 8px;
+            color: #f7dba7;
+        }
+        .onboarding-card p {
+            margin: 0;
+            color: #dcd3c3;
+        }
+        .seo-pillbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .seo-pillbar span {
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            color: #f4f1e8;
+        }
     </style>
 </head>
 <body>
@@ -111,6 +184,7 @@
             <a href="/legal-notices.html">Notices</a>
             <a href="/agreement-templates.html">Agreements</a>
             <a href="/legal-calculators.html">Calculators</a>
+            <a href="/legal-guides.html">Guides</a>
             <a href="/chat.html">Chat</a>
         </div>
     </nav>
@@ -125,17 +199,48 @@
             <p>Your AI-powered legal companion for consultation, document generation, and legal guidance</p>
         </div>
 
-        <div class="hero-cta-banner">
+        <div class="hero-cta-banner" aria-label="Primary onboarding call to action">
             <div>
                 <h2>Need answers fast?</h2>
                 <p>Jump into chat, browse legal notices, or run compliance calculators in two clicks.</p>
             </div>
             <div class="hero-cta-actions">
-                <button class="primary" type="button" onclick="startConsultation()">💬 Start Chat</button>
+                <button class="primary" type="button" onclick="startConsultation('hero_cta')">💬 Start Chat</button>
                 <a class="secondary" href="/legal-notices.html">⚠️ Legal Notices</a>
                 <a class="secondary" href="/legal-calculators.html">🧮 Calculators</a>
             </div>
         </div>
+
+        <section aria-labelledby="onboarding-title" class="onboarding">
+            <h2 id="onboarding-title" style="color: #f4f1e8; margin: 10px 0;">How Saathi Works</h2>
+            <p style="color: #dcd3c3; margin-bottom: 14px;">Three quick steps to go from question to ready-to-share draft. No accounts, no tracking.</p>
+            <div class="onboarding-steps">
+                <article class="onboarding-card">
+                    <h4>1. Share Context</h4>
+                    <p>Tell us the dispute, amount, or parties involved. We assign an anonymous ID locally.</p>
+                    <div class="seo-pillbar">
+                        <span>Consent Gate</span>
+                        <span>Anon Tracking</span>
+                    </div>
+                </article>
+                <article class="onboarding-card">
+                    <h4>2. Pick a Tool</h4>
+                    <p>Use AI chat, download notices, or open compliance calculators depending on your goal.</p>
+                    <div class="seo-pillbar">
+                        <span>Multiple Languages</span>
+                        <span>Templates</span>
+                    </div>
+                </article>
+                <article class="onboarding-card">
+                    <h4>3. Review & Share</h4>
+                    <p>Preview drafts, request manual review, export PDFs, and share them with advocates.</p>
+                    <div class="seo-pillbar">
+                        <span>Manual Review</span>
+                        <span>PDF Export</span>
+                    </div>
+                </article>
+            </div>
+        </section>
 
                 <!-- Main Content -->
         <div class="main-content">
@@ -175,14 +280,14 @@
 
             <!-- Features Section -->
             <div class="features">
-                <div class="feature-card" onclick="startConsultation('chat')" style="cursor: pointer;">
+                <div class="feature-card" onclick="startConsultation('feature_card_chat')" style="cursor: pointer;">
                     <div class="feature-icon">💬</div>
                     <h3>AI Legal Consultation</h3>
                     <p>Get instant answers to your legal questions with our advanced AI assistant trained on Indian law</p>
                     <div class="feature-cta">Ask Legal Questions Now →</div>
                 </div>
 
-                <div class="feature-card" onclick="startConsultation('documents')" style="cursor: pointer;">
+                <div class="feature-card" onclick="startConsultation('feature_card_documents')" style="cursor: pointer;">
                     <div class="feature-icon">📄</div>
                     <h3>Smart Templates</h3>
                     <p>Create professional legal documents instantly with our smart templates - rent agreements, legal notices, contracts</p>
@@ -272,7 +377,7 @@
                     <a href="/language-selection.html" class="quick-action-btn">
                         🌍 Choose Language
                     </a>
-                    <a href="#" onclick="startConsultation()" class="quick-action-btn" id="chatBtn">
+                    <a href="#" onclick="startConsultation('quick_action_chat')" class="quick-action-btn" id="chatBtn">
                         💬 Ask Legal Questions
                     </a>
                 </div>
@@ -292,7 +397,7 @@
 
             <!-- CTA Section -->
             <div class="cta-section">
-                <button id="startBtn" class="start-consulting-btn" onclick="startConsultation()" disabled>
+                <button id="startBtn" class="start-consulting-btn" onclick="startConsultation('form_cta')" disabled>
                     🚀 Start Consultation
                 </button>
                 <div id="loading" class="loading">
@@ -463,7 +568,7 @@
         }
         
         // Start consultation
-        function startConsultation() {
+        function startConsultation(entryPoint = 'landing_cta') {
             // Show loading
             document.getElementById('loading').style.display = 'block';
             document.getElementById('startBtn').style.display = 'none';
@@ -490,6 +595,9 @@
                 headers: headersWithAnon,
                 body: JSON.stringify(payloadWithAnon)
             }).then(response => {
+                if (window.saathiAnalytics && typeof window.saathiAnalytics.trackEvent === 'function') {
+                    window.saathiAnalytics.trackEvent('start_consultation', { entry_point: entryPoint });
+                }
                 // Redirect to chat regardless of server response
                 setTimeout(() => {
                     window.location.href = 'chat.html';
@@ -497,6 +605,9 @@
             }).catch(error => {
                 // Still redirect even if session logging fails
                 console.log('Session logging failed, but continuing...');
+                if (window.saathiAnalytics && typeof window.saathiAnalytics.trackEvent === 'function') {
+                    window.saathiAnalytics.trackEvent('start_consultation_failed', { entry_point: entryPoint });
+                }
                 setTimeout(() => {
                     window.location.href = 'chat.html';
                 }, 2000);
@@ -904,5 +1015,37 @@
     </div>
     </script>
     <script src="enhanced-ux.js"></script>
+    <footer class="site-footer" aria-label="Saathi trust signals">
+        <div class="site-footer__grid">
+            <section>
+                <span class="site-footer__label">Support</span>
+                <h3>Need human escalation?</h3>
+                <p>Email <a href="mailto:support@saathi.legal">support@saathi.legal</a> or WhatsApp <a href="https://wa.me/917977000111" target="_blank" rel="noopener">+91&nbsp;79770&nbsp;00111</a> (9 AM – 7 PM IST).</p>
+                <div class="site-footer__links">
+                    <a href="/privacy.html">Privacy</a>
+                    <a href="/legal-guides.html">Guides</a>
+                    <a href="/case-tracker.html">Case Tracker</a>
+                </div>
+            </section>
+            <section>
+                <span class="site-footer__label">Trust &amp; Compliance</span>
+                <ul class="site-footer__badges">
+                    <li>Consent + anon ID gate</li>
+                    <li>Manual review queue</li>
+                    <li>Hosted on ISO 27001 cloud</li>
+                    <li>No login or tracking pixels</li>
+                </ul>
+                <p class="site-footer__disclaimer">Saathi shares general legal information—not legal advice. Validate drafts with a licensed advocate.</p>
+            </section>
+            <section>
+                <span class="site-footer__label">Quick help</span>
+                <div class="site-footer__cta">
+                    <a href="/tools.html">Tools &amp; Requests</a>
+                    <a href="/legal-notices.html">Legal Notices</a>
+                    <a href="/legal-calculators.html">Rights Calculators</a>
+                </div>
+            </section>
+        </div>
+    </footer>
 </body>
 </html>

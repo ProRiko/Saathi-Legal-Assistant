@@ -30,6 +30,7 @@
 - [ ] **Uptime Monitoring**: Set up uptime monitoring service
 - [ ] **Log Analysis**: Configure log aggregation and alerting
 - [ ] **Performance Metrics**: Monitor response times and throughput
+- [ ] **Analytics Events**: Confirm `/api/event` receives consented page views + calculator usage (inspect `audit_logs`).
 
 ---
 
@@ -68,6 +69,10 @@ curl -H "Origin: https://malicious-site.com" \
 - [ ] **Document Templates**: Template generation works
 - [ ] **Error Handling**: 404 and 500 errors return proper JSON
 - [ ] **Mobile Responsiveness**: Test on various screen sizes
+- [ ] **Guides & Onboarding**: Navigation exposes legal guides and onboarding steps without console errors
+- [ ] **Sitemap / Robots**: `https://<domain>/sitemap.xml` and `/robots.txt` return 200 with expected links
+- [ ] **PWA Installability**: Lighthouse (or Chrome DevTools) reports manifest/icons/shortcuts are valid
+- [ ] **Analytics Opt-In**: Accepting consent fires `page_view` in `/api/event`; declining redirects to consent info page
 
 ---
 

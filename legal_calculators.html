@@ -3,10 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive calculators for notice period, overtime pay, maternity benefits, and consumer compensation under Indian law.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://saathi-legal-assistant.onrender.com/legal-calculators.html">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Legal Rights Calculators">
+    <meta property="og:description" content="Instant compliance math for Indian employees, tenants, and consumers.">
+    <meta property="og:url" content="https://saathi-legal-assistant.onrender.com/legal-calculators.html">
+    <meta property="og:image" content="https://saathi-legal-assistant.onrender.com/assets/og-card.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Calculate Your Legal Rights">
+    <meta name="twitter:description" content="Notice period, overtime, maternity, and consumer claims in one dashboard">
+    <meta name="twitter:image" content="https://saathi-legal-assistant.onrender.com/assets/og-card.svg">
     <title>Legal Rights Calculators - Saathi Legal Assistant</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="enhanced-ux.css">
     <script src="anon-id.js"></script>
+    <script src="analytics.js" defer></script>
     <style>
         body {
             margin: 0;
@@ -288,6 +301,7 @@
             <a href="/legal-notices.html">Notices</a>
             <a href="/agreement-templates.html">Agreements</a>
             <a href="/legal-calculators.html" class="is-active">Calculators</a>
+            <a href="/legal-guides.html">Guides</a>
             <a href="/chat.html">Chat</a>
         </div>
     </nav>
@@ -337,7 +351,7 @@
                     <p>Get a benchmark notice period based on company type and continuous service.</p>
                     <div class="calc-meta" data-calculator="notice-period"></div>
                 </div>
-                <form id="noticeForm">
+                    <form id="noticeForm" data-analytics-form="notice_period">
                     <label for="companyType">Company / Sector</label>
                     <select id="companyType" required>
                         <option value="it_services">IT / Services</option>
@@ -359,7 +373,7 @@
                     <p>Check Factories Act compliance and estimated overtime payout for the week.</p>
                     <div class="calc-meta" data-calculator="work-hours"></div>
                 </div>
-                <form id="hoursForm">
+                    <form id="hoursForm" data-analytics-form="work_hours">
                     <label for="weeklyHours">Total Hours Worked This Week</label>
                     <input type="number" id="weeklyHours" min="0" step="0.5" placeholder="e.g. 52" required>
                     <label for="hourlyRate">Hourly Rate (₹)</label>
@@ -376,7 +390,7 @@
                     <p>Estimate eligibility and payable amount under the Maternity Benefit Act.</p>
                     <div class="calc-meta" data-calculator="maternity"></div>
                 </div>
-                <form id="maternityForm">
+                    <form id="maternityForm" data-analytics-form="maternity_benefit">
                     <label for="daysWorked">Days Worked in the Last 12 Months</label>
                     <input type="number" id="daysWorked" min="0" step="1" placeholder="e.g. 240" required>
                     <label for="avgDailyWage">Average Daily Wage (₹)</label>
@@ -399,7 +413,7 @@
                     <p>Combine refund, out-of-pocket costs, and delay penalties for a demand notice.</p>
                     <div class="calc-meta" data-calculator="consumer-compensation"></div>
                 </div>
-                <form id="consumerForm">
+                    <form id="consumerForm" data-analytics-form="consumer_compensation">
                     <label for="purchaseAmount">Purchase / Service Amount (₹)</label>
                     <input type="number" id="purchaseAmount" min="0" step="100" placeholder="e.g. 25000" required>
                     <label for="issueType">Issue Type</label>
@@ -487,6 +501,41 @@
             if (!el) return;
             el.innerHTML = markup;
             el.classList.add('active');
+        }
+
+        function trackCalculatorEvent(eventName, payload = {}) {
+            if (window.saathiAnalytics && typeof window.saathiAnalytics.trackEvent === 'function') {
+                window.saathiAnalytics.trackEvent(eventName, { page: 'legal_calculators', ...payload });
+            }
+        }
+
+        function resetResult(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = '';
+            el.classList.remove('active');
+        }
+
+        function toggleSubmitLoading(formId, isLoading, loadingLabel = 'Working...') {
+            const form = document.getElementById(formId);
+            if (!form) return null;
+            const button = form.querySelector('button[type="submit"]');
+            if (!button) return null;
+            if (isLoading) {
+                if (!button.dataset.originalText) {
+                    button.dataset.originalText = button.textContent;
+                }
+                button.disabled = true;
+                button.setAttribute('aria-busy', 'true');
+                button.textContent = loadingLabel;
+            } else {
+                button.disabled = false;
+                button.removeAttribute('aria-busy');
+                if (button.dataset.originalText) {
+                    button.textContent = button.dataset.originalText;
+                }
+            }
+            return button;
         }
 
         function corsHelpMessage() {
@@ -616,7 +665,9 @@
 
         document.getElementById('noticeForm').addEventListener('submit', async (event) => {
             event.preventDefault();
+            resetResult('noticeResult');
             setStatus('noticeStatus', 'Evaluating entitlement...', 'info');
+            toggleSubmitLoading('noticeForm', true, 'Calculating...');
             try {
                 const payload = {
                     companyType: document.getElementById('companyType').value,
@@ -630,15 +681,28 @@
                 `;
                 setStatus('noticeStatus', 'Recommendation ready ✓', 'success');
                 showResult('noticeResult', markup);
+                trackCalculatorEvent('notice_period_calculated', {
+                    status: 'success',
+                    notice_days: result.notice_days,
+                    statutory_min: result.statutory_min
+                });
             } catch (error) {
                 console.error(error);
                 setStatus('noticeStatus', error.message, 'error');
+                trackCalculatorEvent('notice_period_failed', {
+                    status: 'error',
+                    message: error.message
+                });
+            } finally {
+                toggleSubmitLoading('noticeForm', false);
             }
         });
 
         document.getElementById('hoursForm').addEventListener('submit', async (event) => {
             event.preventDefault();
+            resetResult('hoursResult');
             setStatus('hoursStatus', 'Checking compliance...', 'info');
+            toggleSubmitLoading('hoursForm', true, 'Reviewing...');
             try {
                 const payload = {
                     totalWeeklyHours: document.getElementById('weeklyHours').value,
@@ -658,15 +722,28 @@
                 `;
                 setStatus('hoursStatus', 'Analysis ready ✓', 'success');
                 showResult('hoursResult', markup);
+                trackCalculatorEvent('work_hours_calculated', {
+                    status: 'success',
+                    compliant: result.compliant,
+                    overtime_hours: result.overtime_hours
+                });
             } catch (error) {
                 console.error(error);
                 setStatus('hoursStatus', error.message, 'error');
+                trackCalculatorEvent('work_hours_failed', {
+                    status: 'error',
+                    message: error.message
+                });
+            } finally {
+                toggleSubmitLoading('hoursForm', false);
             }
         });
 
         document.getElementById('maternityForm').addEventListener('submit', async (event) => {
             event.preventDefault();
+            resetResult('maternityResult');
             setStatus('maternityStatus', 'Evaluating benefits...', 'info');
+            toggleSubmitLoading('maternityForm', true, 'Calculating...');
             try {
                 const payload = {
                     daysWorked: document.getElementById('daysWorked').value,
@@ -683,15 +760,28 @@
                 `;
                 setStatus('maternityStatus', result.eligible ? 'Eligible ✓' : 'Needs more qualifying days', result.eligible ? 'success' : 'info');
                 showResult('maternityResult', markup);
+                trackCalculatorEvent('maternity_benefit_calculated', {
+                    status: 'success',
+                    eligible: result.eligible,
+                    payable_weeks: result.payable_weeks
+                });
             } catch (error) {
                 console.error(error);
                 setStatus('maternityStatus', error.message, 'error');
+                trackCalculatorEvent('maternity_benefit_failed', {
+                    status: 'error',
+                    message: error.message
+                });
+            } finally {
+                toggleSubmitLoading('maternityForm', false);
             }
         });
 
         document.getElementById('consumerForm').addEventListener('submit', async (event) => {
             event.preventDefault();
+            resetResult('consumerResult');
             setStatus('consumerStatus', 'Crunching numbers...', 'info');
+            toggleSubmitLoading('consumerForm', true, 'Estimating...');
             try {
                 const payload = {
                     purchaseAmount: document.getElementById('purchaseAmount').value,
@@ -712,13 +802,56 @@
                 `;
                 setStatus('consumerStatus', 'Estimated claim value ready ✓', 'success');
                 showResult('consumerResult', markup);
+                trackCalculatorEvent('consumer_compensation_calculated', {
+                    status: 'success',
+                    recommended_total: result.recommended_total,
+                    issue_type: payload.issueType
+                });
             } catch (error) {
                 console.error(error);
                 setStatus('consumerStatus', error.message, 'error');
+                trackCalculatorEvent('consumer_compensation_failed', {
+                    status: 'error',
+                    message: error.message
+                });
+            } finally {
+                toggleSubmitLoading('consumerForm', false);
             }
         });
 
         hydrateCalculatorMeta();
     </script>
+    <footer class="site-footer" aria-label="Saathi trust signals">
+        <div class="site-footer__grid">
+            <section>
+                <span class="site-footer__label">Support</span>
+                <h3>Need human escalation?</h3>
+                <p>Email <a href="mailto:support@saathi.legal">support@saathi.legal</a> or WhatsApp <a href="https://wa.me/917977000111" target="_blank" rel="noopener">+91&nbsp;79770&nbsp;00111</a> (9 AM – 7 PM IST).</p>
+                <div class="site-footer__links">
+                    <a href="/privacy.html">Privacy</a>
+                    <a href="/legal-guides.html">Guides</a>
+                    <a href="/case-tracker.html">Case Tracker</a>
+                </div>
+            </section>
+            <section>
+                <span class="site-footer__label">Trust &amp; Compliance</span>
+                <ul class="site-footer__badges">
+                    <li>Consent + anon ID gate</li>
+                    <li>Manual review queue</li>
+                    <li>Hosted on ISO 27001 cloud</li>
+                    <li>No login or tracking pixels</li>
+                </ul>
+                <p class="site-footer__disclaimer">Saathi shares general legal information—not legal advice. Validate drafts with a licensed advocate.</p>
+            </section>
+            <section>
+                <span class="site-footer__label">Quick help</span>
+                <div class="site-footer__cta">
+                    <a href="/tools.html">Tools &amp; Requests</a>
+                    <a href="/legal-notices.html">Legal Notices</a>
+                    <a href="/legal-calculators.html">Rights Calculators</a>
+                </div>
+            </section>
+        </div>
+    </footer>
 </body>
 </html>
