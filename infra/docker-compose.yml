@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: saathi
+      POSTGRES_USER: saathi
+      POSTGRES_PASSWORD: saathi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  ai-python:
+    build:
+      context: ../apps/ai-python
+      dockerfile: Dockerfile
+    environment:
+      INTERNAL_KEY: saathi-internal
+      INTERNAL_SECRET: replace-this-secret
+      MODEL_PROVIDER: claude
+      ANTHROPIC_API_KEY: ""
+      GEMINI_API_KEY: ""
+    ports:
+      - "8081:8081"
+
+  # Laravel service is intentionally a placeholder.
+  # Use your existing Laravel Dockerfile or Sail setup and point to this stack.
+
+volumes:
+  pgdata:

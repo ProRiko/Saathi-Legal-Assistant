@@ -1,6 +1,6 @@
 """
-Saathi Legal Assistant - Gemini AI Powered
-Railway.app deployment ready with Google Gemini API
+Saathi Legal Assistant - Claude/Gemini AI Powered
+Railway.app deployment ready with Anthropic Claude or Google Gemini APIs
 Enhanced with Legal Document Generation - Production Ready
 """
 import os
@@ -111,6 +111,40 @@ TOOL_INDEX = {entry.get('slug'): entry for entry in TOOL_MANIFEST.get('tools', [
 TEMPLATE_MANIFEST = load_template_manifest()
 TEMPLATE_INDEX = {entry.get('slug'): entry for entry in TEMPLATE_MANIFEST.get('templates', []) if entry.get('slug')}
 
+UPGRADE_PAGE_URL = '/pricing.html'
+TIER_FREE = 'free'
+TIER_PRO = 'pro'
+TIER_ADMIN = 'legal_desk'
+DAILY_USAGE_METRICS = {
+    'chat': 'Chat messages per day',
+    'documents': 'Document downloads per day',
+    'ai_reviews': 'AI reviewer runs per day',
+    'manual_reviews': 'Manual review submissions per day'
+}
+TIER_LIMITS = {
+    TIER_FREE: {
+        'chat': 15,
+        'documents': 3,
+        'ai_reviews': 1,
+        'manual_reviews': 1
+    },
+    TIER_PRO: {
+        'chat': 200,
+        'documents': 12,
+        'ai_reviews': 8,
+        'manual_reviews': 4
+    },
+    TIER_ADMIN: {
+        'chat': None,
+        'documents': None,
+        'ai_reviews': None,
+        'manual_reviews': None
+    }
+}
+
+REVIEW_STATUS_OPTIONS = {'pending', 'triaged', 'in_review', 'completed', 'rejected'}
+PAYMENT_STATUS_OPTIONS = {'pending', 'paid', 'waived'}
+
 
 def get_db_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -198,10 +232,50 @@ def init_sqlite() -> None:
         user_agent TEXT,
         created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS usage_counters (
+        usage_key TEXT NOT NULL,
+        user_id INTEGER,
+        metric TEXT NOT NULL,
+        tier TEXT NOT NULL,
+        date TEXT NOT NULL,
+        count INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (usage_key, metric, date)
+    );
+
+    CREATE TABLE IF NOT EXISTS account_activity (
+        user_id INTEGER NOT NULL,
+        anon_id TEXT NOT NULL,
+        first_seen TEXT NOT NULL,
+        last_seen TEXT NOT NULL,
+        total_sessions INTEGER NOT NULL DEFAULT 1,
+        PRIMARY KEY (user_id, anon_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS founder_metrics (
+        metric_date TEXT NOT NULL,
+        metric TEXT NOT NULL,
+        dimension TEXT NOT NULL,
+        count INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (metric_date, metric, dimension)
+    );
     """
     with SQLITE_LOCK:
         conn = get_db_connection()
         conn.executescript(schema)
+        # Add new columns for existing installs
+        alter_statements = [
+            "ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'",
+            "ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'",
+            "ALTER TABLE users ADD COLUMN account_warning TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE review_requests ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'free'",
+            "ALTER TABLE review_requests ADD COLUMN reviewed_at TEXT"
+        ]
+        for statement in alter_statements:
+            try:
+                conn.execute(statement)
+            except sqlite3.OperationalError:
+                pass
         conn.commit()
         conn.close()
 
@@ -222,6 +296,151 @@ def record_audit_event(action: str, user_id: int | None = None, anon_id: str | N
         conn.close()
 
 
+def normalize_tier(value: str | None) -> str:
+    text = (value or '').strip().lower()
+    if text in {TIER_PRO, 'pro'}:
+        return TIER_PRO
+    if text in {TIER_ADMIN, 'admin', 'legal', 'legal_desk'}:
+        return TIER_ADMIN
+    return TIER_FREE
+
+
+def resolve_user_tier(user: Dict[str, Any] | None) -> str:
+    if not user:
+        return TIER_FREE
+    return normalize_tier(user.get('tier'))
+
+
+def resolve_usage_key(user_id: int | None, anon_id: str | None) -> str:
+    if user_id:
+        return f"user:{user_id}"
+    return f"anon:{anon_id or 'guest'}"
+
+
+def today_key() -> str:
+    return datetime.utcnow().strftime('%Y-%m-%d')
+
+
+def get_tier_limit(tier: str, metric: str) -> int | None:
+    limits = TIER_LIMITS.get(tier) or TIER_LIMITS[TIER_FREE]
+    return limits.get(metric)
+
+
+def get_usage_count(metric: str, user_id: int | None, anon_id: str | None) -> int:
+    usage_key = resolve_usage_key(user_id, anon_id)
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        row = conn.execute(
+            "SELECT count FROM usage_counters WHERE usage_key = ? AND metric = ? AND date = ?",
+            (usage_key, metric, today_key())
+        ).fetchone()
+        conn.close()
+    return row['count'] if row else 0
+
+
+def record_founder_metric(metric: str, dimension: str, amount: int = 1) -> None:
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.execute(
+            """
+            INSERT INTO founder_metrics (metric_date, metric, dimension, count)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(metric_date, metric, dimension) DO UPDATE SET count = count + ?
+            """,
+            (today_key(), metric, dimension, amount, amount)
+        )
+        conn.commit()
+        conn.close()
+
+
+def increment_usage(metric: str, tier: str, user_id: int | None, anon_id: str | None, amount: int = 1) -> None:
+    usage_key = resolve_usage_key(user_id, anon_id)
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.execute(
+            """
+            INSERT INTO usage_counters (usage_key, user_id, metric, tier, date, count)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(usage_key, metric, date) DO UPDATE SET count = count + ?
+            """,
+            (usage_key, user_id, metric, tier, today_key(), amount, amount)
+        )
+        conn.commit()
+        conn.close()
+    record_founder_metric(f'usage:{metric}', tier, amount)
+
+
+def upgrade_payload(metric: str, tier: str, limit: int) -> Dict[str, Any]:
+    description = DAILY_USAGE_METRICS.get(metric, 'usage for this feature')
+    return {
+        "status": "upgrade_required",
+        "metric": metric,
+        "tier": tier,
+        "limit": limit,
+        "message": f"You have reached the {description} limit for the {tier.title()} plan. Upgrade to Pro for more access.",
+        "upgrade_url": UPGRADE_PAGE_URL
+    }
+
+
+def enforce_usage_limit(metric: str, tier: str, user_id: int | None, anon_id: str | None) -> tuple[bool, Dict[str, Any] | None]:
+    limit = get_tier_limit(tier, metric)
+    if limit is None:
+        return True, None
+    current = get_usage_count(metric, user_id, anon_id)
+    if current >= limit:
+        record_founder_metric('limit_hit', f'{metric}:{tier}')
+        return False, upgrade_payload(metric, tier, limit)
+    return True, None
+
+
+def usage_snapshot(tier: str, user_id: int | None, anon_id: str | None) -> Dict[str, Dict[str, int | None]]:
+    summary: Dict[str, Dict[str, int | None]] = {}
+    for metric in DAILY_USAGE_METRICS.keys():
+        summary[metric] = {
+            "used": get_usage_count(metric, user_id, anon_id),
+            "limit": get_tier_limit(tier, metric)
+        }
+    return summary
+
+
+def next_usage_reset_iso() -> str:
+    tomorrow = (datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+                + timedelta(days=1))
+    return f"{tomorrow.isoformat()}Z"
+
+
+def track_account_activity(user_id: int, anon_id: str) -> None:
+    if not user_id or not anon_id:
+        return
+    now = datetime.utcnow().isoformat()
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        conn.execute(
+            """
+            INSERT INTO account_activity (user_id, anon_id, first_seen, last_seen, total_sessions)
+            VALUES (?, ?, ?, ?, 1)
+            ON CONFLICT(user_id, anon_id)
+            DO UPDATE SET last_seen = excluded.last_seen,
+                          total_sessions = account_activity.total_sessions + 1
+            """,
+            (user_id, anon_id, now, now)
+        )
+        cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat()
+        row = conn.execute(
+            "SELECT COUNT(*) as cnt FROM account_activity WHERE user_id = ? AND last_seen >= ?",
+            (user_id, cutoff)
+        ).fetchone()
+        conn.commit()
+        conn.close()
+    if row and row['cnt'] >= 4:
+        with SQLITE_LOCK:
+            conn = get_db_connection()
+            conn.execute(
+                "UPDATE users SET account_warning = ? WHERE id = ?",
+                ("Multiple devices detected in the last 24h", user_id)
+            )
+            conn.commit()
+            conn.close()
 def get_authenticated_user() -> Dict[str, Any] | None:
     token = request.headers.get('X-Session-Token') or request.args.get('session_token')
     if not token:
@@ -229,7 +448,7 @@ def get_authenticated_user() -> Dict[str, Any] | None:
     with SQLITE_LOCK:
         conn = get_db_connection()
         row = conn.execute(
-            """SELECT sessions.token, sessions.user_id, users.email
+            """SELECT sessions.token, sessions.user_id, users.email, users.tier, users.status, users.account_warning
             FROM sessions
             JOIN users ON users.id = sessions.user_id
             WHERE sessions.token = ?""",
@@ -244,7 +463,32 @@ def get_authenticated_user() -> Dict[str, Any] | None:
         )
         conn.commit()
         conn.close()
-    return {"token": row["token"], "user_id": row["user_id"], "email": row["email"]}
+    user_payload = {
+        "token": row["token"],
+        "user_id": row["user_id"],
+        "email": row["email"],
+        "tier": normalize_tier(row["tier"]),
+        "status": row["status"],
+        "account_warning": row["account_warning"]
+    }
+    anon_id = get_request_anon_id()
+    track_account_activity(user_payload['user_id'], anon_id)
+    return user_payload
+
+
+def user_is_suspended(user: Dict[str, Any] | None) -> bool:
+    return bool(user and user.get('status') == 'suspended')
+
+
+def user_is_admin(user: Dict[str, Any] | None) -> bool:
+    return bool(user and resolve_user_tier(user) == TIER_ADMIN)
+
+
+def suspended_response() -> tuple[Any, int]:
+    return jsonify({
+        "status": "error",
+        "message": "This account is currently suspended. Contact support@saathi.legal to restore access."
+    }), 403
 
 
 def get_request_anon_id() -> str:
@@ -370,43 +614,56 @@ def fallback_review(document_text: str) -> Dict[str, Any]:
     }
 
 
+def _extract_json_blob(raw_text: str) -> str:
+    cleaned = raw_text.strip()
+    if cleaned.startswith('```'):
+        cleaned = cleaned.split('\n', 1)[1] if '\n' in cleaned else cleaned
+        cleaned = cleaned.rstrip('`').strip()
+    if cleaned.endswith('```'):
+        cleaned = cleaned.rsplit('```', 1)[0].strip()
+    return cleaned
+
+
 def generate_ai_document_review(document_text: str) -> Dict[str, Any]:
-    if not document_text:
-        return fallback_review(document_text)
-    if not is_api_configured():
-        return fallback_review(document_text)
-    prompt = (
-        "You are an AI document reviewer for Indian legal teams. Read the document text and respond ONLY "
-        "with valid JSON using this schema: {\"summary\": string (3-5 sentences), \"key_clauses\": list, "
-        "\"risks\": list, \"suggestions\": list, \"lawyer_recommendation\": string}. "
-        "Highlight missing protections, vague clauses, or harmful language. Avoid legal advice. Document text:\n"
-        f"{document_text}\nJSON:"
-    )
-    try:
-        response = requests.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
-            headers={"Content-Type": "application/json"},
-            json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.4, "maxOutputTokens": 512}
-            },
-            timeout=40
-        )
-        response.raise_for_status()
-        body = response.json()
-        candidate = body.get('candidates', [{}])[0]
-        text_part = candidate.get('content', {}).get('parts', [{}])[0].get('text', '').strip()
-        parsed = json.loads(text_part)
-    except (requests.RequestException, json.JSONDecodeError, IndexError) as exc:
-        logger.warning('AI reviewer fallback due to %s', exc)
+    if not document_text or not is_api_configured():
         return fallback_review(document_text)
 
+    prompt = (
+        "Read the following contract or notice text and highlight key clauses, risks, and next steps. "
+        "Respond ONLY with valid minified JSON using this schema: "
+        "{\"summary\": string, \"key_clauses\": [string], \"risks\": [string], "
+        "\"suggestions\": [string], \"lawyer_recommendation\": string}. "
+        "If information is missing, infer top risks conservatively. Document text:\n"
+        f"{document_text}\nJSON:"
+    )
+
+    llm_output = call_llm_api(
+        messages=[{"role": "user", "content": prompt}],
+        user_language='english',
+        system_prompt=(
+            "You are Saathi's AI reviewer for Indian legal teams. "
+            "Return ONLY valid JSON. Do not include Markdown fences or explanations."
+        ),
+        language_directive='Respond in English only. Output strict JSON. No Markdown or commentary.',
+        max_tokens=700
+    )
+
+    if not llm_output:
+        return fallback_review(document_text)
+
+    try:
+        parsed = json.loads(_extract_json_blob(llm_output))
+    except json.JSONDecodeError as exc:
+        logger.warning('AI reviewer JSON parsing failed: %s', exc)
+        return fallback_review(document_text)
+
+    defaults = fallback_review(document_text)
     normalized = {
-        "summary": parsed.get('summary') or fallback_review(document_text)['summary'],
-        "key_clauses": parsed.get('key_clauses') or [],
-        "risks": parsed.get('risks') or [],
-        "suggestions": parsed.get('suggestions') or [],
-        "lawyer_recommendation": parsed.get('lawyer_recommendation') or "Consult an advocate for complex filings.",
+        "summary": (parsed.get('summary') or defaults['summary'])[:600],
+        "key_clauses": parsed.get('key_clauses') or defaults['key_clauses'],
+        "risks": parsed.get('risks') or defaults['risks'],
+        "suggestions": parsed.get('suggestions') or defaults['suggestions'],
+        "lawyer_recommendation": parsed.get('lawyer_recommendation') or defaults['lawyer_recommendation'],
     }
     return normalized
 
@@ -561,21 +818,27 @@ def list_review_requests_for_user(user_id: int) -> list[Dict[str, Any]]:
     with SQLITE_LOCK:
         conn = get_db_connection()
         rows = conn.execute(
-            "SELECT id, status, doc_title, created_at, updated_at, admin_notes FROM review_requests WHERE user_id = ? ORDER BY id DESC",
+            "SELECT id, status, doc_title, created_at, updated_at, admin_notes, payment_status, reviewed_at FROM review_requests WHERE user_id = ? ORDER BY id DESC",
             (user_id,)
         ).fetchall()
         conn.close()
-    return [
-        {
-            "id": row['id'],
-            "status": row['status'],
-            "doc_title": row['doc_title'],
-            "created_at": row['created_at'],
-            "updated_at": row['updated_at'],
-            "admin_notes": row['admin_notes']
-        }
-        for row in rows
-    ]
+    return [format_review_request_row(row) for row in rows]
+
+
+def format_review_request_row(row: sqlite3.Row) -> Dict[str, Any]:
+    return {
+        "id": row['id'],
+        "status": row['status'],
+        "doc_title": row['doc_title'],
+        "created_at": row['created_at'],
+        "updated_at": row['updated_at'],
+        "admin_notes": row['admin_notes'],
+        "payment_status": row['payment_status'],
+        "reviewed_at": row['reviewed_at'],
+        "contact_name": row['contact_name'] if 'contact_name' in row.keys() else None,
+        "contact_email": row['contact_email'] if 'contact_email' in row.keys() else None,
+        "notes": row['notes'] if 'notes' in row.keys() else None
+    }
 
 
 def create_review_request(user_id: int | None,
@@ -584,7 +847,8 @@ def create_review_request(user_id: int | None,
                           doc_title: str,
                           contact_name: str,
                           contact_email: str,
-                          notes: str) -> int:
+                          notes: str,
+                          payment_status: str) -> int:
     """Persist a manual review request so legal admins can triage it later."""
     timestamp = datetime.utcnow().isoformat()
     with SQLITE_LOCK:
@@ -593,8 +857,8 @@ def create_review_request(user_id: int | None,
             """INSERT INTO review_requests (
                 user_id, anon_id, document_id, doc_title, status,
                 contact_name, contact_email, notes, admin_notes, reviewed_file,
-                created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                payment_status, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 user_id,
                 anon_id,
@@ -606,6 +870,7 @@ def create_review_request(user_id: int | None,
                 notes,
                 '',
                 '',
+                payment_status,
                 timestamp,
                 timestamp
             )
@@ -1137,13 +1402,42 @@ else:
     logger.warning("📦 pymongo not installed. Install with: pip install pymongo")
 
 # Configuration from environment variables
+MODEL_PROVIDER = (os.environ.get('MODEL_PROVIDER') or 'claude').strip().lower()
+ANTHROPIC_API_KEY = (os.environ.get('ANTHROPIC_API_KEY') or '').strip()
+CLAUDE_MODEL = (os.environ.get('CLAUDE_MODEL') or 'claude-3-5-haiku-20241022').strip() or 'claude-3-5-haiku-20241022'
 GEMINI_API_KEY = (os.environ.get('GEMINI_API_KEY') or '').strip()
-if not GEMINI_API_KEY:
-    logger.warning("⚠️ GEMINI_API_KEY is not set; chat endpoint will stay disabled until provided in the environment.")
-
 GEMINI_MODEL = (os.environ.get('GEMINI_MODEL') or 'gemini-2.5-flash').strip() or 'gemini-2.5-flash'
 MAX_TOKENS = int(os.environ.get('MAX_TOKENS', '500'))
 TEMPERATURE = float(os.environ.get('TEMPERATURE', '0.7'))
+
+if MODEL_PROVIDER == 'claude' and not ANTHROPIC_API_KEY:
+    logger.warning("⚠️ MODEL_PROVIDER=claude but ANTHROPIC_API_KEY is missing; chat will be disabled until set.")
+if MODEL_PROVIDER == 'gemini' and not GEMINI_API_KEY:
+    logger.warning("⚠️ MODEL_PROVIDER=gemini but GEMINI_API_KEY is missing; chat will be disabled until set.")
+
+if MODEL_PROVIDER not in {'claude', 'gemini'}:
+    MODEL_PROVIDER = 'claude'
+
+if MODEL_PROVIDER == 'claude' and ANTHROPIC_API_KEY:
+    ACTIVE_PROVIDER = 'claude'
+elif MODEL_PROVIDER == 'gemini' and GEMINI_API_KEY:
+    ACTIVE_PROVIDER = 'gemini'
+elif ANTHROPIC_API_KEY:
+    ACTIVE_PROVIDER = 'claude'
+elif GEMINI_API_KEY:
+    ACTIVE_PROVIDER = 'gemini'
+else:
+    ACTIVE_PROVIDER = 'unconfigured'
+
+ACTIVE_MODEL_NAME = CLAUDE_MODEL if ACTIVE_PROVIDER == 'claude' else GEMINI_MODEL
+
+
+def current_provider_label() -> str:
+    if ACTIVE_PROVIDER == 'claude':
+        return 'Anthropic Claude'
+    if ACTIVE_PROVIDER == 'gemini':
+        return 'Google Gemini'
+    return 'Unconfigured'
 
 # Rate limiting configuration
 RATE_LIMIT_REQUESTS = 3  # Maximum requests per minute
@@ -1169,12 +1463,11 @@ Important guidelines:
 
 Remember: You provide information, not legal advice. Always encourage users to seek professional legal counsel for their specific situations."""
 
-# Global conversation history
-conversation_history = []
+# Avoid process-wide shared state for chat context; use per-request payload context.
 
 def is_api_configured():
-    """Check if Gemini API key is configured"""
-    return bool(GEMINI_API_KEY)
+    """Check if the selected LLM provider is ready"""
+    return ACTIVE_PROVIDER in {'claude', 'gemini'}
 
 def detect_intent(user_input):
     """Simple intent detection for legal queries"""
@@ -2038,6 +2331,8 @@ def api_notice_period():
     years = _safe_float(payload.get('yearsOfService'), None)
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    if user_is_suspended(user):
+        return suspended_response()
 
     if years is None or years < 0:
         return _calculator_error("Please provide yearsOfService as a non-negative number.")
@@ -2067,6 +2362,8 @@ def api_work_hours():
     hourly_rate = _safe_float(payload.get('hourlyRate'), None)
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    if user_is_suspended(user):
+        return suspended_response()
 
     if total_hours is None or total_hours < 0:
         return _calculator_error("Provide totalWeeklyHours as a non-negative number.")
@@ -2095,6 +2392,8 @@ def api_maternity_benefit():
     children_count = _safe_int(payload.get('childrenCount'), 1) or 1
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    if user_is_suspended(user):
+        return suspended_response()
 
     if days_worked is None or days_worked < 0:
         return _calculator_error("daysWorked must be 0 or more")
@@ -2128,6 +2427,8 @@ def api_consumer_compensation():
     out_of_pocket = _safe_float(payload.get('outOfPocket'), 0.0) or 0.0
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    if user_is_suspended(user):
+        return suspended_response()
 
     if purchase_amount is None or purchase_amount <= 0:
         return _calculator_error("purchaseAmount must be greater than 0")
@@ -2166,6 +2467,8 @@ def record_consent():
     anon_id = get_request_anon_id()
     user = get_authenticated_user()
     user_id = str(user['user_id']) if user else None
+    if user_is_suspended(user):
+        return suspended_response()
 
     user_id_override = payload.get('user_id')
     if user_id_override is not None:
@@ -2218,6 +2521,8 @@ def record_event():
     # Associate request context
     anon_id = get_request_anon_id()
     user = get_authenticated_user()
+    if user_is_suspended(user):
+        return suspended_response()
 
     # Persist in audit_logs for simple analysis
     record_audit_event(
@@ -2347,6 +2652,8 @@ def api_render_template():
     slug = str(payload.get('slug') or '').strip()
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    if user_is_suspended(user):
+        return suspended_response()
     entry = get_template_entry(slug)
     if not slug or not entry:
         return jsonify({"status": "error", "message": "Template not found"}), 404
@@ -2374,6 +2681,9 @@ def api_template_pdf():
     slug = str(payload.get('slug') or '').strip()
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    tier = resolve_user_tier(user)
+    if user_is_suspended(user):
+        return suspended_response()
     entry = get_template_entry(slug)
     if not slug or not entry:
         return jsonify({"status": "error", "message": "Template not found"}), 404
@@ -2385,12 +2695,16 @@ def api_template_pdf():
     final_text = edited_text or rendered_text or render_template_body(slug, cleaned)
     if not final_text:
         return jsonify({"status": "error", "message": "Nothing to convert into PDF"}), 400
+    allowed, upgrade_info = enforce_usage_limit('documents', tier, user['user_id'] if user else None, anon_id)
+    if not allowed:
+        return jsonify(upgrade_info), 403
     title = payload.get('title') or entry.get('pdf_title') or _get_template_document(slug)[1] or entry.get('display_name') or slug
     pdf_data = create_pdf_document(title, final_text, f"{slug}.pdf")
     if not pdf_data:
         return jsonify({"status": "error", "message": "Failed to generate PDF"}), 500
     save_template_history(user, slug, title, cleaned)
     record_audit_event('template_pdf_generated', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"slug": slug})
+    increment_usage('documents', tier, user['user_id'] if user else None, anon_id)
     filename = f"{slug}_{datetime.now().strftime('%Y%m%d')}.pdf"
     response = make_response(pdf_data)
     response.headers['Content-Type'] = 'application/pdf'
@@ -2401,6 +2715,14 @@ def api_template_pdf():
 @app.route('/notices/<notice_key>', methods=['GET'])
 def download_legal_notice(notice_key: str):
     """Stream the requested legal notice as a PDF download."""
+    user = get_authenticated_user()
+    if user_is_suspended(user):
+        return suspended_response()
+    anon_id = get_request_anon_id()
+    tier = resolve_user_tier(user)
+    allowed, upgrade_info = enforce_usage_limit('documents', tier, user['user_id'] if user else None, anon_id)
+    if not allowed:
+        return jsonify(upgrade_info), 403
     pdf_data = generate_notice_pdf(notice_key)
     if not pdf_data:
         return jsonify({
@@ -2413,6 +2735,7 @@ def download_legal_notice(notice_key: str):
     response = make_response(pdf_data)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    increment_usage('documents', tier, user['user_id'] if user else None, anon_id)
     return response
 
 
@@ -2451,6 +2774,12 @@ def api_reviewer_sample():
 def api_reviewer_analyze():
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    if user_is_suspended(user):
+        return suspended_response()
+    tier = resolve_user_tier(user)
+    allowed, upgrade_info = enforce_usage_limit('ai_reviews', tier, user['user_id'] if user else None, anon_id)
+    if not allowed:
+        return jsonify(upgrade_info), 403
     payload = request.get_json(silent=True) or {}
     uploaded_file = request.files.get('file') if request.files else None
     document_text = ''
@@ -2490,6 +2819,8 @@ def api_reviewer_analyze():
         metadata={"filename": filename}
     )
 
+    increment_usage('ai_reviews', tier, user['user_id'] if user else None, anon_id)
+
     return jsonify({"status": "success", "review": review})
 
 
@@ -2497,6 +2828,12 @@ def api_reviewer_analyze():
 def api_reviewer_manual():
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    if user_is_suspended(user):
+        return suspended_response()
+    tier = resolve_user_tier(user)
+    allowed, upgrade_info = enforce_usage_limit('manual_reviews', tier, user['user_id'] if user else None, anon_id)
+    if not allowed:
+        return jsonify(upgrade_info), 403
     payload = request.get_json(silent=True) or {}
 
     document_id = str(payload.get('document_id') or '').strip()
@@ -2526,6 +2863,8 @@ def api_reviewer_manual():
             "message": "Please describe what needs manual review."
         }), 400
 
+    payment_status = 'paid' if tier in {TIER_PRO, TIER_ADMIN} else 'pending'
+
     request_id = create_review_request(
         user['user_id'] if user else None,
         anon_id,
@@ -2533,8 +2872,11 @@ def api_reviewer_manual():
         doc_title,
         contact_name,
         contact_email,
-        notes
+        notes,
+        payment_status
     )
+    increment_usage('manual_reviews', tier, user['user_id'] if user else None, anon_id)
+    record_founder_metric('manual_review_request', payment_status)
 
     record_audit_event(
         action='manual_review_requested',
@@ -2550,8 +2892,98 @@ def api_reviewer_manual():
     return jsonify({
         "status": "success",
         "request_id": request_id,
-        "message": "Manual review request submitted"
+        "message": "Manual review request submitted",
+        "payment_status": payment_status
     })
+
+
+@app.route('/api/admin/review-requests', methods=['GET'])
+def api_admin_review_requests():
+    user = get_authenticated_user()
+    if not user or not user_is_admin(user):
+        return jsonify({"status": "error", "message": "Admin access required"}), 403
+    status_filter = request.args.get('status')
+    payment_filter = request.args.get('payment_status')
+    limit = request.args.get('limit', default=100, type=int)
+    limit = max(1, min(limit, 500))
+    query = (
+        "SELECT id, status, doc_title, created_at, updated_at, admin_notes, payment_status, reviewed_at, "
+        "contact_name, contact_email, notes FROM review_requests WHERE 1=1"
+    )
+    params: list[Any] = []
+    if status_filter and status_filter in REVIEW_STATUS_OPTIONS:
+        query += " AND status = ?"
+        params.append(status_filter)
+    if payment_filter and payment_filter in PAYMENT_STATUS_OPTIONS:
+        query += " AND payment_status = ?"
+        params.append(payment_filter)
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        rows = conn.execute(query, params).fetchall()
+        conn.close()
+    return jsonify({
+        "status": "success",
+        "count": len(rows),
+        "requests": [format_review_request_row(row) for row in rows]
+    })
+
+
+@app.route('/api/admin/review-requests/<int:request_id>', methods=['PATCH'])
+def api_admin_update_review_request(request_id: int):
+    user = get_authenticated_user()
+    if not user or not user_is_admin(user):
+        return jsonify({"status": "error", "message": "Admin access required"}), 403
+    payload = request.get_json(silent=True) or {}
+    update_fields: list[str] = []
+    params: list[Any] = []
+    new_status = payload.get('status')
+    if new_status:
+        normalized = str(new_status).strip().lower()
+        if normalized not in REVIEW_STATUS_OPTIONS:
+            return jsonify({"status": "error", "message": "Invalid status"}), 400
+        update_fields.append('status = ?')
+        params.append(normalized)
+    new_payment = payload.get('payment_status')
+    if new_payment:
+        normalized = str(new_payment).strip().lower()
+        if normalized not in PAYMENT_STATUS_OPTIONS:
+            return jsonify({"status": "error", "message": "Invalid payment status"}), 400
+        update_fields.append('payment_status = ?')
+        params.append(normalized)
+    if 'admin_notes' in payload:
+        update_fields.append('admin_notes = ?')
+        params.append(str(payload.get('admin_notes') or '').strip())
+    if payload.get('reviewed_file') is not None:
+        update_fields.append('reviewed_file = ?')
+        params.append(str(payload.get('reviewed_file') or '').strip())
+    mark_reviewed = payload.get('mark_reviewed', False)
+    if new_status in {'completed', 'rejected'} or mark_reviewed:
+        update_fields.append('reviewed_at = ?')
+        params.append(datetime.utcnow().isoformat())
+    if not update_fields:
+        return jsonify({"status": "error", "message": "No fields to update"}), 400
+    update_fields.append('updated_at = ?')
+    params.append(datetime.utcnow().isoformat())
+    params.append(request_id)
+    with SQLITE_LOCK:
+        conn = get_db_connection()
+        cursor = conn.execute(
+            f"UPDATE review_requests SET {', '.join(update_fields)} WHERE id = ?",
+            params
+        )
+        conn.commit()
+        changed = cursor.rowcount
+        conn.close()
+    if not changed:
+        return jsonify({"status": "error", "message": "Request not found"}), 404
+    record_audit_event('manual_review_admin_update', user_id=user['user_id'], metadata={'request_id': request_id})
+    if new_status:
+        record_founder_metric('manual_review_status', new_status)
+    if new_payment:
+        record_founder_metric('manual_review_payment', new_payment)
+    return jsonify({"status": "success", "request_id": request_id})
 
 
 @app.route('/api/reviewer/annotated/<int:review_id>', methods=['GET'])
@@ -2559,6 +2991,8 @@ def api_reviewer_download(review_id: int):
     user = get_authenticated_user()
     if not user:
         return jsonify({"status": "error", "message": "Login required"}), 401
+    if user_is_suspended(user):
+        return suspended_response()
     with SQLITE_LOCK:
         conn = get_db_connection()
         row = conn.execute(
@@ -2631,6 +3065,8 @@ def api_dashboard():
     user = get_authenticated_user()
     if not user:
         return jsonify({"status": "error", "message": "Login required"}), 401
+    if user_is_suspended(user):
+        return suspended_response()
     saved_items = list_saved_items(user['user_id'])
     ai_reviews = list_ai_reviews_for_user(user['user_id'])
     review_requests = list_review_requests_for_user(user['user_id'])
@@ -2643,11 +3079,63 @@ def api_dashboard():
     })
 
 
+@app.route('/api/account/usage', methods=['GET'])
+def api_account_usage():
+    user = get_authenticated_user()
+    if user_is_suspended(user):
+        return suspended_response()
+    anon_id = get_request_anon_id()
+    tier = resolve_user_tier(user)
+    user_id = user['user_id'] if user else None
+    usage = usage_snapshot(tier, user_id, anon_id)
+    limits = TIER_LIMITS.get(tier, TIER_LIMITS[TIER_FREE])
+    overages: Dict[str, bool] = {}
+    for metric, stats in usage.items():
+        limit_value = stats.get('limit')
+        overages[metric] = bool(limit_value is not None and stats.get('used', 0) >= limit_value)
+    return jsonify({
+        "status": "success",
+        "tier": tier,
+        "limits": limits,
+        "usage": usage,
+        "limit_hits": overages,
+        "next_reset": next_usage_reset_iso(),
+        "upgrade_url": UPGRADE_PAGE_URL,
+        "account_warning": (user or {}).get('account_warning', ''),
+        "is_authenticated": bool(user)
+    })
+
+
+@app.route('/api/account/upgrade-intent', methods=['POST'])
+def api_account_upgrade_intent():
+    payload = request.get_json(silent=True) or {}
+    user = get_authenticated_user()
+    if user_is_suspended(user):
+        return suspended_response()
+    anon_id = get_request_anon_id()
+    tier = resolve_user_tier(user)
+    plan = str(payload.get('desired_plan') or '').strip().lower() or 'pro'
+    metadata = {
+        "desired_plan": plan,
+        "source": payload.get('source') or 'unknown',
+        "reason": payload.get('reason') or 'not_provided'
+    }
+    record_audit_event('upgrade_interest', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata=metadata)
+    record_founder_metric('upgrade_interest', plan)
+    return jsonify({
+        "status": "success",
+        "message": "Thanks! Our team will reach out about the upgrade.",
+        "tier": tier
+    }), 201
+
+
 @app.route('/api/saved-items/<int:item_id>', methods=['DELETE'])
 def delete_saved_item(item_id: int):
     user = get_authenticated_user()
     if not user:
         return jsonify({"status": "error", "message": "Login required"}), 401
+    if user_is_suspended(user):
+        return suspended_response()
     with SQLITE_LOCK:
         conn = get_db_connection()
         result = conn.execute('DELETE FROM saved_items WHERE id = ? AND user_id = ?', (item_id, user['user_id']))
@@ -2664,85 +3152,143 @@ def purge_dashboard():
     user = get_authenticated_user()
     if not user:
         return jsonify({"status": "error", "message": "Login required"}), 401
+    if user_is_suspended(user):
+        return suspended_response()
     purge_user_data(user['user_id'])
     record_audit_event('user_deleted_all_data', user_id=user['user_id'])
     return jsonify({"status": "success"})
 
-def call_gemini_api(messages, user_language='english'):
-    """Call Google Gemini API with language support"""
+
+LANGUAGE_PROMPTS = {
+    'english': 'Respond in English only.',
+    'hindi': 'Provide your response in both Hindi and English. Format: **Hindi:** [response in Hindi] **English:** [response in English]',
+    'marathi': 'Provide your response in both Marathi and English. Format: **मराठी:** [response in Marathi] **English:** [response in English]',
+    'tamil': 'Provide your response in both Tamil and English. Format: **தமிழ்:** [response in Tamil] **English:** [response in English]',
+    'telugu': 'Provide your response in both Telugu and English. Format: **తెలుగు:** [response in Telugu] **English:** [response in English]',
+    'gujarati': 'Provide your response in both Gujarati and English. Format: **ગુજરાતી:** [response in Gujarati] **English:** [response in English]',
+    'bengali': 'Provide your response in both Bengali and English. Format: **বাংলা:** [response in Bengali] **English:** [response in English]',
+    'kannada': 'Provide your response in both Kannada and English. Format: **ಕನ್ನಡ:** [response in Kannada] **English:** [response in English]',
+    'punjabi': 'Provide your response in both Punjabi and English. Format: **ਪੰਜਾਬੀ:** [response in Punjabi] **English:** [response in English]'
+}
+
+
+def build_language_directive(user_language: str | None) -> str:
+    if not user_language:
+        return LANGUAGE_PROMPTS['english']
+    return LANGUAGE_PROMPTS.get(user_language.lower(), LANGUAGE_PROMPTS['english'])
+
+
+def normalize_messages(messages: list[dict[str, Any]]) -> list[dict[str, str]]:
+    normalized: list[dict[str, str]] = []
+    for entry in messages:
+        role = 'assistant' if entry.get('role') == 'assistant' else 'user'
+        content = entry.get('content')
+        if isinstance(content, (list, tuple)):
+            text = ' '.join(str(part) for part in content)
+        else:
+            text = str(content or '')
+        normalized.append({'role': role, 'content': text})
+    return normalized
+
+
+def call_claude_api(messages, system_prompt: str, max_tokens: int | None = None) -> str | None:
+    if not ANTHROPIC_API_KEY:
+        return None
+    payload = {
+        "model": CLAUDE_MODEL,
+        "max_tokens": max_tokens or MAX_TOKENS,
+        "temperature": TEMPERATURE,
+        "system": system_prompt,
+        "messages": [
+            {
+                "role": msg['role'],
+                "content": [{"type": "text", "text": msg['content']}]
+            }
+            for msg in normalize_messages(messages)
+        ]
+    }
     try:
-        # Language prompts for multilingual support
-        language_prompts = {
-            'english': 'Respond in English only.',
-            'hindi': 'Provide your response in both Hindi and English. Format: **Hindi:** [response in Hindi] **English:** [response in English]',
-            'marathi': 'Provide your response in both Marathi and English. Format: **मराठी:** [response in Marathi] **English:** [response in English]',
-            'tamil': 'Provide your response in both Tamil and English. Format: **தமிழ்:** [response in Tamil] **English:** [response in English]',
-            'telugu': 'Provide your response in both Telugu and English. Format: **తెలుగు:** [response in Telugu] **English:** [response in English]',
-            'gujarati': 'Provide your response in both Gujarati and English. Format: **ગુજરાતી:** [response in Gujarati] **English:** [response in English]',
-            'bengali': 'Provide your response in both Bengali and English. Format: **বাংলা:** [response in Bengali] **English:** [response in English]',
-            'kannada': 'Provide your response in both Kannada and English. Format: **ಕನ್ನಡ:** [response in Kannada] **English:** [response in English]',
-            'punjabi': 'Provide your response in both Punjabi and English. Format: **ਪੰਜਾਬੀ:** [response in Punjabi] **English:** [response in English]'
-        }
-        
-        # Get language instruction
-        language_instruction = language_prompts.get(user_language, language_prompts['english'])
-        
-        # Prepare the request for Gemini API
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-        headers = {
-            "Content-Type": "application/json"
-        }
-        
-        # Convert messages to Gemini format
-        prompt_parts = []
-        
-        # Add system prompt with language instruction
-        enhanced_system_prompt = f"{SYSTEM_PROMPT}\n\nIMPORTANT LANGUAGE INSTRUCTION: {language_instruction}\n\nConversation:\n"
-        prompt_parts.append({
-            "text": enhanced_system_prompt
-        })
-        
-        # Add conversation history
-        for msg in messages:
-            role_text = f"{msg['role'].title()}: {msg['content']}\n"
-            prompt_parts.append({"text": role_text})
-        
-        # Add instruction for assistant response
-        prompt_parts.append({"text": "Assistant: "})
-        
+        response = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            json=payload,
+            timeout=40
+        )
+        response.raise_for_status()
+        body = response.json()
+        parts = body.get('content') or []
+        text = ''.join(part.get('text', '') for part in parts if part.get('type') == 'text').strip()
+        return text or None
+    except requests.RequestException as exc:
+        logger.error("Claude API error: %s", exc)
+        return None
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Unexpected Claude API failure: %s", exc)
+        return None
+
+
+def call_gemini_api(messages, system_prompt: str, max_tokens: int | None = None) -> str | None:
+    if not GEMINI_API_KEY:
+        return None
+    try:
+        prompt_parts = [{"text": f"{system_prompt}\n\nConversation log:"}]
+        for msg in normalize_messages(messages):
+            prefix = 'User' if msg['role'] == 'user' else 'Assistant'
+            prompt_parts.append({"text": f"{prefix}: {msg['content']}\n"})
+        prompt_parts.append({"text": "Assistant:"})
         data = {
-            "contents": [{
-                "parts": prompt_parts
-            }],
+            "contents": [{"parts": prompt_parts}],
             "generationConfig": {
                 "temperature": TEMPERATURE,
-                "maxOutputTokens": MAX_TOKENS,
+                "maxOutputTokens": max_tokens or MAX_TOKENS,
             }
         }
-        
-        # Make API request
         response = requests.post(
-            f"{url}?key={GEMINI_API_KEY}",
-            headers=headers,
+            f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
             json=data,
-            timeout=30
+            timeout=40
         )
-        
-        if response.status_code == 200:
-            result = response.json()
-            if 'candidates' in result and len(result['candidates']) > 0:
-                content = result['candidates'][0]['content']['parts'][0]['text']
-                return content.strip()
-            else:
-                logger.error(f"No candidates in Gemini response: {result}")
-                return None
-        else:
-            logger.error(f"Gemini API error {response.status_code}: {response.text}")
-            return None
-            
-    except Exception as e:
-        logger.error(f"Error calling Gemini API: {str(e)}")
+        response.raise_for_status()
+        body = response.json()
+        candidate = (body.get('candidates') or [{}])[0]
+        content = candidate.get('content', {}).get('parts', [{}])[0].get('text', '')
+        return content.strip() or None
+    except requests.RequestException as exc:
+        logger.error("Gemini API error: %s", exc)
         return None
+    except Exception as exc:  # pragma: no cover
+        logger.error("Unexpected Gemini error: %s", exc)
+        return None
+
+
+def call_llm_api(messages,
+                 user_language: str = 'english',
+                 system_prompt: str | None = None,
+                 language_directive: str | None = None,
+                 max_tokens: int | None = None) -> str | None:
+    base_prompt = system_prompt or SYSTEM_PROMPT
+    directive = language_directive if language_directive is not None else build_language_directive(user_language)
+    final_prompt = f"{base_prompt}\n\n{directive}".strip() if directive else base_prompt
+    provider_order: list[str] = []
+    preferred = ACTIVE_PROVIDER if ACTIVE_PROVIDER in {'claude', 'gemini'} else None
+    if preferred:
+        provider_order.append(preferred)
+    for candidate, ready in (('claude', bool(ANTHROPIC_API_KEY)), ('gemini', bool(GEMINI_API_KEY))):
+        if ready and candidate not in provider_order:
+            provider_order.append(candidate)
+    for provider in provider_order:
+        if provider == 'claude':
+            result = call_claude_api(messages, final_prompt, max_tokens)
+        else:
+            result = call_gemini_api(messages, final_prompt, max_tokens)
+        if result:
+            return result
+    return None
 
 @app.route('/health')
 def health_check():
@@ -2754,11 +3300,11 @@ def health_check():
         
         return jsonify({
             "status": "healthy",
-            "app": "Saathi Legal Assistant - Gemini Powered",
+            "app": f"Saathi Legal Assistant - {current_provider_label()} Powered",
             "version": "2.1.0-production",
             "api_configured": is_api_configured(),
-            "model": GEMINI_MODEL,
-            "provider": "Google Gemini",
+            "model": ACTIVE_MODEL_NAME,
+            "provider": current_provider_label(),
             "timestamp": datetime.now().isoformat(),
             "uptime": {
                 "seconds": round(uptime_seconds),
@@ -2795,6 +3341,9 @@ def generate_letter():
         
         user = get_authenticated_user()
         anon_id = get_request_anon_id()
+        if user_is_suspended(user):
+            return suspended_response()
+        tier = resolve_user_tier(user)
         letter_type = data.get('letter_type', '').strip()
         user_data = data.get('user_data', {})
         output_format = data.get('format', 'text')  # 'text' or 'pdf'
@@ -2830,6 +3379,10 @@ def generate_letter():
             "format": output_format
         }
 
+        allowed, upgrade_info = enforce_usage_limit('documents', tier, user['user_id'] if user else None, anon_id)
+        if not allowed:
+            return jsonify(upgrade_info), 403
+
         if output_format == 'pdf':
             # Generate PDF
             pdf_data = create_pdf_document(result['title'], result['content'], f"{letter_type}.pdf")
@@ -2840,6 +3393,7 @@ def generate_letter():
                 response = make_response(pdf_data)
                 response.headers['Content-Type'] = 'application/pdf'
                 response.headers['Content-Disposition'] = f'attachment; filename="{letter_type}_{datetime.now().strftime("%Y%m%d")}.pdf"'
+                increment_usage('documents', tier, user['user_id'] if user else None, anon_id)
                 return response
             else:
                 return jsonify({
@@ -2849,13 +3403,15 @@ def generate_letter():
         else:
             record_audit_event('legal_letter_generated', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata=audit_metadata)
             # Return text format
-            return jsonify({
+            response_body = {
                 "title": result['title'],
                 "content": result['content'],
                 "letter_type": letter_type,
                 "generated_date": user_data['date'],
                 "status": "success"
-            })
+            }
+            increment_usage('documents', tier, user['user_id'] if user else None, anon_id)
+            return jsonify(response_body)
             
     except Exception as e:
         logger.error(f"Error generating letter: {str(e)}")
@@ -2910,6 +3466,9 @@ def generate_form(form_type):
         
         user = get_authenticated_user()
         anon_id = get_request_anon_id()
+        if user_is_suspended(user):
+            return suspended_response()
+        tier = resolve_user_tier(user)
         user_data = data.get('form_data', {})
         output_format = data.get('format', 'pdf')  # Default to PDF for forms
         
@@ -2989,6 +3548,10 @@ Generated by Saathi Legal Assistant - For reference only.
                 "status": "error"
             }), 400
         
+        allowed, upgrade_info = enforce_usage_limit('documents', tier, user['user_id'] if user else None, anon_id)
+        if not allowed:
+            return jsonify(upgrade_info), 403
+
         audit_metadata = {
             "form_type": form_type,
             "format": output_format
@@ -3003,6 +3566,7 @@ Generated by Saathi Legal Assistant - For reference only.
                 response = make_response(pdf_data)
                 response.headers['Content-Type'] = 'application/pdf'
                 response.headers['Content-Disposition'] = f'attachment; filename="{form_type}_{datetime.now().strftime("%Y%m%d")}.pdf"'
+                increment_usage('documents', tier, user['user_id'] if user else None, anon_id)
                 return response
             else:
                 return jsonify({
@@ -3011,13 +3575,15 @@ Generated by Saathi Legal Assistant - For reference only.
                 }), 500
         else:
             record_audit_event('legal_form_generated', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata=audit_metadata)
-            return jsonify({
+            response_body = {
                 "title": template['title'],
                 "content": content,
                 "form_type": form_type,
                 "generated_date": user_data['date'],
                 "status": "success"
-            })
+            }
+            increment_usage('documents', tier, user['user_id'] if user else None, anon_id)
+            return jsonify(response_body)
             
     except Exception as e:
         logger.error(f"Error generating form: {str(e)}")
@@ -3056,6 +3622,7 @@ def get_user_conversations(user_name, limit=50):
 
 # Landing Page Route
 @app.route('/')
+@app.route('/legacy-landing')
 def landing_page():
     """Serve the landing page with phone input and old money theme"""
     try:
@@ -3089,6 +3656,23 @@ def templates_page():
             <h1>📄 Templates Not Available</h1>
             <p>Document templates page not found.</p>
             <a href="/" style="color: #8b4513;">Back to Home</a>
+        </body>
+        </html>
+        """, 404
+
+
+@app.route('/pricing.html')
+def pricing_page():
+    try:
+        with open('pricing.html', 'r', encoding='utf-8') as handle:
+            return handle.read()
+    except FileNotFoundError:
+        return """
+        <html>
+        <body style='text-align:center;padding:40px;font-family:Arial;background:#1a2332;color:#f4f1e8;'>
+            <h1>Pricing page missing</h1>
+            <p>Add pricing.html to describe upgrade paths.</p>
+            <a href='/' style='color:#f7dba7;'>Return home</a>
         </body>
         </html>
         """, 404
@@ -3164,6 +3748,9 @@ def generate_document_api():
         
         user = get_authenticated_user()
         anon_id = get_request_anon_id()
+        if user_is_suspended(user):
+            return suspended_response()
+        tier = resolve_user_tier(user)
         template_id = data.get('template_id')
         user_data = data.get('data', {})
         
@@ -3178,6 +3765,9 @@ def generate_document_api():
         }
         
         if document:
+            allowed, upgrade_info = enforce_usage_limit('documents', tier, user['user_id'] if user else None, anon_id)
+            if not allowed:
+                return jsonify(upgrade_info), 403
             # Log document generation
             log_data = {
                 'template_id': template_id,
@@ -3193,6 +3783,7 @@ def generate_document_api():
                 anon_id=anon_id,
                 metadata={'template_id': template_id, 'data_keys': list(user_data.keys())}
             )
+            increment_usage('documents', tier, user['user_id'] if user else None, anon_id)
             
             return jsonify({
                 "success": True,
@@ -3233,6 +3824,8 @@ def start_session():
         
         user = get_authenticated_user()
         anon_id = get_request_anon_id()
+        if user_is_suspended(user):
+            return suspended_response()
         user_name = data.get('user_name', 'Anonymous')
         user_phone = data.get('user_phone', '')
         session_id = data.get('session_id')
@@ -3286,6 +3879,8 @@ def log_conversation():
         
         user = get_authenticated_user()
         anon_id = get_request_anon_id()
+        if user_is_suspended(user):
+            return suspended_response()
         session_id = data.get('session_id')
         conversation_data = {
             'user_name': data.get('user_name', 'Anonymous'),
@@ -3351,10 +3946,12 @@ def get_user_history(user_name):
 @app.route('/chat', methods=['POST'])
 def chat():
     """Main chat endpoint using Gemini API with rate limiting"""
-    global conversation_history
 
     user = get_authenticated_user()
     anon_id = get_request_anon_id()
+    tier = resolve_user_tier(user)
+    if user_is_suspended(user):
+        return suspended_response()
     client_ip = get_client_identifier(request)
 
     # Apply rate limiting if security packages not available
@@ -3421,30 +4018,41 @@ def chat():
                 "error": "Query too long. Please keep it under 1000 characters.",
                 "status": "error"
             }), 400
+
+        allowed, upgrade_info = enforce_usage_limit('chat', tier, user['user_id'] if user else None, anon_id)
+        if not allowed:
+            return jsonify(upgrade_info), 403
         
         # Detect intent early for guardrails + reply metadata
         intent = detect_intent(user_input)
 
-        # Add user message to conversation
-        conversation_history.append({"role": "user", "content": user_input})
-        
-        # Keep conversation history manageable (last 10 exchanges)
-        if len(conversation_history) > 20:
-            conversation_history = conversation_history[-20:]
+        # Build per-request conversation context to prevent cross-user message leakage.
+        incoming_history = data.get('conversation_history', [])
+        scoped_history: list[dict[str, Any]] = []
+        if isinstance(incoming_history, list):
+            for item in incoming_history[-19:]:
+                if not isinstance(item, dict):
+                    continue
+                role = item.get('role', 'user')
+                content = str(item.get('content', '')).strip()
+                if not content:
+                    continue
+                scoped_history.append({
+                    "role": "assistant" if role == 'assistant' else "user",
+                    "content": content[:4000]
+                })
+        scoped_history.append({"role": "user", "content": user_input})
         
         logger.info(f"Processing query: {user_input[:50]}... in {user_language}")
         
-        # Call Gemini API with language support
-        reply = call_gemini_api(conversation_history, user_language)
+        # Call LLM API with a request-scoped context window.
+        reply = call_llm_api(scoped_history, user_language=user_language)
         
         guardrail_meta: Dict[str, Any] = {}
         if reply and ENABLE_GUARDRAILS:
             reply, guardrail_meta = apply_citation_guardrails(user_input, reply, intent)
 
         if reply:
-            # Add assistant response to conversation
-            conversation_history.append({"role": "assistant", "content": reply})
-            
             # Log conversation to MongoDB if user is named
             if user_name != 'User' and db is not None:
                 log_to_mongodb('conversations', {
@@ -3473,6 +4081,7 @@ def chat():
                     payload={"question": user_input, "reply": reply}
                 )
             record_audit_event('chat_exchange', user_id=user['user_id'] if user else None, anon_id=anon_id, metadata={"rate_limit_key": rate_limit_key})
+            increment_usage('chat', tier, user['user_id'] if user else None, anon_id)
             return jsonify({
                 "reply": reply,
                 "language": user_language,
@@ -3481,8 +4090,8 @@ def chat():
                 "user_name": user_name,
                 "session_id": session_id,
                 "message_count": message_count,
-                "provider": "Google Gemini",
-                "model": GEMINI_MODEL,
+                "provider": current_provider_label(),
+                "model": ACTIVE_MODEL_NAME,
                 "timestamp": datetime.now().isoformat(),
                 "rate_limit": {
                     "limit": RATE_LIMIT_REQUESTS,
@@ -3495,7 +4104,7 @@ def chat():
             return jsonify({
                 "reply": "I'm having trouble connecting to my knowledge base. Please try again later.",
                 "intent": None,
-                "error": "GEMINI_API_ERROR",
+                "error": "LLM_API_ERROR",
                 "status": "error"
             }), 500
             
@@ -3516,12 +4125,10 @@ def api_chat():
 
 @app.route('/reset', methods=['POST'])
 def reset_conversation():
-    """Reset conversation history"""
-    global conversation_history
+    """Reset endpoint kept for compatibility; conversation is now request-scoped."""
     try:
-        conversation_history = []
         return jsonify({
-            "message": "Conversation reset successfully",
+            "message": "Conversation reset acknowledged",
             "status": "success",
             "timestamp": datetime.now().isoformat()
         })
@@ -3538,28 +4145,27 @@ def get_config():
     return jsonify({
         "app_name": "Saathi Legal Assistant",
         "version": "2.0.0",
-        "model": GEMINI_MODEL,
-        "provider": "Google Gemini",
+        "model": ACTIVE_MODEL_NAME,
+        "provider": current_provider_label(),
         "api_configured": is_api_configured(),
         "max_tokens": MAX_TOKENS,
         "timestamp": datetime.now().isoformat()
     })
 
-# Error handlers
-@app.errorhandler(404)
-def not_found(error):
+# Legacy fallback helpers kept without decorators to avoid overriding earlier handlers.
+def legacy_not_found(error):
     return jsonify({"error": "Endpoint not found", "status": "error"}), 404
 
-@app.errorhandler(500)
-def internal_error(error):
+
+def legacy_internal_error(error):
     return jsonify({"error": "Internal server error", "status": "error"}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     host = os.environ.get('HOST', '0.0.0.0')
     
-    print(f"🚀 Starting Saathi Legal Assistant - Gemini Powered")
-    print(f"🤖 Model: {GEMINI_MODEL}")
+    print(f"🚀 Starting Saathi Legal Assistant - {current_provider_label()} Powered")
+    print(f"🤖 Model: {ACTIVE_MODEL_NAME}")
     print(f"🔑 API Configured: {is_api_configured()}")
     print(f"🌐 Running on {host}:{port}")
     
@@ -3570,7 +4176,7 @@ if __name__ == '__main__':
 if __name__ != '__main__':
     # Production startup logging
     port = int(os.environ.get('PORT', 8080))
-    print(f"🚀 Saathi Legal Assistant - Production Mode")
-    print(f"🤖 Model: {GEMINI_MODEL}")
+    print(f"🚀 Saathi Legal Assistant - Production Mode ({current_provider_label()})")
+    print(f"🤖 Model: {ACTIVE_MODEL_NAME}")
     print(f"🔑 API Configured: {is_api_configured()}")
     print(f"🌐 Production server on port {port}")

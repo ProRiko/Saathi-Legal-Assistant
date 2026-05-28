@@ -1,6 +1,6 @@
 # 🏛️ Saathi Legal Assistant
 
-> AI-powered legal guidance, document templates, and compliance calculators crafted for Indian law and deployed on **Render**.
+> AI-powered legal guidance, document templates, and compliance calculators crafted for Indian law, deployed on **Render**, and now defaulting to Anthropic Claude Haiku with Gemini fallback.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://dashboard.render.com/deploy?repo=https://github.com/ProRiko/Saathi-Legal-Assistant)
 
@@ -12,7 +12,7 @@
 
 ## ✨ Feature Highlights
 
-- 🤖 **AI Legal Copilot** – Gemini-powered chat (multi-language) with intent detection, memory, and guardrails.
+- 🤖 **AI Legal Copilot** – Anthropic Claude Haiku (default) chat with optional Gemini fallback, multi-language mirroring, intent detection, memory, and guardrails.
 - ⚠️ **Legal Notice Generator** – Advocate-style notices (salary delay, rent default, consumer complaint, cheque bounce) rendered as PDFs.
 - 📄 **Agreement Templates** – Ready-to-sign rent agreements, NDAs, freelance contracts, offer letters, and sale-of-goods drafts.
 - 🧮 **Compliance Calculators** – Notice period, overtime & working hours, maternity benefits, and consumer compensation estimators.
@@ -89,7 +89,8 @@
 ### Prerequisites
 - Python 3.12+
 - Node 18+ (only if you plan to work inside `frontend/` React prototype)
-- A Gemini API key (Google AI Studio) for chat completion.
+- An Anthropic API key (Claude Haiku) for the default chat provider.
+- (Optional) A Gemini API key (Google AI Studio) if you want a fallback provider.
 
 ### Setup Steps
 ```bash
@@ -105,7 +106,10 @@ Fill the `.env` with at least:
 
 | Variable | Description |
 |----------|-------------|
-| `GEMINI_API_KEY` | Google Gemini key used by the chat + calculators. |
+| `MODEL_PROVIDER` | `claude` (default) or `gemini` to force a specific provider. |
+| `ANTHROPIC_API_KEY` | Required for Anthropic Claude Haiku (default chat). |
+| `CLAUDE_MODEL` | Defaults to `claude-3-5-haiku-20241022`. |
+| `GEMINI_API_KEY` | Optional fallback (used when provider is `gemini` or Claude is unavailable). |
 | `GEMINI_MODEL` | Defaults to `gemini-2.5-flash`. |
 | `SECRET_KEY` | Flask session secret. |
 | `ALLOWED_ORIGINS` | CORS whitelist (use `*` for development). |
@@ -150,7 +154,9 @@ Add your preferred linters/test suites as needed.
 | Key | Value / Notes |
 |-----|---------------|
 | `PYTHON_VERSION` | `3.11.9` (avoids wheel issues on Render's default Python 3.13). |
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | Gemini access; keep the API key secret. |
+| `MODEL_PROVIDER` | Usually `claude` (defaults automatically); set to `gemini` only if forcing fallback. |
+| `ANTHROPIC_API_KEY`, `CLAUDE_MODEL` | Anthropic Claude Haiku credentials (default chat provider). |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | Optional fallback Gemini access; keep the API key secret. |
 | `SECRET_KEY` | Strong random string. |
 | `ALLOWED_ORIGINS` | Public domain(s) for CORS. |
 | `MONGODB_URI`, `MONGO_DB_NAME`, `MONGO_COLLECTION_NAME` | Optional; required only if you enable persistent conversation logging. |
@@ -171,7 +177,7 @@ Add your preferred linters/test suites as needed.
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/chat` | POST | Gemini-powered conversational replies with optional multilingual output. |
+| `/api/chat` | POST | Provider-agnostic conversational replies (Anthropic Claude by default) with optional multilingual output. |
 | `/api/legal-notices` | GET | Returns metadata for each notice template. |
 | `/notices/<slug>` | GET | Streams PDF notice download. |
 | `/api/agreements` | GET | Lists agreement templates with tags and descriptions. |
