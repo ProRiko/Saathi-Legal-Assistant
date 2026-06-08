@@ -50,24 +50,28 @@ except ImportError:
     MONGODB_AVAILABLE = False
     print("MongoDB not available. Conversation logging will be disabled.")
 
+app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RUNTIME_STORAGE_DIR = os.environ.get('SAATHI_STORAGE_DIR')
+if not RUNTIME_STORAGE_DIR:
+    RUNTIME_STORAGE_DIR = tempfile.gettempdir() if os.environ.get('VERCEL') else BASE_DIR
+os.makedirs(RUNTIME_STORAGE_DIR, exist_ok=True)
+DB_PATH = os.path.join(RUNTIME_STORAGE_DIR, 'saathi.db')
+CONSENT_LOG_PATH = os.path.join(RUNTIME_STORAGE_DIR, 'consent_logs.jsonl')
+CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
+TOOL_MANIFEST_PATH = os.path.join(BASE_DIR, 'tool_metadata.json')
+TEMPLATE_MANIFEST_PATH = os.path.join(BASE_DIR, 'template_metadata.json')
+logging_handlers = [logging.StreamHandler()]
+if not os.environ.get('VERCEL'):
+    logging_handlers.append(logging.FileHandler(os.path.join(RUNTIME_STORAGE_DIR, 'saathi.log')))
+
 # Set up logging for production
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('saathi.log') if os.path.exists('.') else logging.StreamHandler()
-    ]
+    handlers=logging_handlers
 )
 logger = logging.getLogger(__name__)
-
-app = Flask(__name__)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'saathi.db')
-CONSENT_LOG_PATH = os.path.join(BASE_DIR, 'consent_logs.jsonl')
-CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
-TOOL_MANIFEST_PATH = os.path.join(BASE_DIR, 'tool_metadata.json')
-TEMPLATE_MANIFEST_PATH = os.path.join(BASE_DIR, 'template_metadata.json')
 CONSENT_NOSCRIPT_BLOCK = (
     '<noscript>'
     '<div class="no-js-consent-banner" role="alert">'

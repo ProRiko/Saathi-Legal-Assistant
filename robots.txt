@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /__pycache__/
 
-Sitemap: https://saathi-legal-assistant.onrender.com/sitemap.xml
+Sitemap: https://saathi-legal-assistant.vercel.app/sitemap.xml

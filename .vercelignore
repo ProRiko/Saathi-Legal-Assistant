@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+apps/
+backend/
+docs/
+frontend/
+infra/
+render.yaml
+Procfile
+gunicorn.conf.py
+railway.json

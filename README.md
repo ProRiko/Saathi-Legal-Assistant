@@ -1,14 +1,14 @@
 # 🏛️ Saathi Legal Assistant
 
-> AI-powered legal guidance, document templates, and compliance calculators crafted for Indian law, deployed on **Render**, and now defaulting to Anthropic Claude Haiku with Gemini fallback.
+> AI-powered legal guidance, document templates, and compliance calculators crafted for Indian law, prepared for **Vercel** deployment, and now defaulting to Anthropic Claude Haiku with Gemini fallback.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://dashboard.render.com/deploy?repo=https://github.com/ProRiko/Saathi-Legal-Assistant)
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ProRiko/Saathi-Legal-Assistant)
 
 ## 🔗 Quick Links
 
-- **Live Demo (Render)**: https://saathi-legal-assistant.onrender.com
+- **Live Demo (Vercel)**: https://saathi-legal-assistant.vercel.app
 - **Landing Experience**: `landing.html` (static HTML served by Flask)
-- **Blueprint**: `render.yaml` (Render auto-detects build/start commands and env vars)
+- **Blueprint**: `vercel.json` (routes the whole Flask app through a Python serverless function)
 
 ## ✨ Feature Highlights
 
@@ -82,7 +82,7 @@
 | Templates | ReportLab | Reusable `create_pdf_document` helper streams advocate-ready PDFs. |
 | Frontend | Static HTML/CSS/JS (`landing.html`, `legal_*.html`) | Hosted by Flask; optional React prototype lives under `frontend/`. |
 | Data | `use_cases/legal_questions.json`, optional MongoDB | Conversational context logging + canned FAQ prompts. |
-| Deployment | Render (free plan) | `render.yaml` configures build/start commands and env vars. |
+| Deployment | Vercel (serverless) | `vercel.json` and `api/index.py` route the Flask app through a Python function. |
 
 ## 🛠️ Local Development
 
@@ -141,37 +141,34 @@ python -m compileall app_production.py
 
 Add your preferred linters/test suites as needed.
 
-## ☁️ Deploy to Render
+## ☁️ Deploy to Vercel
 
 1. Push your fork to GitHub.
-2. Click **Deploy to Render** above (or create a new Web Service in the Render dashboard pointing to this repo).
-3. Render will auto-read `render.yaml`, pre-filling:
-	 - Build: `pip install -r requirements.txt`
-	 - Start: `gunicorn --config gunicorn.conf.py app_production:app`
-	 - Region: Singapore (free plan)
+2. Import the GitHub repo in Vercel or click **Deploy to Vercel** above.
+3. Keep the project root as-is so Vercel sees `vercel.json` and the `api/` directory.
 4. Set the environment variables:
 
 | Key | Value / Notes |
 |-----|---------------|
-| `PYTHON_VERSION` | `3.11.9` (avoids wheel issues on Render's default Python 3.13). |
 | `MODEL_PROVIDER` | Usually `claude` (defaults automatically); set to `gemini` only if forcing fallback. |
 | `ANTHROPIC_API_KEY`, `CLAUDE_MODEL` | Anthropic Claude Haiku credentials (default chat provider). |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | Optional fallback Gemini access; keep the API key secret. |
 | `SECRET_KEY` | Strong random string. |
 | `ALLOWED_ORIGINS` | Public domain(s) for CORS. |
 | `MONGODB_URI`, `MONGO_DB_NAME`, `MONGO_COLLECTION_NAME` | Optional; required only if you enable persistent conversation logging. |
+| `SAATHI_STORAGE_DIR` | Optional writable directory for local SQLite and consent logs during testing. |
 
-5. Deploy. Once healthy, Render assigns `https://<service>.onrender.com`. Update the README's Live Demo link with the generated domain.
+5. Deploy. Once healthy, Vercel assigns `https://<project>.vercel.app`.
 6. Hit `/health` or `/version` to confirm the instance is responding before sharing publicly.
 
-> 📝 The `render.yaml` also works as infrastructure-as-code if you prefer `render blueprint deploy` workflows.
+> 📝 The Flask app still runs locally with `python app_production.py`; Vercel uses the serverless wrapper in `api/index.py`.
 
 ### Configuring CORS & Allowed Origins
 
 - `ALLOWED_ORIGINS` accepts a comma-separated list (e.g., `https://saathi.example.com,https://admin.example.com`).
 - Use `*` during local development, but **never** in production—list each domain that will host the HTML.
 - The frontend now surfaces an explicit CORS hint if it cannot talk to the Flask API: “Add <origin> to ALLOWED_ORIGINS.” Use that origin string verbatim when updating your env vars.
-- Restart the Render service (or your local server) after changing the variable so Flask reloads the whitelist.
+- Redeploy Vercel after changing the variable so the function picks up the new whitelist.
 
 ## 📄 API Reference Snapshot
 
@@ -195,7 +192,8 @@ Add your preferred linters/test suites as needed.
 - `legal_notices.html`, `agreement_templates.html`, `legal_calculators.html` – Feature-specific landing pages.
 - `landing.html` – Primary marketing and onboarding surface.
 - `legal-guides.html` + `*-guide.html` – Long-form explainer content that links to calculators and notices.
-- `render.yaml` – Render IaC blueprint.
+- `vercel.json` – Vercel routing config for the Flask app.
+- `api/index.py` – Vercel Python entrypoint that exposes the Flask WSGI app.
 - `requirements.txt` – Python dependencies (ReportLab, Flask, Gunicorn, etc.).
 - `analytics.js` – Consent-aware tracker that posts to `/api/event`.
 - `sitemap.xml` & `robots.txt` – Search crawling aids now deployed alongside the app.
@@ -204,7 +202,7 @@ Add your preferred linters/test suites as needed.
 ## 🔒 Privacy & Legal Notice
 
 - ✅ No accounts or personal-data storage.
-- ✅ HTTPS via Render.
+- ✅ HTTPS via Vercel.
 - ✅ Rate limiting + security headers guard abuse.
 - ⚠️ AI answers are informational only; always consult a qualified advocate before taking legal action.
 
@@ -212,4 +210,4 @@ Add your preferred linters/test suites as needed.
 
 ---
 
-*Built with ❤️ for India 🇮🇳 — now running on Render's free tier so anyone can deploy a full-fledged legal companion at zero cost.*
+*Built with ❤️ for India 🇮🇳 — now ready for a Vercel deployment flow while keeping the local Flask workflow intact.*
