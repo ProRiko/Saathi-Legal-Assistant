@@ -249,6 +249,9 @@ body {
     font-family: 'Georgia', serif;
     background: rgba(255, 255, 255, 0.9);
     color: #2c2c2c;
+    caret-color: #1a2332;
+    -webkit-text-fill-color: #2c2c2c;
+    color-scheme: light;
     min-height: 48px;
     max-height: 120px;
     transition: all 0.3s ease;
@@ -264,6 +267,15 @@ body {
 .message-input::placeholder {
     color: rgba(44, 44, 44, 0.6);
     font-style: italic;
+}
+
+.message-input::-webkit-autofill,
+.message-input:-webkit-autofill,
+.message-input:-webkit-autofill:hover,
+.message-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #2c2c2c;
+    box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.9) inset;
+    caret-color: #1a2332;
 }
 
 .send-btn {
@@ -501,6 +513,7 @@ body {
     .message-input {
         background: rgba(44, 44, 44, 0.8);
         color: #f4f1e8;
+        -webkit-text-fill-color: #f4f1e8;
         border-color: rgba(139, 69, 19, 0.6);
     }
 
