@@ -28,6 +28,12 @@
     ],
     "shortcuts": [
         {
+            "name": "Government Forms",
+            "short_name": "Gov Forms",
+            "description": "Find the correct official government form by department",
+            "url": "/government-forms.html?ref=shortcut"
+        },
+        {
             "name": "Ask Saathi",
             "short_name": "Chat",
             "description": "Jump straight into the multilingual chat",

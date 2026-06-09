@@ -1,6 +1,29 @@
 {
   "tools": [
     {
+      "slug": "government-forms-navigator",
+      "category": "gov_forms",
+      "title": "Government Forms Navigator",
+      "description": "Find Aadhaar, Passport, PAN, and Ration Card forms from verified official sources.",
+      "icon": "GF",
+      "order": 0,
+      "reviewed_on": "2026-06-09",
+      "reviewed_by": "Saathi Government Services Desk",
+      "risk_level": "low",
+      "when_to_consult": "Consult the official department if the workflow is state-specific, portal-only, or recently changed.",
+      "sample_preview": "Department-led browser showing form number, use case, and official source link.",
+      "sample_highlights": [
+        "Choose a department first, then narrow by topic and state when needed.",
+        "Shows what each form is used for before opening the official source.",
+        "Uses government-hosted source links only for downloads and filing paths."
+      ],
+      "sample_example_input": "I need the Aadhaar form for a child below 5 years, or the PAN form for a foreign company.",
+      "sample_example_output": "\"Aadhaar Form 3 is used for resident children below 5 years. PAN Form 96 is used for foreign entities such as overseas companies and LLPs.\"",
+      "sample_pdf_link": "https://uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "estimated_time": "2-4 min",
+      "use_url": "/government-forms.html"
+    },
+    {
       "slug": "salary-not-paid",
       "category": "legal_notice",
       "title": "Salary Not Paid Notice",

@@ -1,0 +1,736 @@
+{
+  "updated_at": "2026-06-09",
+  "departments": [
+    {
+      "slug": "aadhaar",
+      "name": "Aadhaar",
+      "icon": "ID",
+      "summary": "UIDAI enrolment, update, and life-cycle forms for residents, NRIs, children, and foreign nationals.",
+      "official_source_label": "UIDAI",
+      "official_source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html"
+    },
+    {
+      "slug": "passport",
+      "name": "Passport",
+      "icon": "PP",
+      "summary": "Passport Seva application, annexure, affidavit, and instruction downloads for travel documents and PCC requests.",
+      "official_source_label": "Passport Seva",
+      "official_source_url": "https://services1.passportindia.gov.in/forms/PreLogin"
+    },
+    {
+      "slug": "pan",
+      "name": "PAN / Tax ID",
+      "icon": "TAX",
+      "summary": "Income Tax Department guidance for PAN allotment under the 2026 forms framework, plus official filing entry points.",
+      "official_source_label": "Income Tax Department",
+      "official_source_url": "https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/income-tax-forms"
+    },
+    {
+      "slug": "ration-card",
+      "name": "Ration Card",
+      "icon": "RC",
+      "summary": "NFSA-linked state and UT food portal guidance for new ration cards, corrections, and beneficiary services.",
+      "official_source_label": "NFSA",
+      "official_source_url": "https://nfsa.gov.in/portal/apply"
+    }
+  ],
+  "forms": [
+    {
+      "id": "aadhaar-form-1",
+      "department": "aadhaar",
+      "topic": "enrolment-and-update",
+      "title": "Aadhaar Form 1",
+      "form_number": "Form 1",
+      "use_for": "Aadhaar enrolment or update for residents who are 18 years or older.",
+      "audience": "Resident Indian adult",
+      "delivery_type": "pdf_download",
+      "official_url": "https://uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images/Form_1_Eng.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "Offline at Aadhaar enrolment or update center",
+      "documents": [
+        "Proof of identity",
+        "Proof of address",
+        "Proof of date of birth if required"
+      ],
+      "keywords": [
+        "aadhaar form 1",
+        "aadhaar adult enrolment",
+        "aadhaar adult update",
+        "uidai resident adult"
+      ],
+      "notes": [
+        "Use this when the applicant is a resident and 18 or older.",
+        "UIDAI also accepts online update flows for selected fields."
+      ]
+    },
+    {
+      "id": "aadhaar-form-2",
+      "department": "aadhaar",
+      "topic": "nri",
+      "title": "Aadhaar Form 2",
+      "form_number": "Form 2",
+      "use_for": "Aadhaar enrolment or update for non-resident Indians who are 18 years or older.",
+      "audience": "NRI adult",
+      "delivery_type": "pdf_download",
+      "official_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images/Form-2-English.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "Offline at Aadhaar enrolment or update center",
+      "documents": [
+        "Valid Indian passport",
+        "Proof of NRI status or overseas address as applicable"
+      ],
+      "keywords": [
+        "aadhaar form 2",
+        "aadhaar nri adult",
+        "uidai nri"
+      ],
+      "notes": [
+        "Use this when the applicant is an NRI adult."
+      ]
+    },
+    {
+      "id": "aadhaar-form-3",
+      "department": "aadhaar",
+      "topic": "child-enrolment",
+      "title": "Aadhaar Form 3",
+      "form_number": "Form 3",
+      "use_for": "Aadhaar enrolment or update for resident children below 5 years.",
+      "audience": "Resident child below 5",
+      "delivery_type": "pdf_download",
+      "official_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images/Form_3_Eng.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "Offline at Aadhaar enrolment or update center",
+      "documents": [
+        "Child birth proof",
+        "Parent or guardian Aadhaar details"
+      ],
+      "keywords": [
+        "aadhaar form 3",
+        "aadhaar child below 5",
+        "baal aadhaar",
+        "aadhaar minor"
+      ],
+      "notes": [
+        "This is commonly used for young children and Baal Aadhaar enrolment."
+      ]
+    },
+    {
+      "id": "aadhaar-form-4",
+      "department": "aadhaar",
+      "topic": "nri-child",
+      "title": "Aadhaar Form 4",
+      "form_number": "Form 4",
+      "use_for": "Aadhaar enrolment or update for NRI children below 5 years.",
+      "audience": "NRI child below 5",
+      "delivery_type": "pdf_download",
+      "official_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images/Form-4-English.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "Offline at Aadhaar enrolment or update center",
+      "documents": [
+        "Child passport or equivalent proof",
+        "Parent or guardian Aadhaar or passport details"
+      ],
+      "keywords": [
+        "aadhaar form 4",
+        "aadhaar nri child",
+        "nri child aadhaar"
+      ],
+      "notes": [
+        "Use this for NRI children below 5 years."
+      ]
+    },
+    {
+      "id": "aadhaar-form-5",
+      "department": "aadhaar",
+      "topic": "child-enrolment",
+      "title": "Aadhaar Form 5",
+      "form_number": "Form 5",
+      "use_for": "Aadhaar enrolment or update for resident children aged 5 to less than 18 years.",
+      "audience": "Resident child age 5 to under 18",
+      "delivery_type": "pdf_download",
+      "official_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images/Form_5_Eng.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "Offline at Aadhaar enrolment or update center",
+      "documents": [
+        "School ID or child identity proof",
+        "Parent or guardian Aadhaar details",
+        "Address proof as applicable"
+      ],
+      "keywords": [
+        "aadhaar form 5",
+        "aadhaar child 5 to 18",
+        "aadhaar minor update"
+      ],
+      "notes": [
+        "Use this for resident minors who are 5 years or older but under 18."
+      ]
+    },
+    {
+      "id": "aadhaar-form-6",
+      "department": "aadhaar",
+      "topic": "nri-child",
+      "title": "Aadhaar Form 6",
+      "form_number": "Form 6",
+      "use_for": "Aadhaar enrolment or update for NRI children aged 5 to less than 18 years.",
+      "audience": "NRI child age 5 to under 18",
+      "delivery_type": "pdf_download",
+      "official_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images/Form-6-English.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "Offline at Aadhaar enrolment or update center",
+      "documents": [
+        "Child passport or NRI proof",
+        "Parent or guardian details"
+      ],
+      "keywords": [
+        "aadhaar form 6",
+        "aadhaar nri child 5 to 18"
+      ],
+      "notes": [
+        "Use this for NRI children from age 5 to under 18."
+      ]
+    },
+    {
+      "id": "aadhaar-form-7",
+      "department": "aadhaar",
+      "topic": "foreign-national",
+      "title": "Aadhaar Form 7",
+      "form_number": "Form 7",
+      "use_for": "Aadhaar enrolment or update for resident foreign nationals aged 18 years or older.",
+      "audience": "Resident foreign national adult",
+      "delivery_type": "pdf_download",
+      "official_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images/Form_7_Eng.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "Offline at Aadhaar enrolment or update center",
+      "documents": [
+        "Valid foreign passport",
+        "Valid visa or long-term stay proof",
+        "Indian address proof"
+      ],
+      "keywords": [
+        "aadhaar form 7",
+        "aadhaar foreign national adult",
+        "foreigner aadhaar"
+      ],
+      "notes": [
+        "Use this when the applicant is a resident foreign national adult."
+      ]
+    },
+    {
+      "id": "aadhaar-form-8",
+      "department": "aadhaar",
+      "topic": "foreign-national",
+      "title": "Aadhaar Form 8",
+      "form_number": "Form 8",
+      "use_for": "Aadhaar enrolment or update for resident foreign national children below 18 years.",
+      "audience": "Resident foreign national child",
+      "delivery_type": "pdf_download",
+      "official_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images/Form_8_Eng.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "Offline at Aadhaar enrolment or update center",
+      "documents": [
+        "Child passport",
+        "Parent or guardian passport details",
+        "Indian address proof as applicable"
+      ],
+      "keywords": [
+        "aadhaar form 8",
+        "aadhaar foreign national child"
+      ],
+      "notes": [
+        "Use this for resident foreign national children under 18."
+      ]
+    },
+    {
+      "id": "aadhaar-form-9",
+      "department": "aadhaar",
+      "topic": "life-cycle",
+      "title": "Aadhaar Form 9",
+      "form_number": "Form 9",
+      "use_for": "Application by Aadhaar number holder for omission or cancellation on attaining age 18 years where required by UIDAI's current process.",
+      "audience": "Aadhaar holder after attaining 18 years in specific UIDAI cases",
+      "delivery_type": "pdf_download",
+      "official_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "download_url": "https://uidai.gov.in/images//FORM_9__Application_by_Aadhaar_Number_Holder_for_omission_cancellation_of_Aadhaar_Number_on_attaining_the_Age_of_18_Years.pdf",
+      "source_url": "https://www.uidai.gov.in/en/my-aadhaar/downloads/enrolment-and-update-forms.html",
+      "submission_mode": "As directed by UIDAI",
+      "documents": [
+        "Existing Aadhaar details",
+        "Any UIDAI-requested supporting documents"
+      ],
+      "keywords": [
+        "aadhaar form 9",
+        "aadhaar cancellation on attaining 18",
+        "uidai form 9"
+      ],
+      "notes": [
+        "This is a special-purpose UIDAI form and not part of routine updates."
+      ]
+    },
+    {
+      "id": "passport-application-form",
+      "department": "passport",
+      "topic": "application",
+      "title": "Passport Application Form",
+      "form_number": "Application Form",
+      "use_for": "Fresh passport application or re-issue workflow through Passport Seva.",
+      "audience": "Indian passport applicant",
+      "delivery_type": "official_page",
+      "official_url": "https://portal1.passportindia.gov.in/AppOnlineProject/online/printForm",
+      "download_url": "",
+      "source_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "submission_mode": "Passport Seva online workflow plus appointment at Passport Seva Kendra",
+      "documents": [
+        "Identity proof",
+        "Address proof",
+        "Date of birth proof",
+        "Supporting annexures if applicable"
+      ],
+      "keywords": [
+        "passport application",
+        "fresh passport",
+        "passport reissue",
+        "passport form"
+      ],
+      "notes": [
+        "Passport Seva hosts the official print form workflow on its own page instead of a single public PDF."
+      ]
+    },
+    {
+      "id": "passport-pcc-form",
+      "department": "passport",
+      "topic": "police-clearance",
+      "title": "Police Clearance Certificate (PCC) Application",
+      "form_number": "PCC Application",
+      "use_for": "Police Clearance Certificate request through Passport Seva.",
+      "audience": "Passport holder seeking PCC",
+      "delivery_type": "official_page",
+      "official_url": "https://portal1.passportindia.gov.in/AppOnlineProject/online/printForm",
+      "download_url": "",
+      "source_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "submission_mode": "Passport Seva online workflow plus appointment if required",
+      "documents": [
+        "Existing passport details",
+        "Address proof if requested",
+        "Purpose-specific documents if requested"
+      ],
+      "keywords": [
+        "passport pcc form",
+        "police clearance certificate",
+        "passport police clearance"
+      ],
+      "notes": [
+        "Use the Passport Seva print form workflow for PCC requests."
+      ]
+    },
+    {
+      "id": "passport-surrender-certificate",
+      "department": "passport",
+      "topic": "miscellaneous",
+      "title": "Surrender Certificate Application",
+      "form_number": "Surrender Certificate",
+      "use_for": "Apply for surrender certificate after acquiring foreign nationality and surrendering Indian passport.",
+      "audience": "Former Indian passport holder",
+      "delivery_type": "official_page",
+      "official_url": "https://portal1.passportindia.gov.in/AppOnlineProject/online/printForm",
+      "download_url": "",
+      "source_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "submission_mode": "Passport Seva workflow",
+      "documents": [
+        "Old Indian passport",
+        "Foreign nationality or passport proof"
+      ],
+      "keywords": [
+        "surrender certificate passport",
+        "renunciation of passport"
+      ],
+      "notes": [
+        "Passport Seva handles surrender certificate requests through its official application flow."
+      ]
+    },
+    {
+      "id": "passport-annexure-d",
+      "department": "passport",
+      "topic": "annexures",
+      "title": "Passport Annexure D",
+      "form_number": "Annexure D",
+      "use_for": "Affidavit or declaration support in the Passport Seva documentation set, commonly used for specific applicant categories.",
+      "audience": "Passport applicants asked to submit Annexure D",
+      "delivery_type": "pdf_download",
+      "official_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "download_url": "https://www.passportindia.gov.in/AppOnlineProject/pdf/AnnexureD.pdf",
+      "source_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "submission_mode": "Upload or carry as instructed by Passport Seva",
+      "documents": [
+        "As listed in the annexure instructions"
+      ],
+      "keywords": [
+        "passport annexure d",
+        "annexure d passport"
+      ],
+      "notes": [
+        "Always confirm with the current Passport Seva checklist whether your case needs Annexure D."
+      ]
+    },
+    {
+      "id": "passport-annexure-f",
+      "department": "passport",
+      "topic": "annexures",
+      "title": "Passport Annexure F",
+      "form_number": "Annexure F",
+      "use_for": "Passport Seva annexure or affidavit support file for specific cases.",
+      "audience": "Passport applicants asked to submit Annexure F",
+      "delivery_type": "pdf_download",
+      "official_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "download_url": "https://www.passportindia.gov.in/AppOnlineProject/pdf/AnnexureF.pdf",
+      "source_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "submission_mode": "Upload or carry as instructed by Passport Seva",
+      "documents": [
+        "As listed in the annexure instructions"
+      ],
+      "keywords": [
+        "passport annexure f",
+        "annexure f passport"
+      ],
+      "notes": [
+        "Check the current Passport Seva checklist before using any annexure."
+      ]
+    },
+    {
+      "id": "passport-annexure-g",
+      "department": "passport",
+      "topic": "annexures",
+      "title": "Passport Annexure G",
+      "form_number": "Annexure G",
+      "use_for": "Passport Seva annexure or affidavit support file for specific cases.",
+      "audience": "Passport applicants asked to submit Annexure G",
+      "delivery_type": "pdf_download",
+      "official_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "download_url": "https://www.passportindia.gov.in/AppOnlineProject/pdf/AnnexureG.pdf",
+      "source_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "submission_mode": "Upload or carry as instructed by Passport Seva",
+      "documents": [
+        "As listed in the annexure instructions"
+      ],
+      "keywords": [
+        "passport annexure g",
+        "annexure g passport"
+      ],
+      "notes": [
+        "Check the current Passport Seva checklist before using any annexure."
+      ]
+    },
+    {
+      "id": "passport-annexure-h",
+      "department": "passport",
+      "topic": "annexures",
+      "title": "Passport Annexure H",
+      "form_number": "Annexure H",
+      "use_for": "Passport Seva annexure or affidavit support file for specific cases.",
+      "audience": "Passport applicants asked to submit Annexure H",
+      "delivery_type": "pdf_download",
+      "official_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "download_url": "https://www.passportindia.gov.in/AppOnlineProject/pdf/AnnexureH.pdf",
+      "source_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "submission_mode": "Upload or carry as instructed by Passport Seva",
+      "documents": [
+        "As listed in the annexure instructions"
+      ],
+      "keywords": [
+        "passport annexure h",
+        "annexure h passport"
+      ],
+      "notes": [
+        "Check the current Passport Seva checklist before using any annexure."
+      ]
+    },
+    {
+      "id": "passport-instruction-booklet",
+      "department": "passport",
+      "topic": "instructions",
+      "title": "Passport Application Instruction Booklet",
+      "form_number": "Instruction Booklet",
+      "use_for": "Official instructions for filling passport application and understanding document rules.",
+      "audience": "Any passport applicant",
+      "delivery_type": "pdf_download",
+      "official_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "download_url": "https://passportindia.gov.in/AppOnlineProject/pdf/ApplicationformInstructionBooklet-V3.0.pdf",
+      "source_url": "https://services1.passportindia.gov.in/forms/PreLogin",
+      "submission_mode": "Reference document",
+      "documents": [
+        "No submission; use for guidance"
+      ],
+      "keywords": [
+        "passport instruction booklet",
+        "passport application instructions"
+      ],
+      "notes": [
+        "This is the official booklet for form-filling guidance."
+      ]
+    },
+    {
+      "id": "pan-form-93",
+      "department": "pan",
+      "topic": "new-pan",
+      "title": "PAN Form 93",
+      "form_number": "Form 93",
+      "use_for": "PAN allotment application for an individual who is a citizen of India under the Income-tax Rules, 2026 framework.",
+      "audience": "Indian citizen individual applicant",
+      "delivery_type": "official_page",
+      "official_url": "https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/income-tax-forms",
+      "download_url": "",
+      "source_url": "https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/income-tax-forms",
+      "submission_mode": "Official Income Tax filing path",
+      "documents": [
+        "Identity proof",
+        "Address proof",
+        "Date of birth proof"
+      ],
+      "keywords": [
+        "pan form 93",
+        "new pan citizen of india",
+        "pan individual citizen"
+      ],
+      "notes": [
+        "As of April 1, 2026, the Income Tax Department refers to Form 93 for Indian citizen individuals."
+      ]
+    },
+    {
+      "id": "pan-form-94",
+      "department": "pan",
+      "topic": "new-pan",
+      "title": "PAN Form 94",
+      "form_number": "Form 94",
+      "use_for": "PAN allotment application for Indian entities such as HUFs, companies registered in India, LLPs registered in India, firms, trusts, AOPs, local authorities, and government bodies.",
+      "audience": "Indian entities and organizations",
+      "delivery_type": "official_page",
+      "official_url": "https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/income-tax-forms",
+      "download_url": "",
+      "source_url": "https://www.incometax.gov.in/iec/foportal/sites/default/files/2026-03/En-Notified-IT-Rules-2026-20-03-2026.pdf",
+      "submission_mode": "Official Income Tax filing path",
+      "documents": [
+        "Entity registration proof",
+        "Constitution or deed documents",
+        "Any authority-specific identity documents"
+      ],
+      "keywords": [
+        "pan form 94",
+        "pan company india",
+        "pan trust india",
+        "pan huf"
+      ],
+      "notes": [
+        "Form 94 covers multiple India-registered non-individual applicant categories."
+      ]
+    },
+    {
+      "id": "pan-form-95",
+      "department": "pan",
+      "topic": "new-pan",
+      "title": "PAN Form 95",
+      "form_number": "Form 95",
+      "use_for": "PAN allotment application for individuals who are not citizens of India.",
+      "audience": "Foreign individual applicant",
+      "delivery_type": "official_page",
+      "official_url": "https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/income-tax-forms",
+      "download_url": "",
+      "source_url": "https://www.incometax.gov.in/iec/foportal/sites/default/files/2026-03/En-Notified-IT-Rules-2026-20-03-2026.pdf",
+      "submission_mode": "Official Income Tax filing path",
+      "documents": [
+        "Passport or equivalent identity proof",
+        "Date of birth proof",
+        "Foreign or Indian address proof as allowed by the rules"
+      ],
+      "keywords": [
+        "pan form 95",
+        "pan foreign individual",
+        "pan nri foreign national"
+      ],
+      "notes": [
+        "Form 95 applies to individuals who are not citizens of India."
+      ]
+    },
+    {
+      "id": "pan-form-96",
+      "department": "pan",
+      "topic": "new-pan",
+      "title": "PAN Form 96",
+      "form_number": "Form 96",
+      "use_for": "PAN allotment application for non-Indian entities such as foreign companies, foreign LLPs, foreign firms, and other overseas entities.",
+      "audience": "Foreign entities and organizations",
+      "delivery_type": "official_page",
+      "official_url": "https://www.incometax.gov.in/iec/foportal/help/all-topics/e-filing-services/income-tax-forms",
+      "download_url": "",
+      "source_url": "https://www.incometax.gov.in/iec/foportal/sites/default/files/2026-03/En-Notified-IT-Rules-2026-20-03-2026.pdf",
+      "submission_mode": "Official Income Tax filing path",
+      "documents": [
+        "Overseas registration certificate",
+        "Apostille or consular attestation as required",
+        "India registration or approval proof if operating in India"
+      ],
+      "keywords": [
+        "pan form 96",
+        "pan foreign company",
+        "pan foreign entity"
+      ],
+      "notes": [
+        "Form 96 applies to overseas entities and organizations."
+      ]
+    },
+    {
+      "id": "pan-instant-epan",
+      "department": "pan",
+      "topic": "instant-pan",
+      "title": "Instant e-PAN",
+      "form_number": "Instant e-PAN",
+      "use_for": "Get an instant e-PAN through Aadhaar-linked online processing when eligible.",
+      "audience": "Eligible Aadhaar holder",
+      "delivery_type": "official_page",
+      "official_url": "https://www.incometax.gov.in/iec/foportal/",
+      "download_url": "",
+      "source_url": "https://www.incometax.gov.in/iec/foportal/",
+      "submission_mode": "Online only",
+      "documents": [
+        "Aadhaar-linked mobile access",
+        "Eligibility under the Income Tax portal flow"
+      ],
+      "keywords": [
+        "instant epan",
+        "instant pan",
+        "e pan aadhaar"
+      ],
+      "notes": [
+        "This is usually faster than the full PAN workflow when the applicant is eligible."
+      ]
+    },
+    {
+      "id": "ration-card-new",
+      "department": "ration-card",
+      "topic": "application",
+      "title": "New Ration Card Application",
+      "form_number": "Varies by State/UT",
+      "use_for": "Apply for a new ration card through the state or UT food and civil supplies system.",
+      "audience": "Household applying under state or UT rules",
+      "delivery_type": "state_portal",
+      "official_url": "https://nfsa.gov.in/portal/apply",
+      "download_url": "",
+      "source_url": "https://nfsa.gov.in/portal/apply",
+      "submission_mode": "Usually online or state-specific offline process",
+      "documents": [
+        "Address proof",
+        "Identity proof",
+        "Family member details",
+        "Income or category documents if required by state"
+      ],
+      "keywords": [
+        "new ration card",
+        "ration card application",
+        "apply ration card"
+      ],
+      "notes": [
+        "There is no single national ration card form number. Use your state or UT portal."
+      ],
+      "state_required": true
+    },
+    {
+      "id": "ration-card-correction",
+      "department": "ration-card",
+      "topic": "correction",
+      "title": "Ration Card Correction / Update",
+      "form_number": "Varies by State/UT",
+      "use_for": "Correct name, address, member details, or category on an existing ration card.",
+      "audience": "Existing ration card holder",
+      "delivery_type": "state_portal",
+      "official_url": "https://nfsa.gov.in/portal/apply",
+      "download_url": "",
+      "source_url": "https://nfsa.gov.in/portal/apply",
+      "submission_mode": "State or UT portal process",
+      "documents": [
+        "Existing ration card details",
+        "Proof supporting the requested correction"
+      ],
+      "keywords": [
+        "ration card correction",
+        "ration card update",
+        "name correction ration card"
+      ],
+      "notes": [
+        "Correction forms and workflow differ by state or UT."
+      ],
+      "state_required": true
+    },
+    {
+      "id": "ration-card-duplicate",
+      "department": "ration-card",
+      "topic": "duplicate",
+      "title": "Duplicate / Reprint Ration Card",
+      "form_number": "Varies by State/UT",
+      "use_for": "Request duplicate or reprint service for lost, damaged, or unreadable ration cards.",
+      "audience": "Existing ration card holder",
+      "delivery_type": "state_portal",
+      "official_url": "https://nfsa.gov.in/portal/apply",
+      "download_url": "",
+      "source_url": "https://nfsa.gov.in/portal/apply",
+      "submission_mode": "State or UT portal process",
+      "documents": [
+        "Existing ration card number if available",
+        "Identity proof",
+        "Loss or damage explanation if required"
+      ],
+      "keywords": [
+        "duplicate ration card",
+        "lost ration card",
+        "reprint ration card"
+      ],
+      "notes": [
+        "Duplicate card services differ by state or UT."
+      ],
+      "state_required": true
+    }
+  ],
+  "states": [
+    {"slug": "andaman-and-nicobar-islands", "name": "Andaman and Nicobar Islands", "official_url": "https://nfsa.gov.in/State/AN"},
+    {"slug": "andhra-pradesh", "name": "Andhra Pradesh", "official_url": "https://nfsa.gov.in/State/AP"},
+    {"slug": "arunachal-pradesh", "name": "Arunachal Pradesh", "official_url": "https://nfsa.gov.in/State/AR"},
+    {"slug": "assam", "name": "Assam", "official_url": "https://nfsa.gov.in/State/AS"},
+    {"slug": "bihar", "name": "Bihar", "official_url": "https://nfsa.gov.in/State/BR"},
+    {"slug": "chandigarh", "name": "Chandigarh", "official_url": "https://nfsa.gov.in/State/CH"},
+    {"slug": "chhattisgarh", "name": "Chhattisgarh", "official_url": "https://nfsa.gov.in/State/CG"},
+    {"slug": "dadra-and-nagar-haveli-and-daman-and-diu", "name": "Dadra and Nagar Haveli and Daman and Diu", "official_url": "https://nfsa.gov.in/State/DN"},
+    {"slug": "delhi", "name": "Delhi", "official_url": "https://nfsa.gov.in/State/DL"},
+    {"slug": "goa", "name": "Goa", "official_url": "https://nfsa.gov.in/State/GA"},
+    {"slug": "gujarat", "name": "Gujarat", "official_url": "https://nfsa.gov.in/State/GJ"},
+    {"slug": "haryana", "name": "Haryana", "official_url": "https://nfsa.gov.in/State/HR"},
+    {"slug": "himachal-pradesh", "name": "Himachal Pradesh", "official_url": "https://nfsa.gov.in/State/HP"},
+    {"slug": "jammu-and-kashmir", "name": "Jammu and Kashmir", "official_url": "https://nfsa.gov.in/State/JK"},
+    {"slug": "jharkhand", "name": "Jharkhand", "official_url": "https://nfsa.gov.in/State/JH"},
+    {"slug": "karnataka", "name": "Karnataka", "official_url": "https://nfsa.gov.in/State/KA"},
+    {"slug": "kerala", "name": "Kerala", "official_url": "https://nfsa.gov.in/State/KL"},
+    {"slug": "ladakh", "name": "Ladakh", "official_url": "https://nfsa.gov.in/State/LH"},
+    {"slug": "lakshadweep", "name": "Lakshadweep", "official_url": "https://nfsa.gov.in/State/LD"},
+    {"slug": "madhya-pradesh", "name": "Madhya Pradesh", "official_url": "https://nfsa.gov.in/State/MP"},
+    {"slug": "maharashtra", "name": "Maharashtra", "official_url": "https://nfsa.gov.in/State/MH"},
+    {"slug": "manipur", "name": "Manipur", "official_url": "https://nfsa.gov.in/State/MN"},
+    {"slug": "meghalaya", "name": "Meghalaya", "official_url": "https://nfsa.gov.in/State/ML"},
+    {"slug": "mizoram", "name": "Mizoram", "official_url": "https://nfsa.gov.in/State/MZ"},
+    {"slug": "nagaland", "name": "Nagaland", "official_url": "https://nfsa.gov.in/State/NL"},
+    {"slug": "odisha", "name": "Odisha", "official_url": "https://nfsa.gov.in/State/OR"},
+    {"slug": "puducherry", "name": "Puducherry", "official_url": "https://nfsa.gov.in/State/PY"},
+    {"slug": "punjab", "name": "Punjab", "official_url": "https://nfsa.gov.in/State/PB"},
+    {"slug": "rajasthan", "name": "Rajasthan", "official_url": "https://nfsa.gov.in/State/RJ"},
+    {"slug": "sikkim", "name": "Sikkim", "official_url": "https://nfsa.gov.in/State/SK"},
+    {"slug": "tamil-nadu", "name": "Tamil Nadu", "official_url": "https://nfsa.gov.in/State/TN"},
+    {"slug": "telangana", "name": "Telangana", "official_url": "https://nfsa.gov.in/State/TL"},
+    {"slug": "tripura", "name": "Tripura", "official_url": "https://nfsa.gov.in/State/TR"},
+    {"slug": "uttar-pradesh", "name": "Uttar Pradesh", "official_url": "https://nfsa.gov.in/State/UP"},
+    {"slug": "uttarakhand", "name": "Uttarakhand", "official_url": "https://nfsa.gov.in/State/UK"},
+    {"slug": "west-bengal", "name": "West Bengal", "official_url": "https://nfsa.gov.in/State/WB"}
+  ]
+}

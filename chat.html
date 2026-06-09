@@ -93,6 +93,7 @@
             <div class="welcome-message">
                 <h2>👋 Welcome to your legal consultation!</h2>
                 <p>I'm here to help you with legal questions, document generation, and guidance.</p>
+                <p>You can also ask which government form you need for Aadhaar, Passport, PAN, or Ration Card workflows.</p>
                 <p>Feel free to ask me anything about Indian law, legal procedures, or request document generation.</p>
                 <p><strong>Remember:</strong> This is for informational purposes only. Always consult a qualified attorney for specific legal matters.</p>
             </div>
@@ -169,7 +170,8 @@
         // Initialize
         function init() {
             document.getElementById('userGreeting').textContent = `Hello, ${userName}!`;
-            document.getElementById('messageInput').focus();
+            const messageInput = document.getElementById('messageInput');
+            messageInput.focus();
             
             // Load saved language preference
             if (currentLanguage) {
@@ -188,6 +190,18 @@
                     sendMessage();
                 }
             });
+
+            // Support prefilled prompts from other Saathi tools.
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const prefill = (params.get('prefill') || '').trim();
+                if (prefill) {
+                    messageInput.value = prefill;
+                    autoResize();
+                }
+            } catch (error) {
+                console.warn('Unable to read chat prefill', error);
+            }
         }
 
         function generateSessionId() {

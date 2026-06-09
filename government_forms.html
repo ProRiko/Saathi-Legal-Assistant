@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Find the right official Indian government form by department, understand what it is used for, and open only verified official sources.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://saathi-legal-assistant.vercel.app/government-forms.html">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Saathi Government Forms Navigator">
+    <meta property="og:description" content="Choose Aadhaar, Passport, PAN, or Ration Card and open the right official form or service path with confidence.">
+    <meta property="og:url" content="https://saathi-legal-assistant.vercel.app/government-forms.html">
+    <meta property="og:image" content="https://saathi-legal-assistant.vercel.app/assets/og-card.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Government Forms Navigator">
+    <meta name="twitter:description" content="Saathi helps users find the correct department, form, and official source before they fill anything.">
+    <meta name="twitter:image" content="https://saathi-legal-assistant.vercel.app/assets/og-card.svg">
+    <title>Saathi Government Forms Navigator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="enhanced-ux.css">
+    <script src="anon-id.js"></script>
+    <script src="analytics.js" defer></script>
+    <style>
+        body {
+            margin: 0;
+            background:
+                radial-gradient(circle at top left, rgba(249, 168, 38, 0.14), transparent 28%),
+                radial-gradient(circle at top right, rgba(247, 107, 28, 0.12), transparent 32%),
+                linear-gradient(180deg, #0f1724, #071018 58%, #050b12);
+            color: #f4f1e8;
+            font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        }
+        .forms-shell {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 34px 20px 100px;
+        }
+        .forms-hero {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+            align-items: stretch;
+            margin-bottom: 26px;
+        }
+        .forms-hero-card,
+        .forms-guidance {
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(12, 20, 31, 0.86);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        }
+        .forms-hero-card {
+            padding: 34px;
+        }
+        .forms-hero-card .tagline,
+        .forms-guidance .tagline {
+            margin: 0 0 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(247, 219, 167, 0.82);
+            font-size: 0.82rem;
+        }
+        .forms-hero-card h1 {
+            margin: 0 0 12px;
+            font-size: clamp(2.2rem, 4vw, 3.45rem);
+            color: #f8e7c2;
+            line-height: 1.03;
+        }
+        .forms-hero-card p {
+            margin: 0;
+            max-width: 760px;
+            color: #d9d0bf;
+            font-size: 1.04rem;
+            line-height: 1.6;
+        }
+        .hero-search {
+            margin-top: 24px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+        }
+        .hero-search input,
+        .filter-row input,
+        .filter-row select {
+            width: 100%;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(6, 10, 16, 0.86);
+            color: #f4f1e8;
+            padding: 14px 16px;
+            font-size: 1rem;
+        }
+        .hero-search button,
+        .card-actions a,
+        .card-actions button {
+            border: none;
+            border-radius: 999px;
+            padding: 14px 20px;
+            cursor: pointer;
+            font-weight: 700;
+            text-decoration: none;
+            text-align: center;
+        }
+        .hero-search button,
+        .card-actions .primary {
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #190d00;
+            box-shadow: 0 18px 35px rgba(247, 107, 28, 0.24);
+        }
+        .forms-guidance {
+            padding: 28px;
+        }
+        .guidance-list {
+            margin: 16px 0 0;
+            padding-left: 18px;
+            color: #d9d0bf;
+            line-height: 1.7;
+        }
+        .guidance-callout {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 18px;
+            background: rgba(247, 219, 167, 0.09);
+            border: 1px solid rgba(247, 219, 167, 0.2);
+            color: #f7dfb2;
+        }
+        .department-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 12px 0 24px;
+        }
+        .department-card {
+            border-radius: 22px;
+            padding: 18px 18px 20px;
+            background: rgba(12, 20, 31, 0.76);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+        .department-card:hover,
+        .department-card:focus-visible,
+        .department-card.active {
+            transform: translateY(-2px);
+            border-color: rgba(247, 219, 167, 0.4);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+        }
+        .department-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(247, 219, 167, 0.14);
+            color: #f8e7c2;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            margin-bottom: 12px;
+        }
+        .department-card h3 {
+            margin: 0 0 8px;
+            color: #f8e7c2;
+        }
+        .department-card p {
+            margin: 0;
+            color: #cdc2ae;
+            line-height: 1.5;
+        }
+        .filter-panel {
+            border-radius: 24px;
+            background: rgba(11, 18, 28, 0.86);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+        .filter-row {
+            display: grid;
+            grid-template-columns: minmax(220px, 1.4fr) minmax(180px, 0.7fr) minmax(200px, 0.9fr) auto;
+            gap: 12px;
+            align-items: center;
+        }
+        .filter-row button {
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: transparent;
+            color: #f4f1e8;
+            border-radius: 999px;
+            padding: 14px 18px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .status-line {
+            margin: 14px 2px 0;
+            color: #bfb5a2;
+            font-size: 0.94rem;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }
+        .form-card {
+            border-radius: 24px;
+            padding: 22px;
+            background: linear-gradient(180deg, rgba(16, 26, 39, 0.96), rgba(9, 15, 24, 0.94));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .form-card .eyebrow {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 0.86rem;
+        }
+        .pill {
+            border-radius: 999px;
+            padding: 6px 12px;
+            background: rgba(247, 219, 167, 0.12);
+            color: #f7dfb2;
+            border: 1px solid rgba(247, 219, 167, 0.22);
+        }
+        .pill.secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: #d5cab6;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        .form-card h3 {
+            margin: 0;
+            font-size: 1.34rem;
+            color: #f8e7c2;
+            line-height: 1.25;
+        }
+        .form-card p,
+        .form-card li {
+            color: #d8cfbe;
+            line-height: 1.55;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .meta-box {
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 14px;
+        }
+        .meta-box strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #f8e7c2;
+            font-size: 0.9rem;
+        }
+        .docs-list,
+        .notes-list {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .card-actions {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .card-actions .secondary {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: transparent;
+            color: #f4f1e8;
+        }
+        .empty-state {
+            display: none;
+            margin-top: 18px;
+            padding: 24px;
+            border-radius: 24px;
+            background: rgba(12, 20, 31, 0.7);
+            border: 1px dashed rgba(255, 255, 255, 0.16);
+            color: #d8cfbe;
+        }
+        .bottom-strip {
+            margin-top: 34px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
+        .bottom-card {
+            border-radius: 22px;
+            background: rgba(12, 20, 31, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px;
+        }
+        .bottom-card h3 {
+            margin-top: 0;
+            color: #f8e7c2;
+        }
+        .bottom-card a {
+            color: #f7dfb2;
+        }
+        @media (max-width: 980px) {
+            .forms-hero {
+                grid-template-columns: 1fr;
+            }
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="site-nav__brand">
+            <a href="/">Saathi Legal Assistant</a>
+        </div>
+        <div class="site-nav__links">
+            <a href="/">Home</a>
+            <a href="/tools.html">Tools</a>
+            <a href="/government-forms.html" class="is-active">Gov Forms</a>
+            <a href="/legal-notices.html">Notices</a>
+            <a href="/agreement-templates.html">Agreements</a>
+            <a href="/legal-calculators.html">Calculators</a>
+            <a href="/chat.html">Chat</a>
+        </div>
+    </nav>
+
+    <main class="forms-shell">
+        <section class="forms-hero">
+            <article class="forms-hero-card">
+                <p class="tagline">Verified government sources only</p>
+                <h1>Find the right form before you fill anything.</h1>
+                <p>Choose the department, see what each form is used for, and open the official government source directly. This page currently covers Aadhaar, Passport, PAN, and Ration Card workflows with a verified catalog.</p>
+                <div class="hero-search">
+                    <input id="heroQuery" type="text" placeholder="Example: Aadhaar address update, PAN for foreign company, passport PCC form">
+                    <button type="button" id="heroSearchBtn">Find form</button>
+                </div>
+            </article>
+            <aside class="forms-guidance">
+                <p class="tagline">How Saathi helps</p>
+                <h2 style="margin:0;color:#f8e7c2;">Department first. Form next. Official source last.</h2>
+                <ul class="guidance-list">
+                    <li>Pick a department like Aadhaar, Passport, PAN, or Ration Card.</li>
+                    <li>Read what each form is actually used for before downloading anything.</li>
+                    <li>Open the official source or PDF only from a government-hosted path.</li>
+                    <li>Jump into chat when you want help understanding documents or eligibility.</li>
+                </ul>
+                <div class="guidance-callout">
+                    Some services are portal-based rather than public PDF downloads. In those cases, Saathi will open the official filing page instead of inventing a form file.
+                </div>
+            </aside>
+        </section>
+
+        <section class="department-strip" id="departmentStrip" aria-label="Departments"></section>
+
+        <section class="filter-panel" aria-label="Government forms filters">
+            <div class="filter-row">
+                <input id="queryInput" type="text" placeholder="Search by form number, service, or use case">
+                <select id="topicSelect">
+                    <option value="">All topics</option>
+                </select>
+                <select id="stateSelect">
+                    <option value="">State or UT (only needed for ration card flows)</option>
+                </select>
+                <button type="button" id="resetFiltersBtn">Reset</button>
+            </div>
+            <p class="status-line" id="statusLine">Loading verified form catalog...</p>
+        </section>
+
+        <section class="results-grid" id="resultsGrid" aria-live="polite"></section>
+        <section class="empty-state" id="emptyState">
+            No matching form was found in the current verified catalog. Try a department first, or ask Saathi in chat using the same question.
+        </section>
+
+        <section class="bottom-strip">
+            <article class="bottom-card">
+                <h3>Need help understanding a form?</h3>
+                <p>Open chat with one click from any result card. Saathi will explain what the form is used for, what documents are usually needed, and when you should double-check with the official department.</p>
+            </article>
+            <article class="bottom-card">
+                <h3>Important note on Ration Card services</h3>
+                <p>Ration card forms and processes vary by state and UT. Saathi uses the official NFSA state directory pages so you can jump into the right public food portal. Source: <a href="https://nfsa.gov.in/portal/apply" target="_blank" rel="noopener">NFSA Apply</a>.</p>
+            </article>
+            <article class="bottom-card">
+                <h3>Spotted a broken official link?</h3>
+                <p>Government sites change often. If one link stops working, use chat or email support so the verified catalog can be refreshed.</p>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        const state = {
+            departments: [],
+            forms: [],
+            states: [],
+            activeDepartment: '',
+            activeTopic: '',
+            activeState: '',
+            activeQuery: ''
+        };
+
+        const departmentStrip = document.getElementById('departmentStrip');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const emptyState = document.getElementById('emptyState');
+        const statusLine = document.getElementById('statusLine');
+        const heroQuery = document.getElementById('heroQuery');
+        const queryInput = document.getElementById('queryInput');
+        const topicSelect = document.getElementById('topicSelect');
+        const stateSelect = document.getElementById('stateSelect');
+        const heroSearchBtn = document.getElementById('heroSearchBtn');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function makeQueryString(params) {
+            const search = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+                if (value) search.set(key, value);
+            });
+            const text = search.toString();
+            return text ? `?${text}` : '';
+        }
+
+        function departmentTopics(forms, departmentSlug) {
+            const items = new Map();
+            forms.filter((item) => item.department === departmentSlug).forEach((item) => {
+                if (!items.has(item.topic)) {
+                    items.set(item.topic, item.topic.replace(/-/g, ' '));
+                }
+            });
+            return Array.from(items.entries());
+        }
+
+        function syncTopicOptions() {
+            const previous = state.activeTopic;
+            topicSelect.innerHTML = '<option value="">All topics</option>';
+            if (!state.activeDepartment) {
+                state.activeTopic = '';
+                return;
+            }
+
+            departmentTopics(state.forms, state.activeDepartment).forEach(([value, label]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+                topicSelect.appendChild(option);
+            });
+
+            if (previous && Array.from(topicSelect.options).some((option) => option.value === previous)) {
+                topicSelect.value = previous;
+                state.activeTopic = previous;
+            } else {
+                topicSelect.value = '';
+                state.activeTopic = '';
+            }
+        }
+
+        function renderDepartments() {
+            departmentStrip.innerHTML = '';
+            state.departments.forEach((item) => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = `department-card${state.activeDepartment === item.slug ? ' active' : ''}`;
+                card.innerHTML = `
+                    <span class="department-icon">${escapeHtml(item.icon || item.name.slice(0, 2).toUpperCase())}</span>
+                    <h3>${escapeHtml(item.name)}</h3>
+                    <p>${escapeHtml(item.summary)}</p>
+                `;
+                card.addEventListener('click', () => {
+                    state.activeDepartment = state.activeDepartment === item.slug ? '' : item.slug;
+                    syncTopicOptions();
+                    renderDepartments();
+                    loadForms();
+                });
+                departmentStrip.appendChild(card);
+            });
+        }
+
+        function renderStateOptions() {
+            stateSelect.innerHTML = '<option value="">State or UT (only needed for ration card flows)</option>';
+            state.states.forEach((item) => {
+                const option = document.createElement('option');
+                option.value = item.slug;
+                option.textContent = item.name;
+                stateSelect.appendChild(option);
+            });
+        }
+
+        function renderResults(forms) {
+            resultsGrid.innerHTML = '';
+            emptyState.style.display = forms.length ? 'none' : 'block';
+            forms.forEach((item) => {
+                const docs = (item.documents || []).map((doc) => `<li>${escapeHtml(doc)}</li>`).join('');
+                const notes = (item.notes || []).map((note) => `<li>${escapeHtml(note)}</li>`).join('');
+                const officialHref = `/government-forms/official/${encodeURIComponent(item.id)}${item.state && item.state.slug ? `?state=${encodeURIComponent(item.state.slug)}` : (state.activeState ? `?state=${encodeURIComponent(state.activeState)}` : '')}`;
+                const askPrompt = encodeURIComponent(`I need help with ${item.title} (${item.form_number}). Tell me what it is used for, what documents are usually needed, and any important caution before submission.`);
+                const sourceUrl = item.source_url || item.official_url || '#';
+                const actionLabel = item.action_label || 'Open official source';
+
+                const card = document.createElement('article');
+                card.className = 'form-card';
+                card.innerHTML = `
+                    <div class="eyebrow">
+                        <span class="pill">${escapeHtml(item.department_name)}</span>
+                        <span class="pill secondary">${escapeHtml(item.form_number || 'Not specified')}</span>
+                    </div>
+                    <h3>${escapeHtml(item.title)}</h3>
+                    <p>${escapeHtml(item.use_for)}</p>
+                    <div class="meta-grid">
+                        <div class="meta-box">
+                            <strong>Audience</strong>
+                            <span>${escapeHtml(item.audience || 'General applicant')}</span>
+                        </div>
+                        <div class="meta-box">
+                            <strong>Submission mode</strong>
+                            <span>${escapeHtml(item.submission_mode || 'Official process')}</span>
+                        </div>
+                    </div>
+                    <div class="meta-box">
+                        <strong>Documents usually needed</strong>
+                        <ul class="docs-list">${docs || '<li>Check the official source for the latest list.</li>'}</ul>
+                    </div>
+                    <div class="meta-box">
+                        <strong>Important note</strong>
+                        <ul class="notes-list">${notes || '<li>Always verify details on the official source before submission.</li>'}</ul>
+                    </div>
+                    ${item.state_required ? `<div class="meta-box"><strong>State or UT route</strong><span>${escapeHtml(item.state ? item.state.name : 'Select a state or UT above to jump into the right official portal.')}</span></div>` : ''}
+                    <div class="card-actions">
+                        <a class="primary" href="${officialHref}" target="_blank" rel="noopener">${escapeHtml(actionLabel)}</a>
+                        <a class="secondary" href="/chat.html?prefill=${askPrompt}" target="_blank" rel="noopener">Ask Saathi</a>
+                        <a class="secondary" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener">Source</a>
+                    </div>
+                `;
+                resultsGrid.appendChild(card);
+            });
+        }
+
+        async function loadForms() {
+            const params = {
+                department: state.activeDepartment,
+                topic: state.activeTopic,
+                query: state.activeQuery,
+                state: state.activeState
+            };
+            const query = makeQueryString(params);
+            statusLine.textContent = 'Loading official form matches...';
+            try {
+                const response = await fetch(`/api/government-forms/forms${query}`);
+                const payload = await response.json();
+                const forms = payload.forms || [];
+                renderResults(forms);
+                const contextParts = [];
+                if (state.activeDepartment) {
+                    const department = state.departments.find((item) => item.slug === state.activeDepartment);
+                    if (department) contextParts.push(department.name);
+                }
+                if (state.activeTopic) contextParts.push(state.activeTopic.replace(/-/g, ' '));
+                if (state.activeState) {
+                    const chosenState = state.states.find((item) => item.slug === state.activeState);
+                    if (chosenState) contextParts.push(chosenState.name);
+                }
+                if (state.activeQuery) contextParts.push(`query "${state.activeQuery}"`);
+                statusLine.textContent = forms.length
+                    ? `Showing ${forms.length} verified match${forms.length === 1 ? '' : 'es'}${contextParts.length ? ` for ${contextParts.join(' / ')}` : ''}.`
+                    : 'No verified match found. Try a broader search or a different department.';
+            } catch (error) {
+                statusLine.textContent = 'Unable to load forms right now.';
+                renderResults([]);
+            }
+        }
+
+        function applySearch(text) {
+            const value = String(text || '').trim();
+            state.activeQuery = value;
+            queryInput.value = value;
+            heroQuery.value = value;
+            loadForms();
+        }
+
+        function parseInitialState() {
+            const params = new URLSearchParams(window.location.search);
+            const department = (params.get('department') || '').trim().toLowerCase();
+            const topic = (params.get('topic') || '').trim().toLowerCase();
+            const query = (params.get('query') || '').trim();
+            const selectedState = (params.get('state') || '').trim().toLowerCase();
+
+            if (department) state.activeDepartment = department;
+            if (topic) state.activeTopic = topic;
+            if (query) {
+                state.activeQuery = query;
+                queryInput.value = query;
+                heroQuery.value = query;
+            }
+            if (selectedState) state.activeState = selectedState;
+        }
+
+        async function init() {
+            try {
+                const [departmentsRes, statesRes] = await Promise.all([
+                    fetch('/api/government-forms/departments'),
+                    fetch('/api/government-forms/states')
+                ]);
+                const departmentsPayload = await departmentsRes.json();
+                const statesPayload = await statesRes.json();
+                state.departments = departmentsPayload.departments || [];
+                state.states = statesPayload.states || [];
+                renderDepartments();
+                renderStateOptions();
+                parseInitialState();
+                renderDepartments();
+                if (state.activeState) stateSelect.value = state.activeState;
+
+                const formsRes = await fetch('/api/government-forms/forms');
+                const formsPayload = await formsRes.json();
+                state.forms = formsPayload.forms || [];
+                syncTopicOptions();
+                if (state.activeTopic) topicSelect.value = state.activeTopic;
+                await loadForms();
+            } catch (error) {
+                statusLine.textContent = 'Unable to load the verified catalog right now.';
+            }
+        }
+
+        heroSearchBtn.addEventListener('click', () => applySearch(heroQuery.value));
+        resetFiltersBtn.addEventListener('click', () => {
+            state.activeDepartment = '';
+            state.activeTopic = '';
+            state.activeState = '';
+            state.activeQuery = '';
+            queryInput.value = '';
+            heroQuery.value = '';
+            topicSelect.value = '';
+            stateSelect.value = '';
+            syncTopicOptions();
+            renderDepartments();
+            loadForms();
+        });
+        queryInput.addEventListener('change', () => applySearch(queryInput.value));
+        heroQuery.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applySearch(heroQuery.value);
+            }
+        });
+        queryInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applySearch(queryInput.value);
+            }
+        });
+        topicSelect.addEventListener('change', () => {
+            state.activeTopic = topicSelect.value;
+            loadForms();
+        });
+        stateSelect.addEventListener('change', () => {
+            state.activeState = stateSelect.value;
+            loadForms();
+        });
+
+        init();
+    </script>
+</body>
+</html>

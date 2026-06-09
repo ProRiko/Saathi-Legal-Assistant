@@ -8,7 +8,7 @@ import re
 import uuid
 import sqlite3
 from typing import Any, Dict
-from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string, g
+from flask import Flask, request, jsonify, send_file, send_from_directory, make_response, render_template_string, g, redirect
 from flask_cors import CORS
 import requests
 import logging
@@ -61,6 +61,7 @@ CONSENT_LOG_PATH = os.path.join(RUNTIME_STORAGE_DIR, 'consent_logs.jsonl')
 CONSENT_SCRIPT_TAG = '<script src="consent-modal.js" defer></script>'
 TOOL_MANIFEST_PATH = os.path.join(BASE_DIR, 'tool_metadata.json')
 TEMPLATE_MANIFEST_PATH = os.path.join(BASE_DIR, 'template_metadata.json')
+GOVERNMENT_FORMS_CATALOG_PATH = os.path.join(BASE_DIR, 'use_cases', 'government_forms_catalog.json')
 logging_handlers = [logging.StreamHandler()]
 if not os.environ.get('VERCEL'):
     logging_handlers.append(logging.FileHandler(os.path.join(RUNTIME_STORAGE_DIR, 'saathi.log')))
@@ -110,10 +111,41 @@ def load_template_manifest(path: str = TEMPLATE_MANIFEST_PATH) -> Dict[str, Any]
     return {"templates": []}
 
 
+def load_government_forms_catalog(path: str = GOVERNMENT_FORMS_CATALOG_PATH) -> Dict[str, Any]:
+    """Load the verified government forms catalog used by UI, API, and chat."""
+    try:
+        with open(path, 'r', encoding='utf-8') as catalog_file:
+            data = json.load(catalog_file)
+            if isinstance(data, dict):
+                data.setdefault('departments', [])
+                data.setdefault('forms', [])
+                data.setdefault('states', [])
+                return data
+    except FileNotFoundError:
+        logger.warning("Government forms catalog not found at %s", path)
+    except json.JSONDecodeError as exc:
+        logger.error("Unable to parse government forms catalog: %s", exc)
+    return {"departments": [], "forms": [], "states": []}
+
+
 TOOL_MANIFEST = load_tool_manifest()
 TOOL_INDEX = {entry.get('slug'): entry for entry in TOOL_MANIFEST.get('tools', [])}
 TEMPLATE_MANIFEST = load_template_manifest()
 TEMPLATE_INDEX = {entry.get('slug'): entry for entry in TEMPLATE_MANIFEST.get('templates', []) if entry.get('slug')}
+GOVERNMENT_FORMS_CATALOG = load_government_forms_catalog()
+GOVERNMENT_DEPARTMENTS = {
+    entry.get('slug'): entry for entry in GOVERNMENT_FORMS_CATALOG.get('departments', []) if entry.get('slug')
+}
+GOVERNMENT_FORMS = [
+    entry for entry in GOVERNMENT_FORMS_CATALOG.get('forms', [])
+    if isinstance(entry, dict) and entry.get('id')
+]
+GOVERNMENT_FORM_INDEX = {entry.get('id'): entry for entry in GOVERNMENT_FORMS}
+GOVERNMENT_STATES = [
+    entry for entry in GOVERNMENT_FORMS_CATALOG.get('states', [])
+    if isinstance(entry, dict) and entry.get('slug')
+]
+GOVERNMENT_STATE_INDEX = {entry.get('slug'): entry for entry in GOVERNMENT_STATES}
 
 UPGRADE_PAGE_URL = '/pricing.html'
 TIER_FREE = 'free'
@@ -1367,6 +1399,12 @@ def serve_tools_dashboard():
     """Serve the central tools discovery page."""
     return render_html_with_consent('tools.html', 'Tools page not found')
 
+
+@app.route('/government-forms.html')
+def serve_government_forms():
+    """Serve the government forms browser page."""
+    return render_html_with_consent('government_forms.html', 'Government forms page not found')
+
 @app.route('/calculator.html') 
 def serve_calculator():
     """Serve the simple calculator page"""
@@ -1473,11 +1511,176 @@ def is_api_configured():
     """Check if the selected LLM provider is ready"""
     return ACTIVE_PROVIDER in {'claude', 'gemini'}
 
+
+def government_form_to_summary(entry: Dict[str, Any], state_slug: str | None = None) -> Dict[str, Any]:
+    """Normalize a government form entry for API responses."""
+    state_info = GOVERNMENT_STATE_INDEX.get(state_slug) if state_slug else None
+    effective_url = state_info.get('official_url') if state_info and entry.get('state_required') else (
+        entry.get('download_url') or entry.get('official_url')
+    )
+    action_label = 'Download official PDF' if entry.get('delivery_type') == 'pdf_download' else 'Open official page'
+    if entry.get('delivery_type') == 'state_portal':
+        action_label = 'Open state or UT portal'
+    elif entry.get('delivery_type') == 'online_only':
+        action_label = 'Open online service'
+
+    department = GOVERNMENT_DEPARTMENTS.get(entry.get('department'), {})
+    return {
+        "id": entry.get('id'),
+        "department": entry.get('department'),
+        "department_name": department.get('name', entry.get('department')),
+        "topic": entry.get('topic'),
+        "title": entry.get('title'),
+        "form_number": entry.get('form_number') or "Not specified",
+        "use_for": entry.get('use_for'),
+        "audience": entry.get('audience'),
+        "delivery_type": entry.get('delivery_type'),
+        "official_url": entry.get('official_url'),
+        "download_url": entry.get('download_url') or "",
+        "source_url": entry.get('source_url') or entry.get('official_url'),
+        "submission_mode": entry.get('submission_mode') or "Official process",
+        "documents": entry.get('documents') or [],
+        "keywords": entry.get('keywords') or [],
+        "notes": entry.get('notes') or [],
+        "state_required": bool(entry.get('state_required')),
+        "state": state_info,
+        "effective_url": effective_url,
+        "action_label": action_label
+    }
+
+
+def list_government_forms(department: str | None = None,
+                          topic: str | None = None,
+                          query: str | None = None,
+                          state_slug: str | None = None) -> list[Dict[str, Any]]:
+    """Filter the government forms catalog for UI and API use."""
+    query_text = (query or '').strip().lower()
+    results: list[Dict[str, Any]] = []
+    for entry in GOVERNMENT_FORMS:
+        if department and entry.get('department') != department:
+            continue
+        if topic and entry.get('topic') != topic:
+            continue
+        if state_slug and entry.get('state_required') and state_slug not in GOVERNMENT_STATE_INDEX:
+            continue
+        if query_text:
+            haystack = ' '.join([
+                str(entry.get('title') or ''),
+                str(entry.get('form_number') or ''),
+                str(entry.get('use_for') or ''),
+                str(entry.get('audience') or ''),
+                ' '.join(entry.get('keywords') or [])
+            ]).lower()
+            if query_text not in haystack:
+                query_tokens = [token for token in re.split(r'[^a-z0-9]+', query_text) if token]
+                if not query_tokens or not all(token in haystack for token in query_tokens):
+                    continue
+        results.append(government_form_to_summary(entry, state_slug=state_slug))
+
+    return sorted(results, key=lambda item: (
+        item.get('department_name') or '',
+        item.get('topic') or '',
+        item.get('title') or ''
+    ))
+
+
+def score_government_form_match(user_input: str, entry: Dict[str, Any]) -> int:
+    """Simple keyword scorer that keeps chat routing deterministic."""
+    lowered = user_input.lower()
+    score = 0
+    for keyword in entry.get('keywords') or []:
+        keyword_lower = keyword.lower()
+        if keyword_lower in lowered:
+            score += max(3, len(keyword_lower.split()))
+
+    title = str(entry.get('title') or '').lower()
+    if title and title in lowered:
+        score += 6
+
+    form_number = str(entry.get('form_number') or '').lower()
+    if form_number and form_number != 'varies by state/ut' and form_number in lowered:
+        score += 5
+
+    use_for = str(entry.get('use_for') or '').lower()
+    for token in ['apply', 'application', 'download', 'form', 'update', 'correction', 'minor', 'child', 'nri']:
+        if token in lowered and token in use_for:
+            score += 1
+
+    if entry.get('department') == 'aadhaar' and any(term in lowered for term in ['aadhaar', 'aadhar', 'uidai']):
+        score += 4
+    if entry.get('department') == 'passport' and 'passport' in lowered:
+        score += 4
+    if entry.get('department') == 'pan' and any(term in lowered for term in ['pan', 'income tax', 'epan', 'e-pan']):
+        score += 4
+    if entry.get('department') == 'ration-card' and any(term in lowered for term in ['ration', 'nfsa', 'food card']):
+        score += 4
+    return score
+
+
+def recommend_government_forms(user_input: str, limit: int = 3) -> list[Dict[str, Any]]:
+    """Return the top catalog matches for a free-text query."""
+    scored: list[tuple[int, Dict[str, Any]]] = []
+    for entry in GOVERNMENT_FORMS:
+        score = score_government_form_match(user_input, entry)
+        if score > 0:
+            scored.append((score, entry))
+    scored.sort(key=lambda item: (-item[0], item[1].get('title') or ''))
+    return [government_form_to_summary(entry) for _, entry in scored[:limit]]
+
+
+def should_route_to_government_forms(user_input: str) -> bool:
+    """Only bypass the LLM when the user is clearly looking for a form or official download."""
+    lowered = user_input.lower()
+    department_terms = [
+        'aadhaar', 'aadhar', 'uidai', 'passport', 'pan', 'epan', 'e-pan', 'ration card', 'ration', 'nfsa',
+        'annexure', 'pcc', 'surrender certificate'
+    ]
+    action_terms = [
+        'form', 'download', 'apply', 'application', 'which form', 'what form', 'official form',
+        'official pdf', 'update', 'correction', 'reissue', 'minor', 'nri'
+    ]
+    return any(term in lowered for term in department_terms) and any(term in lowered for term in action_terms)
+
+
+def build_government_forms_chat_reply(user_input: str) -> tuple[str, list[Dict[str, Any]]]:
+    """Craft a deterministic chat reply that points to verified official forms."""
+    matches = recommend_government_forms(user_input)
+    if not matches:
+        catalog_url = '/government-forms.html'
+        return (
+            "I could not confidently match that to one verified government form yet.\n\n"
+            f"Please open {catalog_url} and choose the department first. I currently cover Aadhaar, Passport, PAN, and Ration Card flows with official-source links only.",
+            []
+        )
+
+    lines = [
+        "Here are the closest official government form matches I found:",
+        ""
+    ]
+    for item in matches:
+        lines.append(f"1. **{item['title']}** ({item['form_number']})")
+        lines.append(f"Used for: {item['use_for']}")
+        lines.append(f"Department: {item['department_name']}")
+        lines.append(f"Official source: {item['source_url']}")
+        if item.get('effective_url'):
+            lines.append(f"Open official form: {item['effective_url']}")
+        lines.append("")
+
+    lines.append(
+        "If you want, open /government-forms.html for the department-wise browser and document checklist."
+    )
+    return '\n'.join(lines).strip(), matches
+
+
 def detect_intent(user_input):
     """Simple intent detection for legal queries"""
     user_input_lower = user_input.lower()
     
     intents = {
+        "government_forms": [
+            "aadhaar", "aadhar", "uidai", "passport", "pan", "epan", "e-pan", "ration card",
+            "nfsa", "annexure", "police clearance certificate", "which form", "official form"
+        ],
         "property_law": ["property", "real estate", "landlord", "tenant", "rent", "deposit", "lease", "eviction", "housing"],
         "employment_law": ["job", "employment", "salary", "workplace", "fired", "resignation", "termination", "labor"],
         "family_law": ["marriage", "divorce", "custody", "alimony", "domestic", "family", "dowry", "maintenance"],
@@ -3133,6 +3336,81 @@ def api_account_upgrade_intent():
     }), 201
 
 
+@app.route('/api/government-forms/departments', methods=['GET'])
+def api_government_form_departments():
+    """List supported departments for the verified government forms browser."""
+    return jsonify({
+        "status": "success",
+        "updated_at": GOVERNMENT_FORMS_CATALOG.get('updated_at'),
+        "departments": GOVERNMENT_FORMS_CATALOG.get('departments', [])
+    })
+
+
+@app.route('/api/government-forms/states', methods=['GET'])
+def api_government_form_states():
+    """List states and UTs used for NFSA-linked ration-card flows."""
+    return jsonify({
+        "status": "success",
+        "states": GOVERNMENT_STATES
+    })
+
+
+@app.route('/api/government-forms/forms', methods=['GET'])
+def api_government_forms():
+    """Filter the government forms catalog by department, topic, query, and state."""
+    department = str(request.args.get('department') or '').strip().lower() or None
+    topic = str(request.args.get('topic') or '').strip().lower() or None
+    query = str(request.args.get('query') or '').strip() or None
+    state_slug = str(request.args.get('state') or '').strip().lower() or None
+
+    forms = list_government_forms(
+        department=department,
+        topic=topic,
+        query=query,
+        state_slug=state_slug
+    )
+    return jsonify({
+        "status": "success",
+        "count": len(forms),
+        "forms": forms
+    })
+
+
+@app.route('/api/government-forms/recommend', methods=['POST'])
+def api_recommend_government_forms():
+    """Recommend forms for a free-text government service query."""
+    payload = request.get_json(silent=True) or {}
+    query = str(payload.get('query') or '').strip()
+    if not query:
+        return jsonify({
+            "status": "error",
+            "message": "Please provide a query."
+        }), 400
+
+    matches = recommend_government_forms(query, limit=5)
+    return jsonify({
+        "status": "success",
+        "count": len(matches),
+        "matches": matches
+    })
+
+
+@app.route('/government-forms/official/<form_id>', methods=['GET'])
+def redirect_to_official_government_form(form_id: str):
+    """Redirect the user to the official form or service URL."""
+    entry = GOVERNMENT_FORM_INDEX.get(form_id)
+    if not entry:
+        return jsonify({"status": "error", "message": "Form not found"}), 404
+
+    state_slug = str(request.args.get('state') or '').strip().lower() or None
+    summary = government_form_to_summary(entry, state_slug=state_slug)
+    target_url = summary.get('effective_url') or summary.get('official_url')
+    if not target_url:
+        return jsonify({"status": "error", "message": "Official link unavailable"}), 404
+
+    return redirect(target_url, code=302)
+
+
 @app.route('/api/saved-items/<int:item_id>', methods=['DELETE'])
 def delete_saved_item(item_id: int):
     user = get_authenticated_user()
@@ -3975,14 +4253,6 @@ def chat():
 
         request_counts[fallback_key]['count'] += 1
 
-    if not is_api_configured():
-        return jsonify({
-            "reply": "Sorry, the chatbot is not properly configured. Please contact the administrator.",
-            "intent": None,
-            "error": "API_NOT_CONFIGURED",
-            "status": "error"
-        }), 500
-
     # Rate limiting check
     rate_limit_key = build_rate_limit_key('chat', user, anon_id, client_ip)
     is_limited, request_count = is_rate_limited(rate_limit_key)
@@ -4029,6 +4299,44 @@ def chat():
         
         # Detect intent early for guardrails + reply metadata
         intent = detect_intent(user_input)
+
+        if should_route_to_government_forms(user_input):
+            reply, form_matches = build_government_forms_chat_reply(user_input)
+            remaining_requests = max(0, RATE_LIMIT_REQUESTS - request_count)
+            record_audit_event(
+                'government_form_chat_match',
+                user_id=user['user_id'] if user else None,
+                anon_id=anon_id,
+                metadata={"matches": [item.get('id') for item in form_matches]}
+            )
+            increment_usage('chat', tier, user['user_id'] if user else None, anon_id)
+            return jsonify({
+                "reply": reply,
+                "language": user_language,
+                "intent": "government_forms",
+                "status": "success",
+                "user_name": user_name,
+                "session_id": session_id,
+                "message_count": message_count,
+                "provider": "Catalog Router",
+                "model": "verified-government-forms",
+                "timestamp": datetime.now().isoformat(),
+                "government_form_matches": form_matches,
+                "rate_limit": {
+                    "limit": RATE_LIMIT_REQUESTS,
+                    "remaining": remaining_requests,
+                    "reset_in": RATE_LIMIT_WINDOW
+                },
+                "guardrails": {"source": "verified_catalog"}
+            })
+
+        if not is_api_configured():
+            return jsonify({
+                "reply": "Sorry, the chatbot is not properly configured. Please contact the administrator.",
+                "intent": None,
+                "error": "API_NOT_CONFIGURED",
+                "status": "error"
+            }), 500
 
         # Build per-request conversation context to prevent cross-user message leakage.
         incoming_history = data.get('conversation_history', [])
