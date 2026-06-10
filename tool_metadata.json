@@ -398,24 +398,144 @@
       }
     },
     {
+      "slug": "pf-claim-helper",
+      "category": "ai_tool",
+      "title": "PF Claim Helper",
+      "description": "Upload a UAN slip, PF rejection email, or screenshot and get a step-by-step fix plan.",
+      "icon": "PF",
+      "order": 14,
+      "reviewed_on": "2026-06-10",
+      "reviewed_by": "Labour Benefits Desk",
+      "risk_level": "low",
+      "when_to_consult": "Consult a lawyer if the employer has disputed service records or is refusing statutory forms.",
+      "sample_preview": "Shows common PF rejection reasons and the exact documents to resubmit.",
+      "sample_highlights": [
+        "Reads UAN screenshots, PF portal notices, and employer responses.",
+        "Gives a step-by-step resolution checklist.",
+        "Flags when to escalate to EPFO or a labour lawyer."
+      ],
+      "sample_example_input": "PF claim rejected because of name mismatch and missing exit date.",
+      "sample_example_output": "\"Step 1: correct the name as per Aadhaar and submit the joint declaration. Step 2: attach exit date proof. Step 3: refile and track the EPFO complaint number.\"",
+      "sample_pdf_link": "/chat.html?prefill=pf-claim-helper",
+      "estimated_time": "≈3 min",
+      "use_url": "/chat.html",
+      "prefill": {
+        "param": "prefill",
+        "value": "I need help fixing my PF claim rejection. Please review my UAN screenshot or rejection note and give me a step-by-step resolution plan.",
+        "fields": {
+          "scenario": "pf_claim"
+        }
+      }
+    },
+    {
+      "slug": "rental-agreement-checker",
+      "category": "ai_tool",
+      "title": "Rental Agreement Checker",
+      "description": "Upload a lease draft and get a risk summary with missing clauses and red flags.",
+      "icon": "RA",
+      "order": 15,
+      "reviewed_on": "2026-06-10",
+      "reviewed_by": "Property Contracts Desk",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if the lease is long-term, high-value, or involves commercial premises.",
+      "sample_preview": "Highlights deposit, termination, maintenance, and registration risks.",
+      "sample_highlights": [
+        "Summarises key lease clauses in plain English.",
+        "Flags one-sided deposit and termination terms.",
+        "Shows a clean list of fixes before signing."
+      ],
+      "sample_example_input": "11-month apartment lease with no maintenance clause and no notice period.",
+      "sample_example_output": "\"Risk summary: the agreement should add a maintenance split, a 30-day notice period, and a refund timeline for the security deposit.\"",
+      "sample_pdf_link": "/chat.html?prefill=rental-agreement-checker",
+      "estimated_time": "≈4 min",
+      "use_url": "/chat.html",
+      "prefill": {
+        "param": "prefill",
+        "value": "Please review this rental agreement for missing clauses, unfair terms, and signing risks.",
+        "fields": {
+          "scenario": "rental_agreement_check"
+        }
+      }
+    },
+    {
+      "slug": "consumer-complaint-generator",
+      "category": "ai_tool",
+      "title": "Consumer Complaint Generator",
+      "description": "Turn invoice details into a ready-to-send complaint and escalation draft.",
+      "icon": "CC",
+      "order": 16,
+      "reviewed_on": "2026-06-10",
+      "reviewed_by": "Consumer Rights Desk",
+      "risk_level": "low",
+      "when_to_consult": "Consult a lawyer if the dispute involves injury, large losses, or repeated non-response.",
+      "sample_preview": "Builds a clean complaint letter from purchase, defect, and compensation details.",
+      "sample_highlights": [
+        "Collects purchase value, defect date, and remedy choice.",
+        "Drafts a complaint letter for the seller or service provider.",
+        "Prepares escalation language for the consumer commission."
+      ],
+      "sample_example_input": "Broken washing machine, invoice ₹28,500, request refund and compensation.",
+      "sample_example_output": "\"Draft ready: demand refund of ₹28,500, compensation of ₹3,000, and replacement or refund within 15 days before filing before the Consumer Commission.\"",
+      "sample_pdf_link": "/chat.html?prefill=consumer-complaint-generator",
+      "estimated_time": "≈4 min",
+      "use_url": "/chat.html",
+      "prefill": {
+        "param": "prefill",
+        "value": "Draft a consumer complaint based on this product defect and prepare the next escalation step.",
+        "fields": {
+          "scenario": "consumer_complaint"
+        }
+      }
+    },
+    {
+      "slug": "legal-notice-simplifier",
+      "category": "ai_tool",
+      "title": "Legal Notice Simplifier",
+      "description": "Upload a notice and get a human-friendly explanation plus reply options.",
+      "icon": "LN",
+      "order": 17,
+      "reviewed_on": "2026-06-10",
+      "reviewed_by": "Notice Review Desk",
+      "risk_level": "medium",
+      "when_to_consult": "Consult a lawyer if the notice mentions litigation, injunctions, or a short statutory deadline.",
+      "sample_preview": "Explains the notice in simple English and lists the response choices.",
+      "sample_highlights": [
+        "Summarises the notice in one short paragraph.",
+        "Highlights deadlines, demands, and legal hooks.",
+        "Suggests the next reply or reply-draft workflow."
+      ],
+      "sample_example_input": "Section 138 cheque bounce notice demanding payment in 15 days.",
+      "sample_example_output": "\"Simple English: the sender says your cheque bounced and wants payment within 15 days, otherwise they may start a case. Suggested next step: confirm facts, preserve documents, and prepare a reply.\"",
+      "sample_pdf_link": "/chat.html?prefill=legal-notice-simplifier",
+      "estimated_time": "≈2 min",
+      "use_url": "/chat.html",
+      "prefill": {
+        "param": "prefill",
+        "value": "Please simplify this legal notice in plain English and tell me what I should do next.",
+        "fields": {
+          "scenario": "legal_notice_simplifier"
+        }
+      }
+    },
+    {
       "slug": "ai-reviewer",
       "category": "ai_tool",
       "title": "AI Document Reviewer",
-      "description": "Upload drafts and get instant plain-language risk flags.",
+      "description": "Upload legal notices, government letters, or agreements and get extracted text plus next steps.",
       "icon": "🤖",
-      "order": 14,
+      "order": 18,
       "reviewed_on": "2025-11-15",
       "reviewed_by": "AI Policy Team",
       "risk_level": "low",
       "when_to_consult": "Consult a lawyer if the document will be filed in court or signed by CXOs.",
-      "sample_preview": "Demonstrates how Saathi summarises clauses and risks.",
+      "sample_preview": "Demonstrates how Saathi extracts text, explains it in simple English, and lists next actions.",
       "sample_highlights": [
-        "Uploads sample vendor agreement and highlights redlines.",
-        "Shows summary bullets + next steps.",
+        "Uploads a legal notice, rental agreement, or government letter.",
+        "Shows the extracted text with a simple-English explanation.",
         "Explains data retention and manual review options."
       ],
       "sample_example_input": "5 page vendor agreement with indemnity and payment clause.",
-      "sample_example_output": "\"AI Review Flags: (1) Payment milestone mismatch, (2) Overbroad indemnity, (3) Missing jurisdiction clause. Suggested fixes provided.\"",
+      "sample_example_output": "\"AI Review Flags: (1) Payment milestone mismatch, (2) Overbroad indemnity, (3) Missing jurisdiction clause. Extracted text and next-step checklist provided.\"",
       "sample_pdf_link": "/chat.html",
       "estimated_time": "≈2 min",
       "use_url": "/chat.html?mode=review",

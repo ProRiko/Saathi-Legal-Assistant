@@ -119,6 +119,182 @@
             color: #1a1309;
             border-color: transparent;
         }
+        .phase-rail {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 18px 0 26px;
+        }
+        .phase-card,
+        .document-studio,
+        .dashboard-preview {
+            background: rgba(15, 21, 33, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 22px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+        }
+        .phase-card h3,
+        .document-studio h2,
+        .dashboard-preview h2 {
+            margin: 0 0 10px;
+            color: #f7dba7;
+        }
+        .phase-card p,
+        .document-studio p,
+        .dashboard-preview p {
+            margin: 0;
+            color: #dcd3c3;
+            line-height: 1.55;
+        }
+        .phase-card ul,
+        .document-studio ul,
+        .dashboard-preview ul {
+            margin: 14px 0 0;
+            padding-left: 20px;
+            color: #dcd3c3;
+        }
+        .document-studio {
+            margin-bottom: 26px;
+        }
+        .document-studio__grid {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 20px;
+            margin-top: 16px;
+        }
+        .document-form,
+        .dashboard-card,
+        .result-card {
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(9, 13, 22, 0.82);
+            padding: 18px;
+        }
+        .document-form label {
+            display: block;
+            font-size: 0.82rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(247, 219, 167, 0.9);
+            margin-bottom: 6px;
+        }
+        .document-form input[type="file"],
+        .document-form textarea {
+            width: 100%;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(9, 13, 22, 0.8);
+            color: #f4f1e8;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 1rem;
+        }
+        .document-form textarea {
+            min-height: 130px;
+            resize: vertical;
+        }
+        .document-form button {
+            width: 100%;
+            border: none;
+            border-radius: 999px;
+            padding: 14px 18px;
+            font-size: 1rem;
+            font-weight: 600;
+            background: linear-gradient(120deg, #f9a826, #f76b1c);
+            color: #1a1309;
+            cursor: pointer;
+        }
+        .document-form .helper-copy {
+            font-size: 0.9rem;
+            color: #bdb6aa;
+            margin-top: -8px;
+            margin-bottom: 12px;
+        }
+        .document-status,
+        .dashboard-status {
+            margin-top: 14px;
+            min-height: 1.2em;
+            color: #f7dba7;
+        }
+        .document-status.success,
+        .dashboard-status.success {
+            color: #9be7a5;
+        }
+        .document-status.error,
+        .dashboard-status.error {
+            color: #ffb4b4;
+        }
+        .document-results {
+            display: grid;
+            gap: 14px;
+        }
+        .result-card h3,
+        .dashboard-card h3 {
+            margin: 0 0 10px;
+            color: #f7dba7;
+            font-size: 1.05rem;
+        }
+        .result-card pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+            color: #f4f1e8;
+            line-height: 1.6;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+            font-size: 0.92rem;
+        }
+        .result-card ul,
+        .dashboard-card ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .dashboard-preview {
+            margin: 26px 0;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+        .dashboard-stat {
+            border-radius: 18px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(247, 219, 167, 0.08), rgba(9, 13, 22, 0.95));
+            border: 1px solid rgba(247, 219, 167, 0.18);
+        }
+        .dashboard-stat .label {
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #c9c1b2;
+        }
+        .dashboard-stat .value {
+            margin-top: 8px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f7dba7;
+        }
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .dashboard-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .dashboard-chip {
+            border-radius: 999px;
+            border: 1px solid rgba(247, 219, 167, 0.18);
+            padding: 5px 12px;
+            color: #f7dba7;
+            font-size: 0.82rem;
+        }
         .tools-status {
             margin-top: 20px;
             text-align: center;
@@ -295,6 +471,9 @@
             .sample-modal__card {
                 padding: 24px;
             }
+            .document-studio__grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -319,8 +498,83 @@
         <header class="tools-hero">
             <p class="tagline" style="letter-spacing:4px; text-transform:uppercase; color:rgba(247,219,167,0.8);">Saathi Tools</p>
             <h1>Choose a tool to get started</h1>
-            <p>View samples before you generate notices, agreements, or calculator outputs. Every card shows review metadata and opens a sample preview with one click.</p>
+            <p>Start with a document upload, then move into templates, complaints, calculators, and follow-up actions. Every card shows review metadata and opens a sample preview with one click.</p>
         </header>
+
+        <section class="phase-rail" aria-label="Saathi product phases">
+            <article class="phase-card">
+                <h3>Phase 1: Document first</h3>
+                <p>Upload a legal notice, government letter, or rental agreement. Saathi extracts text, explains it in simple English, and suggests what to do next.</p>
+            </article>
+            <article class="phase-card">
+                <h3>Phase 2: Personal dashboard</h3>
+                <p>Keep My Documents, My Conversations, Saved Summaries, Pending Actions, and Recent Uploads in one account view.</p>
+            </article>
+            <article class="phase-card">
+                <h3>Phase 3: Specialized tools</h3>
+                <p>Use focused flows like PF Claim Helper, Rental Agreement Checker, Consumer Complaint Generator, and Legal Notice Simplifier instead of generic chat.</p>
+            </article>
+        </section>
+
+        <section class="document-studio" aria-labelledby="documentStudioTitle">
+            <p class="tagline" style="letter-spacing:4px; text-transform:uppercase; color:rgba(247,219,167,0.8);">Document Studio</p>
+            <h2 id="documentStudioTitle">Upload a document and let Saathi read it for you</h2>
+            <p>Use this for a legal notice, a government letter, a rental agreement, or a scanned document. You will get the extracted text, a plain-English summary, and a next-step list you can act on immediately.</p>
+            <div class="document-studio__grid">
+                <form id="documentReviewForm" class="document-form" novalidate>
+                    <label for="documentFile">Upload file</label>
+                    <input id="documentFile" type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp,.bmp,.tif,.tiff">
+                    <p class="helper-copy">Searchable PDF, DOCX, TXT, or a clear scanned image. The result is stored for signed-in users as part of the dashboard history.</p>
+
+                    <label for="documentText">Or paste text</label>
+                    <textarea id="documentText" placeholder="Paste extracted text or the wording you want Saathi to analyze"></textarea>
+
+                    <button type="submit">Explain this document</button>
+                    <p class="document-status" id="documentReviewStatus" role="status" aria-live="polite"></p>
+                </form>
+
+                <div class="document-results" id="documentResults">
+                    <div class="result-card">
+                        <h3>Extracted text</h3>
+                        <pre id="documentExtractedText">Upload a file to see the extracted text here.</pre>
+                    </div>
+                    <div class="result-card">
+                        <h3>Simple English summary</h3>
+                        <p id="documentSummary">Saathi will explain the document in plain English.</p>
+                    </div>
+                    <div class="result-card">
+                        <h3>What should I do next?</h3>
+                        <ul id="documentNextSteps">
+                            <li>Upload a document or paste the text to get step-by-step guidance.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-preview" aria-labelledby="dashboardTitle">
+            <p class="tagline" style="letter-spacing:4px; text-transform:uppercase; color:rgba(247,219,167,0.8);">Personal Dashboard</p>
+            <h2 id="dashboardTitle">Your workspace at a glance</h2>
+            <p>When you log in, Saathi can show your saved documents, past conversations, summaries, pending actions, and recent uploads without making you hunt through chat history.</p>
+            <div class="dashboard-grid">
+                <div class="dashboard-stat"><div class="label">My Documents</div><div class="value" id="dashboardDocumentsCount">0</div></div>
+                <div class="dashboard-stat"><div class="label">My Conversations</div><div class="value" id="dashboardConversationsCount">0</div></div>
+                <div class="dashboard-stat"><div class="label">Saved Summaries</div><div class="value" id="dashboardSummariesCount">0</div></div>
+                <div class="dashboard-stat"><div class="label">Pending Actions</div><div class="value" id="dashboardPendingCount">0</div></div>
+            </div>
+            <div class="dashboard-chip-row" id="dashboardChips">
+                <span class="dashboard-chip">Recent Uploads</span>
+                <span class="dashboard-chip">Follow-up Tasks</span>
+                <span class="dashboard-chip">Review Notes</span>
+            </div>
+            <div class="dashboard-cards" id="dashboardCards">
+                <div class="dashboard-card">
+                    <h3>Login required</h3>
+                    <p>Sign in to see the items Saathi has already stored for you.</p>
+                </div>
+            </div>
+            <p class="dashboard-status" id="dashboardStatus" role="status" aria-live="polite"></p>
+        </section>
 
         <section class="tools-grid" id="toolsGrid" aria-live="polite"></section>
         <div class="tools-status" id="toolsStatus">Loading tools...</div>
@@ -404,6 +658,19 @@
         const modalUseButton = document.getElementById('sampleModalUse');
         const modalPdfLink = document.getElementById('sampleModalPdf');
         const modalClose = document.getElementById('sampleModalClose');
+        const documentReviewForm = document.getElementById('documentReviewForm');
+        const documentFileInput = document.getElementById('documentFile');
+        const documentTextInput = document.getElementById('documentText');
+        const documentStatus = document.getElementById('documentReviewStatus');
+        const documentExtractedText = document.getElementById('documentExtractedText');
+        const documentSummary = document.getElementById('documentSummary');
+        const documentNextSteps = document.getElementById('documentNextSteps');
+        const dashboardStatus = document.getElementById('dashboardStatus');
+        const dashboardCards = document.getElementById('dashboardCards');
+        const dashboardDocumentsCount = document.getElementById('dashboardDocumentsCount');
+        const dashboardConversationsCount = document.getElementById('dashboardConversationsCount');
+        const dashboardSummariesCount = document.getElementById('dashboardSummariesCount');
+        const dashboardPendingCount = document.getElementById('dashboardPendingCount');
         let modalFocusTrap = [];
         let lastFocusedElement = null;
         let activeTool = null;
@@ -454,6 +721,150 @@
                 // Ignore storage access errors and fallback to anon-only headers
             }
             return headers;
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function setDocumentStatus(message, tone = '') {
+            if (!documentStatus) {
+                return;
+            }
+            documentStatus.textContent = message;
+            documentStatus.classList.remove('success', 'error');
+            if (tone) {
+                documentStatus.classList.add(tone);
+            }
+        }
+
+        function renderDashboardItems(title, items) {
+            if (!items || !items.length) {
+                return `
+                    <div class="dashboard-card">
+                        <h3>${title}</h3>
+                        <p>No saved items yet.</p>
+                    </div>
+                `;
+            }
+            return items.slice(0, 3).map(item => `
+                <div class="dashboard-card">
+                    <h3>${escapeHtml(item.title || item.filename || item.doc_title || 'Untitled item')}</h3>
+                    <p>${escapeHtml(item.summary || item.notes || 'Stored for your workspace.')}</p>
+                </div>
+            `).join('');
+        }
+
+        function updateDashboardCounts(data) {
+            const savedItems = Array.isArray(data.saved_items) ? data.saved_items : [];
+            const aiReviews = Array.isArray(data.ai_reviews) ? data.ai_reviews : [];
+            const reviewRequests = Array.isArray(data.review_requests) ? data.review_requests : [];
+            const conversations = Array.isArray(data.conversations) ? data.conversations : [];
+
+            dashboardDocumentsCount.textContent = String(savedItems.filter(item => /document|review|ai_review/i.test(item.type || '')).length || savedItems.length);
+            dashboardConversationsCount.textContent = String(conversations.length);
+            dashboardSummariesCount.textContent = String(aiReviews.length);
+            dashboardPendingCount.textContent = String(reviewRequests.filter(item => String(item.status || '').toLowerCase() === 'pending').length);
+
+            const cards = [];
+            cards.push(renderDashboardItems('My Documents', savedItems));
+            cards.push(renderDashboardItems('Saved Summaries', aiReviews));
+            cards.push(renderDashboardItems('Pending Actions', reviewRequests));
+            cards.push(renderDashboardItems('My Conversations', conversations.map(item => ({
+                title: item.session_id || item.timestamp || 'Conversation',
+                summary: item.message || item.sender || 'Conversation activity'
+            }))));
+            dashboardCards.innerHTML = cards.join('');
+        }
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard', {
+                    headers: sessionAwareHeaders()
+                });
+                if (response.status === 401) {
+                    dashboardStatus.textContent = 'Sign in to unlock My Documents, My Conversations, Saved Summaries, Pending Actions, and Recent Uploads.';
+                    dashboardStatus.classList.add('error');
+                    return;
+                }
+                if (!response.ok) {
+                    throw new Error('Unable to load dashboard');
+                }
+                const data = await response.json();
+                if (data.status !== 'success') {
+                    throw new Error(data.message || 'Dashboard unavailable');
+                }
+                updateDashboardCounts(data);
+                dashboardStatus.textContent = `Loaded workspace for ${data.profile?.email || 'your account'}.`;
+                dashboardStatus.classList.add('success');
+            } catch (error) {
+                dashboardStatus.textContent = 'Dashboard preview is available, but your saved account data could not be loaded right now.';
+                dashboardStatus.classList.add('error');
+                console.error(error);
+            }
+        }
+
+        function renderDocumentReview(review) {
+            documentExtractedText.textContent = review.extracted_text || review.document_text || 'No extracted text returned.';
+            documentSummary.textContent = review.plain_english_summary || review.summary || 'No summary returned.';
+            const nextSteps = Array.isArray(review.next_steps) && review.next_steps.length ? review.next_steps : (review.suggestions || []);
+            documentNextSteps.innerHTML = '';
+            (nextSteps.length ? nextSteps : ['No next steps were returned.']).forEach(step => {
+                const li = document.createElement('li');
+                li.textContent = step;
+                documentNextSteps.appendChild(li);
+            });
+
+            const resultBlock = document.getElementById('documentResults');
+            resultBlock.querySelectorAll('.result-card')[0].style.display = 'block';
+            resultBlock.querySelectorAll('.result-card')[1].style.display = 'block';
+            resultBlock.querySelectorAll('.result-card')[2].style.display = 'block';
+        }
+
+        if (documentReviewForm) {
+            documentReviewForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const hasFile = documentFileInput && documentFileInput.files && documentFileInput.files.length > 0;
+                const pastedText = (documentTextInput?.value || '').trim();
+
+                if (!hasFile && !pastedText) {
+                    setDocumentStatus('Upload a file or paste text before asking Saathi to analyze it.', 'error');
+                    return;
+                }
+
+                setDocumentStatus('Analyzing the document...', '');
+
+                try {
+                    const formData = new FormData();
+                    if (hasFile) {
+                        formData.append('file', documentFileInput.files[0]);
+                    }
+                    if (pastedText) {
+                        formData.append('text', pastedText);
+                    }
+
+                    const response = await fetch('/api/reviewer/analyze', {
+                        method: 'POST',
+                        headers: sessionAwareHeaders(),
+                        body: formData
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || data.status !== 'success') {
+                        throw new Error(data.message || 'Unable to analyze this document right now.');
+                    }
+
+                    renderDocumentReview(data.review || {});
+                    setDocumentStatus('Document analyzed successfully.', 'success');
+                } catch (error) {
+                    setDocumentStatus(error.message || 'Document analysis failed.', 'error');
+                }
+            });
         }
 
         function buildToolCard(tool) {
@@ -624,6 +1035,7 @@
         }
 
         loadTools();
+        loadDashboard();
 
         const manualReviewForm = document.getElementById('manualReviewForm');
         const manualReviewStatus = document.getElementById('manualReviewStatus');

@@ -26,6 +26,14 @@ import io
 import tempfile
 import time
 import hashlib
+try:
+    from PIL import Image
+    import pytesseract
+    OCR_AVAILABLE = True
+except ImportError:
+    Image = None
+    pytesseract = None
+    OCR_AVAILABLE = False
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from functools import wraps
@@ -573,7 +581,8 @@ def save_user_item(user_id: int, item_type: str, title: str, summary: str, paylo
         conn.close()
     
 MAX_REVIEW_FILE_SIZE = int(os.getenv('MAX_REVIEW_FILE_SIZE', str(2 * 1024 * 1024)))
-ALLOWED_REVIEW_EXTENSIONS = {'.pdf', '.docx', '.txt'}
+ALLOWED_REVIEW_EXTENSIONS = {'.pdf', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.webp', '.bmp', '.tif', '.tiff'}
+IMAGE_REVIEW_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.bmp', '.tif', '.tiff'}
 AI_REVIEW_SAMPLE = {
     "summary": "Five-clause vendor agreement covers payment, IP ownership, indemnity, confidentiality, and jurisdiction but timelines are vague.",
     "key_clauses": [
@@ -605,19 +614,35 @@ def clamp_review_text(text: str, max_chars: int = 6000) -> str:
     return cleaned[:max_chars] + "\n… (truncated for review)"
 
 
+def extract_text_from_image(file_bytes: bytes) -> tuple[str | None, str | None]:
+    if not OCR_AVAILABLE:
+        return None, "OCR support is not installed on this deployment. Upload a searchable PDF, DOCX, TXT, or enable OCR dependencies."
+    try:
+        image = Image.open(io.BytesIO(file_bytes))
+        text = pytesseract.image_to_string(image.convert('RGB'))
+    except Exception as exc:
+        logger.error('Failed to OCR uploaded image: %s', exc)
+        return None, "Could not read the image. Try a clearer scan or a searchable PDF."
+    if not text.strip():
+        return None, "No readable text found in the image. Try a clearer scan or a searchable PDF."
+    return clamp_review_text(text), None
+
+
 def extract_text_from_upload(file_storage) -> tuple[str | None, str | None]:
     if not file_storage or not getattr(file_storage, 'filename', None):
         return None, "No file provided"
     filename = secure_filename(file_storage.filename)
     _, ext = os.path.splitext(filename.lower())
     if ext not in ALLOWED_REVIEW_EXTENSIONS:
-        return None, "Unsupported file type. Upload PDF, DOCX, or TXT."
+        return None, "Unsupported file type. Upload PDF, DOCX, TXT, or an image scan."
     file_bytes = file_storage.read()
     if not file_bytes:
         return None, "Uploaded file is empty"
     if len(file_bytes) > MAX_REVIEW_FILE_SIZE:
         return None, "File too large. Limit is 2 MB for Day-4 reviewer."
     try:
+        if ext in IMAGE_REVIEW_EXTENSIONS:
+            return extract_text_from_image(file_bytes)
         if ext == '.pdf':
             reader = PdfReader(io.BytesIO(file_bytes))
             pages = [page.extract_text() or '' for page in reader.pages]
@@ -3028,6 +3053,10 @@ def api_reviewer_analyze():
 
     increment_usage('ai_reviews', tier, user['user_id'] if user else None, anon_id)
 
+    review['extracted_text'] = document_text
+    review['plain_english_summary'] = review.get('summary')
+    review['next_steps'] = review.get('suggestions') or []
+
     return jsonify({"status": "success", "review": review})
 
 
@@ -3277,12 +3306,25 @@ def api_dashboard():
     saved_items = list_saved_items(user['user_id'])
     ai_reviews = list_ai_reviews_for_user(user['user_id'])
     review_requests = list_review_requests_for_user(user['user_id'])
+    conversations = get_user_conversations(user['email'], limit=12)
+    conversation_items = [
+        {
+            "id": str(conversation.get('_id')),
+            "session_id": conversation.get('session_id'),
+            "message": conversation.get('message', ''),
+            "sender": conversation.get('sender'),
+            "timestamp": conversation.get('timestamp'),
+            "summary": (conversation.get('message') or '')[:160]
+        }
+        for conversation in conversations
+    ]
     return jsonify({
         "status": "success",
         "profile": {"email": user['email']},
         "saved_items": saved_items,
         "ai_reviews": ai_reviews,
-        "review_requests": review_requests
+        "review_requests": review_requests,
+        "conversations": conversation_items
     })
 
 
